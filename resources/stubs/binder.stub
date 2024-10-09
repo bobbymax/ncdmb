@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Binders;
+
+use App\Repositories\{{ class }}Repository;
+use App\Services\{{ class }}Service;
+
+class {{ class }}Binder
+{
+    public static function bind($app)
+    {
+        // Binding {{ class }}Repository
+        $app->bind({{ class }}Repository::class, function ($app) {
+            return new {{ class }}Repository(new \App\Models\{{ class }});
+        });
+
+        // Binding {{ class }}Service
+        $app->bind({{ class }}Service::class, function ($app) {
+            return new {{ class }}Service($app->make({{ class }}Repository::class));
+        });
+    }
+}

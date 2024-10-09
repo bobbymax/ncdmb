@@ -1,0 +1,13 @@
+<?php
+
+namespace App\Services;
+
+use App\Repositories\{{ class }}Repository;
+
+class {{ class }}Service extends BaseService
+{
+    public function __construct({{ class }}Repository ${{ camel }}Repository)
+    {
+        $this->repository = ${{ camel }}Repository;
+    }
+}

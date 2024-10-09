@@ -1,0 +1,12 @@
+<?php
+
+namespace App\Repositories;
+
+use App\Models\{{ class }};
+
+class {{ class }}Repository extends BaseRepository
+{
+    public function __construct({{ class }} ${{ camel }}) {
+        parent::__construct(${{ camel }});
+    }
+}

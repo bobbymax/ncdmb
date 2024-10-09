@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use App\Repositories\{{ class }}Repository;
+use App\Services\{{ class }}Service;
+
+class {{ class }}ServiceProvider extends ServiceProvider
+{
+    /**
+     * Register services and bind the repository to the service.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        // Bind the {{ class }}Repository to {{ class }}Service
+        $this->app->bind({{ class }}Service::class, function ($app) {
+            return new {{ class }}Service($app->make({{ class }}Repository::class));
+        });
+    }
+}

@@ -1,0 +1,13 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Services\{{ class }}Service;
+
+class {{ class }}Controller extends Controller
+{
+    public function __construct({{ class }}Service ${{ camel }}Service) {
+        $this->service = ${{ camel }}Service;
+        $this->name = '{{ class }}';
+    }
+}
