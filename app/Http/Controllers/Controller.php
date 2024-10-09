@@ -27,7 +27,6 @@ abstract class Controller
     public function store(Request $request): \Illuminate\Http\JsonResponse
     {
         try {
-
             $validator = Validator::make($request->all(), $this->service->rules());
 
             if ($validator->fails()) {
