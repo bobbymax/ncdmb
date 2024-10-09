@@ -10,4 +10,9 @@ class {{ class }}Service extends BaseService
     {
         $this->repository = ${{ camel }}Repository;
     }
+
+    public function rules()
+    {
+        // TODO: Implement rules() method.
+    }
 }

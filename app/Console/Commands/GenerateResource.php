@@ -13,7 +13,7 @@ class GenerateResource extends Command
      *
      * @var string
      */
-    protected $signature = 'pack:generate {name}';
+    protected $signature = 'pack:generate {name} {--force}';
 
     /**
      * The console command description.
@@ -29,18 +29,30 @@ class GenerateResource extends Command
     {
         // 1. Fetch Name
         $name = $this->argument('name');
-        // 2. Create Model
-        $this->createModel($name);
-        // 3. Create Migration
-        $this->createMigration($name);
-        // 4. Create Repository
-        $this->createRepository($name);
-        // 5. Create Resource Service
-        $this->createService($name);
-        // 6. Create Service Provider
-        $this->createProvider($name);
-        // 7. Create Controller
-        $this->createController($name);
+        $createdFiles = [];
+
+        try {
+            // Start creating resources and keep track of created files
+            $createdFiles[] = $this->createModel($name);
+            $createdFiles[] = $this->createMigration($name);
+            $createdFiles[] = $this->createRepository($name);
+            $createdFiles[] = $this->createService($name);
+            $createdFiles[] = $this->createProvider($name);
+            $createdFiles[] = $this->createController($name);
+
+            $this->info("All resources created successfully.");
+
+        } catch (\Exception $e) {
+            $this->error("Resource generation failed: " . $e->getMessage());
+
+            // Rollback created files if an error occurs
+            foreach ($createdFiles as $file) {
+                if (File::exists($file)) {
+                    File::delete($file);
+                    $this->warn("Rolled back: {$file}");
+                }
+            }
+        }
     }
 
     private function parse($name): array
@@ -50,56 +62,70 @@ class GenerateResource extends Command
         return compact('class','camel');
     }
 
-    protected function createProvider($name): void
+    protected function createProvider($name): string
     {
         $formatted = $this->parse($name);
         $path = app_path("Providers/{$formatted['class']}ServiceProvider.php");
         $this->checkAndSaveFile($path, 'provider', $formatted);
-        $this->info("Provider created successfully.");
+
+        return $path;
     }
 
-    protected function createModel($name): void
+    protected function createModel($name): string
     {
         $formatted = $this->parse($name);
         $modelPath = app_path("Models/{$formatted['class']}.php");
         $this->checkAndSaveFile($modelPath, 'model', $formatted);
-        $this->info("Model created successfully.");
+
+        return $modelPath;
     }
 
-    protected function createMigration($name): void
+    protected function createMigration($name): string
     {
         $table = Str::snake(Str::pluralStudly(class_basename($name)));
+
+        if ($this->migrationExists($table)) {
+           $this->info("Migration for {$table} already exists.");
+           return '';
+        }
+
         $this->call('make:migration', ['name' => "create_{$table}_table"]);
-        $this->info("Migration created successfully.");
+
+        return $this->getLatestMigrationFile();
     }
 
-    protected function createRepository($name): void
+    protected function createRepository($name): string
     {
         $formatted = $this->parse($name);
         $repositoryPath = app_path("Repositories/{$formatted['class']}Repository.php");
         $this->checkAndSaveFile($repositoryPath, 'repository', $formatted);
-        $this->info("Repository created successfully.");
+
+        return $repositoryPath;
     }
 
-    protected function createController($name): void
+    protected function createController($name): string
     {
         $formatted = $this->parse($name);
         $controllerPath = app_path("Http/Controllers/{$formatted['class']}Controller.php");
         $this->checkAndSaveFile($controllerPath, 'controller', $formatted);
-        $this->info("Controller created successfully.");
+
+        return $controllerPath;
     }
 
-    protected function createService($name): void
+    protected function createService($name): string
     {
         $formatted = $this->parse($name);
         $servicePath = app_path("Services/{$formatted['class']}Service.php");
         $this->checkAndSaveFile($servicePath, 'service', $formatted);
-        $this->info("Service created successfully.");
+
+        return $servicePath;
     }
 
     private function checkAndSaveFile($path, $stub, $formatted): void
     {
-        if (!File::exists($path)) {
+        if (File::exists($path) && !$this->option('force')) {
+            $this->warn("File already exists: {$path}. Use --force to overwrite.");
+        } else {
             $stub = File::get(resource_path("stubs/$stub.stub"));
             $replacements = [
                 '{{ class }}' => $formatted['class'],
@@ -109,5 +135,37 @@ class GenerateResource extends Command
             $stub = str_replace(array_keys($replacements), array_values($replacements), $stub);
             File::put($path, $stub);
         }
+    }
+
+    private function getLatestMigrationFile(): string
+    {
+        // Get all migration files in the 'database/migrations' directory
+        $files = File::files(database_path('migrations'));
+
+        // Sort files by the last modified time
+        usort($files, function ($a, $b) {
+            return $b->getMTime() - $a->getMTime(); // Sort by newest first
+        });
+
+        // Return the path of the most recently created migration file
+        return $files[0]->getRealPath();
+    }
+
+    private function migrationExists($name): bool
+    {
+        // Get all migration files in the migrations directory
+        $migrationFiles = File::files(database_path('migrations'));
+
+        // Define the target creation migration filename pattern
+        $targetPattern = "create_{$name}_table";
+
+        // Loop through migration files and check if any file contains the table name
+        foreach ($migrationFiles as $file) {
+            if (Str::contains($file->getFilename(), $targetPattern)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

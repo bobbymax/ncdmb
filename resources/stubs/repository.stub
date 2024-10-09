@@ -9,4 +9,9 @@ class {{ class }}Repository extends BaseRepository
     public function __construct({{ class }} ${{ camel }}) {
         parent::__construct(${{ camel }});
     }
+
+    public function parse(array $data): array
+    {
+        return $data;
+    }
 }
