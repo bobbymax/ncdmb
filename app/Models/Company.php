@@ -37,9 +37,19 @@ class Company extends Model
         return $this->hasMany(LifInstitutionService::class, 'contractor_id');
     }
 
+    public function procuredMaterials(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProcuredMaterial::class, 'contractor_id');
+    }
+
     public function scopes(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(ProjectScope::class, 'contractor_id');
+    }
+
+    public function vendors(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Vendor::class, 'contractor_id');
     }
 
     public function vesselUtilizations(): \Illuminate\Database\Eloquent\Relations\HasMany
