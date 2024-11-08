@@ -11,7 +11,7 @@ class ReviewService extends BaseService
         $this->repository = $reviewRepository;
     }
 
-    public function rules(): array
+    public function rules($action = "store"): array
     {
         return [
             'user_id' => 'required|integer|exists:users,id',

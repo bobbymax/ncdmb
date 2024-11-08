@@ -11,7 +11,7 @@ class ScheduleService extends BaseService
         $this->repository = $scheduleRepository;
     }
 
-    public function rules(): array
+    public function rules($action = "store"): array
     {
         return [
             'name' => 'required|string|max:255',

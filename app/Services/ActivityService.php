@@ -11,7 +11,7 @@ class ActivityService extends BaseService
         $this->repository = $activityRepository;
     }
 
-    public function rules(): array
+    public function rules($action = "store"): array
     {
         return [
             'project_scope_id' => 'required|integer|exists:project_scopes,id',

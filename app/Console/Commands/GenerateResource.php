@@ -62,11 +62,42 @@ class GenerateResource extends Command
         return compact('class','camel');
     }
 
+    private function addProviders($path, $value): void
+    {
+        if (!File::exists($path)) {
+            return;
+        }
+
+        $content = file_get_contents($path);
+
+        // Use regular expression to match the array pattern in the file
+        $pattern = '/return\s*\[\s*(.*)\s*\];/s';
+
+        if (preg_match($pattern, $content, $matches)) {
+            // Get the existing values from the array
+            $existingValues = trim($matches[1]);
+
+            // Prepare the new values for the array
+            $newValues = $existingValues ? "$existingValues,\n    $value" : $value;
+
+            // Replace the original array content with the new values
+            $newContent = "return [\n    $newValues\n];";
+
+            // Replace the original file content with the modified content
+            $updatedFileContent = preg_replace($pattern, $newContent, $content);
+
+            // Save the changes back to the file
+            file_put_contents($path, $updatedFileContent);
+        }
+    }
+
     protected function createProvider($name): string
     {
         $formatted = $this->parse($name);
         $path = app_path("Providers/{$formatted['class']}ServiceProvider.php");
         $this->checkAndSaveFile($path, 'provider', $formatted);
+
+        $this->addProviders(base_path('bootstrap/providers.php'), "App\\Providers\\{$formatted['class']}ServiceProvider::class");
 
         return $path;
     }

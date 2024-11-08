@@ -11,7 +11,7 @@ class UserService extends BaseService
         $this->repository = $userRepository;
     }
 
-    public function rules()
+    public function rules($action = "store")
     {
         // TODO: Implement rules() method.
     }

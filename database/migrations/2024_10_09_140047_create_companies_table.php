@@ -23,6 +23,8 @@ return new class extends Migration
             $table->string('website')->unique()->nullable();
             $table->string('ncec_no')->unique()->nullable();
             $table->string('nogicjqs_cert_no')->unique()->nullable();
+            $table->string('nimasa_reg_no')->unique()->nullable();
+            $table->string('categorization_status')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

@@ -80,5 +80,5 @@ abstract class BaseService implements IService
         }
     }
 
-    abstract public function rules();
+    abstract public function rules($action = "store");
 }

@@ -11,8 +11,10 @@ class {{ class }}Service extends BaseService
         $this->repository = ${{ camel }}Repository;
     }
 
-    public function rules()
+    public function rules($action = "store"): array
     {
-        // TODO: Implement rules() method.
+        return [
+            //
+        ];
     }
 }

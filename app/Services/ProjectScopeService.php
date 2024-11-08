@@ -11,7 +11,7 @@ class ProjectScopeService extends BaseService
         $this->repository = $projectScopeRepository;
     }
 
-    public function rules(): array
+    public function rules($action = "store"): array
     {
         return [
             'project_id' => 'required|integer|exists:projects,id',

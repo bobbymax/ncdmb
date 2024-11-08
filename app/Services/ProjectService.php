@@ -11,14 +11,16 @@ class ProjectService extends BaseService
         $this->repository = $projectRepository;
     }
 
-    public function rules(): array
+    public function rules($action = "store"): array
     {
         return [
-            'operator_id' => 'required|integer|exists:companies,id',
+            'contractor_id' => 'required|integer|exists:companies,id',
             'title' => 'required|string|max:255',
+            'approval_date' => 'required|date',
             'start_date' => 'required|date',
             'completion_date' => 'required|date',
-            'approved_amount' => 'required',
+            'nc_amount' => 'required',
+            'total_amount' => 'required',
         ];
     }
 }

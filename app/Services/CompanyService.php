@@ -11,7 +11,7 @@ class CompanyService extends BaseService
         $this->repository = $companyRepository;
     }
 
-    public function rules(): array
+    public function rules($action = "store"): array
     {
         return [
             'name' => 'required|string|max:255',
@@ -20,6 +20,7 @@ class CompanyService extends BaseService
             'phone' => 'required|string|max:255|unique:companies',
             'ncec_no' => 'required|string|max:255|unique:companies',
             'nogicjqs_cert_no' => 'required|string|max:255|unique:companies',
+            'nimasa_reg_no' => 'required|string|max:255|unique:companies',
             'representative' => 'required|string|max:255',
         ];
     }

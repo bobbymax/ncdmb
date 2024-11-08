@@ -15,7 +15,7 @@ class Project extends Model
 
     public function operator(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(Company::class, 'operator_id');
+        return $this->belongsTo(Company::class, 'contractor_id');
     }
 
     public function scopes(): \Illuminate\Database\Eloquent\Relations\HasMany

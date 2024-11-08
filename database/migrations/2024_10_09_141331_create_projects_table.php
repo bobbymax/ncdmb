@@ -13,13 +13,15 @@ return new class extends Migration
     {
         Schema::create('projects', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('operator_id')->unsigned();
-            $table->foreign('operator_id')->references('id')->on('companies')->onDelete('cascade');
+            $table->bigInteger('contractor_id')->unsigned();
+            $table->foreign('contractor_id')->references('id')->on('companies')->onDelete('cascade');
             $table->string('title');
             $table->text('description')->nullable();
+            $table->date('approval_date')->nullable();
             $table->date('start_date')->nullable();
             $table->date('completion_date')->nullable();
-            $table->decimal('approved_amount', 30, 2)->default(0);
+            $table->decimal('nc_amount', 30, 2)->default(0);
+            $table->decimal('total_amount', 30, 2)->default(0);
             $table->enum('status', ['pending', 'in-progress', 'in-review', 'awaiting-response', 'verified', 'completed', 'overdue'])->default('pending');
             $table->boolean('is_closed')->default(false);
             $table->timestamps();
