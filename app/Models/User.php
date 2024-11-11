@@ -100,6 +100,16 @@ class User extends Authenticatable
         return $this->hasMany(Expenditure::class, 'staff_id');
     }
 
+    public function requisitions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Requisition::class);
+    }
+
+    public function supplies(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StoreSupply::class);
+    }
+
     public function uploads(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Upload::class);

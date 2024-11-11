@@ -29,7 +29,7 @@ abstract class BaseService implements IService
     public function getRecordByColumn(string $column, mixed $value, string $operator = '=')
     {
         try {
-            return $this->repository->getRecordByColumn($column, $value, $operator);
+            return new $this->resource($this->repository->getRecordByColumn($column, $value, $operator));
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
@@ -38,7 +38,7 @@ abstract class BaseService implements IService
     public function getCollectionByColumn(string $column, mixed $value, string $operator = '=')
     {
         try {
-            return $this->repository->getCollectionByColumn($column, $value, $operator);
+            return $this->resource::collection($this->repository->getCollectionByColumn($column, $value, $operator));
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }

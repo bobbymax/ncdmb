@@ -31,4 +31,9 @@ class ProjectContract extends Model
     {
         return $this->belongsTo(Department::class, 'department_id');
     }
+
+    public function supplies(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StoreSupply::class);
+    }
 }

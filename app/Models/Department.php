@@ -52,6 +52,21 @@ class Department extends Model
         return $this->hasMany(Fund::class);
     }
 
+    public function products(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Product::class);
+    }
+
+    public function requisitions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Requisition::class);
+    }
+
+    public function supplies(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(StoreSupply::class);
+    }
+
     public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Transaction::class);

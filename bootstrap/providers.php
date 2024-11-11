@@ -29,5 +29,14 @@ return [
     App\Providers\PaymentBatchServiceProvider::class,
     App\Providers\BatchReversalServiceProvider::class,
     App\Providers\TransactionServiceProvider::class,
-    App\Providers\SettingServiceProvider::class
+    App\Providers\SettingServiceProvider::class,
+    App\Providers\ProductBrandServiceProvider::class,
+    App\Providers\ProductCategoryServiceProvider::class,
+    App\Providers\ProductServiceProvider::class,
+    App\Providers\MeasurementTypeServiceProvider::class,
+    App\Providers\ProductMeasurementServiceProvider::class,
+    App\Providers\StoreSupplyServiceProvider::class,
+    App\Providers\ProductStockServiceProvider::class,
+    App\Providers\RequisitionServiceProvider::class,
+    App\Providers\RequisitionItemServiceProvider::class
 ];
