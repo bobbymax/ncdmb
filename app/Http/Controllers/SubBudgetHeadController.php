@@ -7,7 +7,6 @@ use App\Services\SubBudgetHeadService;
 class SubBudgetHeadController extends Controller
 {
     public function __construct(SubBudgetHeadService $subBudgetHeadService) {
-        $this->service = $subBudgetHeadService;
-        $this->name = 'SubBudgetHead';
+        parent::__construct($subBudgetHeadService, 'Sub Budget Head');
     }
 }

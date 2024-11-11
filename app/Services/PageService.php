@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Resources\PageResource;
 use App\Repositories\PageRepository;
 use App\Repositories\PermissionRepository;
 use App\Repositories\RoleRepository;
@@ -15,20 +16,21 @@ class PageService extends BaseService
     private $bread = ["Browse", "Read", "Add", "Edit", "Delete"];
     public function __construct(
         PageRepository $pageRepository,
+        PageResource $pageResource,
         PermissionRepository $permissionRepository,
         RoleRepository $roleRepository
     ) {
-        $this->repository = $pageRepository;
+        parent::__construct($pageRepository, $pageResource);
         $this->permissionRepository = $permissionRepository;
         $this->roleRepository = $roleRepository;
     }
 
     public function rules($action = "store"): array
     {
-        return [
+        $rules = [
             'parent_id' => 'required|integer|min:0',
             'name' => 'required|string|max:255',
-            'path' => 'sometimes|string|max:255|unique:modules',
+            'path' => 'sometimes|string|max:255',
             'icon' => 'nullable|string|max:255',
             'type' => 'required|string|max:255|in:index,view,form,external,dashboard,report',
             'description' => 'nullable|string|min:5',
@@ -36,6 +38,12 @@ class PageService extends BaseService
             'is_menu' => 'sometimes|nullable|boolean',
             'is_disabled' => 'sometimes|nullable|boolean',
         ];
+
+        if ($action == "store") {
+            $rules['path'] .= '|unique:modules';
+        }
+
+        return $rules;
     }
 
     private function getPermissions($moduleName): array

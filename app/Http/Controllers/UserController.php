@@ -7,7 +7,6 @@ use App\Services\UserService;
 class UserController extends Controller
 {
     public function __construct(UserService $userService) {
-        $this->service = $userService;
-        $this->name = 'User';
+        parent::__construct($userService, 'User');
     }
 }

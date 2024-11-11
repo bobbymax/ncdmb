@@ -2,13 +2,14 @@
 
 namespace App\Services;
 
+use App\Http\Resources\ExpenseResource;
 use App\Repositories\ExpenseRepository;
 
 class ExpenseService extends BaseService
 {
-    public function __construct(ExpenseRepository $expenseRepository)
+    public function __construct(ExpenseRepository $expenseRepository, ExpenseResource $expenseResource)
     {
-        $this->repository = $expenseRepository;
+        parent::__construct($expenseRepository, $expenseResource);
     }
 
     public function rules($action = "store"): array

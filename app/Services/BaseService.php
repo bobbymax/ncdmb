@@ -3,12 +3,21 @@
 namespace App\Services;
 
 use App\Interfaces\IService;
+use App\Repositories\BaseRepository;
+use Illuminate\Http\Resources\Json\JsonResource;
 
 abstract class BaseService implements IService
 {
-    protected $repository;
+    protected BaseRepository $repository;
+    protected JsonResource $resource;
 
-    public function generate(string $column, string $prefix)
+    public function __construct(BaseRepository $repository, JsonResource $resource)
+    {
+        $this->repository = $repository;
+        $this->resource = $resource;
+    }
+
+    public function generate(string $column, string $prefix): string
     {
         try {
             return $this->repository->generate($column, $prefix);
@@ -38,7 +47,7 @@ abstract class BaseService implements IService
     public function index()
     {
         try {
-            return $this->repository->all();
+            return $this->resource::collection($this->repository->all());
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
@@ -47,7 +56,7 @@ abstract class BaseService implements IService
     public function store(array $data)
     {
         try {
-            return $this->repository->create($data);
+            return new $this->resource($this->repository->create($data));
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
@@ -56,7 +65,7 @@ abstract class BaseService implements IService
     public function show(int $id)
     {
         try {
-            return $this->repository->find($id);
+            return new $this->resource($this->repository->find($id));
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
@@ -65,7 +74,7 @@ abstract class BaseService implements IService
     public function update(int $id, array $data)
     {
         try {
-            return $this->repository->update($id, $data);
+            return new $this->resource($this->repository->update($id, $data));
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
@@ -80,7 +89,7 @@ abstract class BaseService implements IService
         }
     }
 
-    public function instanceQuery()
+    public function instanceQuery(): \Illuminate\Database\Eloquent\Builder
     {
         return $this->repository->instanceOfModel();
     }

@@ -2,13 +2,14 @@
 
 namespace App\Services;
 
+use App\Http\Resources\LocationResource;
 use App\Repositories\LocationRepository;
 
 class LocationService extends BaseService
 {
-    public function __construct(LocationRepository $locationRepository)
+    public function __construct(LocationRepository $locationRepository, LocationResource $locationResource)
     {
-        $this->repository = $locationRepository;
+        parent::__construct($locationRepository, $locationResource);
     }
 
     public function rules($action = "store"): array

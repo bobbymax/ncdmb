@@ -7,7 +7,6 @@ use App\Services\ClaimService;
 class ClaimController extends Controller
 {
     public function __construct(ClaimService $claimService) {
-        $this->service = $claimService;
-        $this->name = 'Claim';
+        parent::__construct($claimService, 'Claim');
     }
 }

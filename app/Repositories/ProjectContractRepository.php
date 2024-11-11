@@ -21,7 +21,7 @@ class ProjectContractRepository extends BaseRepository
         return [
             ...$data,
             'user_id' => Auth::user()->id,
-            'code' => $this->generate('code', 'CTR'),
+            'code' => $data['code'] ?? $this->generate('code', 'CTR'),
             'date_of_acceptance' => isset($data['date_of_acceptance']) ? Carbon::parse($data['date_of_acceptance']) : null
         ];
     }

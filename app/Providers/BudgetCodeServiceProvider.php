@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Resources\BudgetCodeResource;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\BudgetCodeRepository;
 use App\Services\BudgetCodeService;
@@ -13,11 +14,13 @@ class BudgetCodeServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         // Bind the BudgetCodeRepository to BudgetCodeService
         $this->app->bind(BudgetCodeService::class, function ($app) {
-            return new BudgetCodeService($app->make(BudgetCodeRepository::class));
+            $budgetCodeRepository = $app->make(BudgetCodeRepository::class);
+            $budgetCodeResource = $app->make(BudgetCodeResource::class);
+            return new BudgetCodeService($budgetCodeRepository, $budgetCodeResource);
         });
     }
 }

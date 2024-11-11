@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Resources\{{ class }}Resource;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\{{ class }}Repository;
 use App\Services\{{ class }}Service;
@@ -13,11 +14,14 @@ class {{ class }}ServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         // Bind the {{ class }}Repository to {{ class }}Service
         $this->app->bind({{ class }}Service::class, function ($app) {
-            return new {{ class }}Service($app->make({{ class }}Repository::class));
+            ${{ camel }}Repository = $app->make({{ class }}Repository::class);
+            ${{ camel }}Resource = $app->make({{ class }}Resource::class);
+
+            return new {{ class }}Service(${{ camel }}Repository, ${{ camel }}Resource);
         });
     }
 }

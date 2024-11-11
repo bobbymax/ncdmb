@@ -2,13 +2,16 @@
 
 namespace App\Services;
 
+use App\Http\Resources\ProjectMilestoneResource;
 use App\Repositories\ProjectMilestoneRepository;
 
 class ProjectMilestoneService extends BaseService
 {
-    public function __construct(ProjectMilestoneRepository $projectMilestoneRepository)
-    {
-        $this->repository = $projectMilestoneRepository;
+    public function __construct(
+        ProjectMilestoneRepository $projectMilestoneRepository,
+        ProjectMilestoneResource $projectMilestoneResource
+    ) {
+        parent::__construct($projectMilestoneRepository, $projectMilestoneResource);
     }
 
     public function rules($action = "store"): array

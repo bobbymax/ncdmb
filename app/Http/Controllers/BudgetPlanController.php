@@ -7,7 +7,6 @@ use App\Services\BudgetPlanService;
 class BudgetPlanController extends Controller
 {
     public function __construct(BudgetPlanService $budgetPlanService) {
-        $this->service = $budgetPlanService;
-        $this->name = 'BudgetPlan';
+        parent::__construct($budgetPlanService, 'BudgetPlan');
     }
 }

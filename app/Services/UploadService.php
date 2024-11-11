@@ -2,16 +2,14 @@
 
 namespace App\Services;
 
+use App\Http\Resources\UploadResource;
 use App\Repositories\UploadRepository;
-use App\Repositories\UserRepository;
-use App\Repositories\VendorRepository;
-use Illuminate\Support\Facades\DB;
 
 class UploadService extends BaseService
 {
-    public function __construct(UploadRepository $uploadRepository)
+    public function __construct(UploadRepository $uploadRepository, UploadResource $uploadResource)
     {
-        $this->repository = $uploadRepository;
+        parent::__construct($uploadRepository, $uploadResource);
     }
 
     public function rules($action = "store"): array

@@ -2,13 +2,14 @@
 
 namespace App\Services;
 
+use App\Http\Resources\BatchReversalResource;
 use App\Repositories\BatchReversalRepository;
 
 class BatchReversalService extends BaseService
 {
-    public function __construct(BatchReversalRepository $batchReversalRepository)
+    public function __construct(BatchReversalRepository $batchReversalRepository, BatchReversalResource $batchReversalResource)
     {
-        $this->repository = $batchReversalRepository;
+        parent::__construct($batchReversalRepository, $batchReversalResource);
     }
 
     public function rules($action = "store"): array

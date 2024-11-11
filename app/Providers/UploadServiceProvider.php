@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Resources\UploadResource;
 use App\Repositories\UserRepository;
 use App\Repositories\VendorRepository;
 use Illuminate\Support\ServiceProvider;
@@ -19,7 +20,9 @@ class UploadServiceProvider extends ServiceProvider
     {
         // Bind the UploadRepository to UploadService
         $this->app->bind(UploadService::class, function ($app) {
-            return new UploadService($app->make(UploadRepository::class));
+            $uploadRepository = $app->make(UploadRepository::class);
+            $uploadResource = $app->make(UploadResource::class);
+            return new UploadService($uploadRepository, $uploadResource);
         });
     }
 }

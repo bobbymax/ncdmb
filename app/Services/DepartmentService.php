@@ -2,20 +2,21 @@
 
 namespace App\Services;
 
+use App\Http\Resources\DepartmentResource;
 use App\Repositories\DepartmentRepository;
 
 class DepartmentService extends BaseService
 {
-    public function __construct(DepartmentRepository $departmentRepository)
+    public function __construct(DepartmentRepository $departmentRepository, DepartmentResource $departmentResource)
     {
-        $this->repository = $departmentRepository;
+        parent::__construct($departmentRepository, $departmentResource);
     }
 
     public function rules($action = "store"): array
     {
-        return [
+        $rules = [
             'name' => 'required|string|max:255',
-            'abv' => 'required|string|max:255|unique:departments,abv',
+            'abv' => 'required|string|max:255',
             'department_payment_code' => 'required|string|max:10',
             'parentId' => 'required|integer|min:0',
             'type' => 'required|string|in:directorate,division,department,unit',
@@ -23,5 +24,11 @@ class DepartmentService extends BaseService
             'bo' => 'sometimes|integer|min:0',
             'director' => 'sometimes|integer|min:0',
         ];
+
+        if ($action === "store") {
+            $rules['abv'] .= '|unique:departments,abv';
+        }
+
+        return $rules;
     }
 }

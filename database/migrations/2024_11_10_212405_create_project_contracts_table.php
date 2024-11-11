@@ -21,13 +21,15 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->unsignedBigInteger('department_id');
             $table->foreign('department_id')->references('id')->on('departments')->onDelete('cascade');
-            $table->string('code')->unique();
+            $table->string('code')->unique()->nullable();
+            $table->string('contract_code')->unique()->nullable();
             $table->string('acceptance_letter')->nullable();
             $table->date('date_of_acceptance')->nullable();
             $table->decimal('total_contract_value', 30, 2)->default(0);
             $table->decimal('total_project_value', 30, 2)->default(0);
             $table->enum('nb_vendor_change', ['na', 'request', 'approved', 'rejected'])->default('na');
             $table->enum('status', ['pending', 'accepted', 'rejected', 're-called'])->default('pending');
+            $table->enum('state', ['na', 'uncompleted', 'partial', 'completed'])->default('na');
             $table->boolean('is_completed')->default(false);
             $table->timestamps();
         });

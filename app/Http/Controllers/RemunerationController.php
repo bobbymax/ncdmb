@@ -7,7 +7,6 @@ use App\Services\RemunerationService;
 class RemunerationController extends Controller
 {
     public function __construct(RemunerationService $remunerationService) {
-        $this->service = $remunerationService;
-        $this->name = 'Remuneration';
+        parent::__construct($remunerationService, 'Remuneration');
     }
 }

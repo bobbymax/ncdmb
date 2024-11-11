@@ -2,13 +2,25 @@
 
 namespace App\Services;
 
+use App\Http\Resources\TransactionResource;
+use App\Repositories\ExpenditureRepository;
+use App\Repositories\FundRepository;
 use App\Repositories\TransactionRepository;
+use Illuminate\Support\Facades\DB;
 
 class TransactionService extends BaseService
 {
-    public function __construct(TransactionRepository $transactionRepository)
-    {
-        $this->repository = $transactionRepository;
+    protected ExpenditureRepository $expenditureRepository;
+    protected FundRepository $fundRepository;
+    public function __construct(
+        TransactionRepository $transactionRepository,
+        TransactionResource $transactionResource,
+        ExpenditureRepository $expenditureRepository,
+        FundRepository $fundRepository
+    ) {
+        parent::__construct($transactionRepository, $transactionResource);
+        $this->expenditureRepository = $expenditureRepository;
+        $this->fundRepository = $fundRepository;
     }
 
     public function rules($action = "store"): array
@@ -31,5 +43,28 @@ class TransactionService extends BaseService
             'stage' => 'required|string|in:budget-office,treasury,audit',
             'status' => 'required|string|in:in-progress,queried,cleared,altered'
         ];
+    }
+
+    public function store(array $data)
+    {
+        return  DB::transaction(function () use ($data) {
+            $transaction = parent::store($data);
+
+            $expenditure = $this->expenditureRepository->find($transaction->expenditure_id);
+            $fund = $this->fundRepository->find($transaction->fund_id);
+
+            if ($transaction->stage === 'audit') {
+                $expenditure->update([
+                    'stage' => $transaction->stage,
+                    'status' => "paid",
+                ]);
+
+                $fund->total_actual_spent_amount += $transaction->transaction_amount;
+                $fund->total_actual_balance -= $transaction->transaction_amount;
+                $fund->save();
+            }
+
+            return $transaction;
+        });
     }
 }

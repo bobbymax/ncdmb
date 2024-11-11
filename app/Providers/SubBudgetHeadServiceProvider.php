@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Resources\SubBudgetHeadResource;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\SubBudgetHeadRepository;
 use App\Services\SubBudgetHeadService;
@@ -13,11 +14,13 @@ class SubBudgetHeadServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         // Bind the SubBudgetHeadRepository to SubBudgetHeadService
         $this->app->bind(SubBudgetHeadService::class, function ($app) {
-            return new SubBudgetHeadService($app->make(SubBudgetHeadRepository::class));
+            $subBudgetHeadRepository = $app->make(SubBudgetHeadRepository::class);
+            $subBudgetHeadResource = $app->make(SubBudgetHeadResource::class);
+            return new SubBudgetHeadService($subBudgetHeadRepository, $subBudgetHeadResource);
         });
     }
 }

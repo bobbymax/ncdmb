@@ -7,7 +7,6 @@ use App\Services\DepartmentService;
 class DepartmentController extends Controller
 {
     public function __construct(DepartmentService $departmentService) {
-        $this->service = $departmentService;
-        $this->name = 'Department';
+        parent::__construct($departmentService, 'Department');
     }
 }

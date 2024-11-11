@@ -2,13 +2,14 @@
 
 namespace App\Services;
 
+use App\Http\Resources\RemunerationResource;
 use App\Repositories\RemunerationRepository;
 
 class RemunerationService extends BaseService
 {
-    public function __construct(RemunerationRepository $remunerationRepository)
+    public function __construct(RemunerationRepository $remunerationRepository, RemunerationResource $remunerationResource)
     {
-        $this->repository = $remunerationRepository;
+        parent::__construct($remunerationRepository, $remunerationResource);
     }
 
     public function rules($action = "store"): array

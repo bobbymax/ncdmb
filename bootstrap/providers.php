@@ -28,5 +28,6 @@ return [
     App\Providers\ExpenditureServiceProvider::class,
     App\Providers\PaymentBatchServiceProvider::class,
     App\Providers\BatchReversalServiceProvider::class,
-    App\Providers\TransactionServiceProvider::class
+    App\Providers\TransactionServiceProvider::class,
+    App\Providers\SettingServiceProvider::class
 ];

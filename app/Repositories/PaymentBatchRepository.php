@@ -24,7 +24,7 @@ class PaymentBatchRepository extends BaseRepository
             ...$data,
             'user_id' => Auth::user()->id,
             'department_id' => Auth::user()->department_id,
-            'code' => $this->generate('code', $prefix),
+            'code' => $data['code'] ?? $this->generate('code', $prefix),
             'total_approved_payable_amount' => $data['total_payable_amount'],
         ];
     }

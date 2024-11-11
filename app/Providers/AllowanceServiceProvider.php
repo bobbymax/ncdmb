@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Resources\AllowanceResource;
 use App\Repositories\GradeLevelRepository;
 use App\Repositories\RemunerationRepository;
 use Illuminate\Support\ServiceProvider;
@@ -20,10 +21,16 @@ class AllowanceServiceProvider extends ServiceProvider
         // Bind the AllowanceRepository to AllowanceService
         $this->app->bind(AllowanceService::class, function ($app) {
             $allowanceRepository = $app->make(AllowanceRepository::class);
+            $allowanceResource  = $app->make(AllowanceResource::class);
             $remunerationRepository = $app->make(RemunerationRepository::class);
             $gradeLevelRepository = $app->make(GradeLevelRepository::class);
 
-            return new AllowanceService($allowanceRepository, $remunerationRepository, $gradeLevelRepository);
+            return new AllowanceService(
+                $allowanceRepository,
+                $allowanceResource,
+                $remunerationRepository,
+                $gradeLevelRepository
+            );
         });
     }
 }

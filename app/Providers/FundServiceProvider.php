@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Resources\FundResource;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\FundRepository;
 use App\Services\FundService;
@@ -13,11 +14,13 @@ class FundServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         // Bind the FundRepository to FundService
         $this->app->bind(FundService::class, function ($app) {
-            return new FundService($app->make(FundRepository::class));
+            $fundRepository = $app->make(FundRepository::class);
+            $fundResource = $app->make(FundResource::class);
+            return new FundService($fundRepository, $fundResource);
         });
     }
 }

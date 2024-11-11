@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Resources\ClaimResource;
 use App\Repositories\ExpenseRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\ClaimRepository;
@@ -19,8 +20,9 @@ class ClaimServiceProvider extends ServiceProvider
         // Bind the ClaimRepository to ClaimService
         $this->app->bind(ClaimService::class, function ($app) {
             $claimRepository = $app->make(ClaimRepository::class);
+            $claimResource = $app->make(ClaimResource::class);
             $expenseRepository = $app->make(ExpenseRepository::class);
-            return new ClaimService($claimRepository, $expenseRepository);
+            return new ClaimService($claimRepository, $claimResource, $expenseRepository);
         });
     }
 }

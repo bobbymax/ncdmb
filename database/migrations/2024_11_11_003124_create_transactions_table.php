@@ -25,6 +25,7 @@ return new class extends Migration
             $table->foreign('payment_batch_id')->references('id')->on('payment_batches')->onDelete('cascade');
             $table->bigInteger('staff_id')->default(0);
             $table->bigInteger('vendor_id')->default(0);
+            $table->string('code')->unique();
             $table->enum('currency', ['NGN', 'USD', 'EUR', 'GBP'])->default('NGN');
             $table->decimal('transaction_amount', 30, 2)->default(0);
             $table->enum('type', ['debit', 'credit'])->default('debit');
@@ -35,7 +36,8 @@ return new class extends Migration
             $table->text('query_note')->nullable();
             $table->text('query_response')->nullable();
             $table->enum('stage', ['budget-office', 'treasury', 'audit'])->default('budget-office');
-            $table->enum('status', ['in-progress', 'queried', 'cleared', 'altered'])->default('in-progress');
+            $table->enum('status', ['in-progress', 'queried', 'cleared', 'altered', 'posted'])->default('in-progress');
+            $table->boolean('is_archived')->default(false);
             $table->timestamps();
         });
     }

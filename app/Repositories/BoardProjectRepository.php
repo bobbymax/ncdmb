@@ -20,7 +20,7 @@ class BoardProjectRepository extends BaseRepository
     {
         return [
             ...$data,
-            'code' => $this->generate('code', 'PROJ'),
+            'code' => $data['code'] ?? $this->generate('code', 'PROJ'),
             'user_id' => Auth::user()->id,
             'department_id' => Auth::user()->department_id,
             'proposed_start_date' => Carbon::parse($data['proposed_start_date']),

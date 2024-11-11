@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Http\Resources\BatchReversalResource;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\BatchReversalRepository;
 use App\Services\BatchReversalService;
@@ -17,7 +18,9 @@ class BatchReversalServiceProvider extends ServiceProvider
     {
         // Bind the BatchReversalRepository to BatchReversalService
         $this->app->bind(BatchReversalService::class, function ($app) {
-            return new BatchReversalService($app->make(BatchReversalRepository::class));
+            $batchReversalRepository = $app->make(BatchReversalRepository::class);
+            $batchReversalResource = $app->make(BatchReversalResource::class);
+            return new BatchReversalService($batchReversalRepository, $batchReversalResource);
         });
     }
 }

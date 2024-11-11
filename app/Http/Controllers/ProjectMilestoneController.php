@@ -7,7 +7,6 @@ use App\Services\ProjectMilestoneService;
 class ProjectMilestoneController extends Controller
 {
     public function __construct(ProjectMilestoneService $projectMilestoneService) {
-        $this->service = $projectMilestoneService;
-        $this->name = 'ProjectMilestone';
+        parent::__construct($projectMilestoneService, 'Milestone');
     }
 }

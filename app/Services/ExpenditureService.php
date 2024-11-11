@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Resources\ExpenditureResource;
 use App\Repositories\ClaimRepository;
 use App\Repositories\ExpenditureRepository;
 use App\Repositories\FundRepository;
@@ -16,13 +17,15 @@ class ExpenditureService extends BaseService
     protected ProjectMilestoneRepository $projectMilestoneRepository;
     public function __construct(
         ExpenditureRepository $expenditureRepository,
+        ExpenditureResource $expenditureResource,
         FundRepository $fundRepository,
         ClaimRepository $claimRepository,
         ProjectMilestoneRepository $projectMilestoneRepository
     ) {
-        $this->repository = $expenditureRepository;
+        parent::__construct($expenditureRepository, $expenditureResource);
         $this->fundRepository = $fundRepository;
         $this->claimRepository = $claimRepository;
+        $this->projectMilestoneRepository = $projectMilestoneRepository;
     }
 
     public function rules($action = "store"): array

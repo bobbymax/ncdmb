@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Http\Resources\PaymentBatchResource;
 use App\Repositories\ExpenditureRepository;
 use App\Repositories\PaymentBatchRepository;
 use Illuminate\Support\Facades\DB;
@@ -9,9 +10,12 @@ use Illuminate\Support\Facades\DB;
 class PaymentBatchService extends BaseService
 {
     protected ExpenditureRepository $expenditureRepository;
-    public function __construct(PaymentBatchRepository $paymentBatchRepository, ExpenditureRepository $expenditureRepository)
-    {
-        $this->repository = $paymentBatchRepository;
+    public function __construct(
+        PaymentBatchRepository $paymentBatchRepository,
+        PaymentBatchResource $paymentBatchResource,
+        ExpenditureRepository $expenditureRepository
+    ) {
+        parent::__construct($paymentBatchRepository, $paymentBatchResource);
         $this->expenditureRepository = $expenditureRepository;
     }
 

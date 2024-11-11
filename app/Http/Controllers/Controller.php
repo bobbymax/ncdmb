@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Handlers\DataNotFound;
 use App\Handlers\RecordCreationUnsuccessful;
 use App\Handlers\ValidationErrors;
+use App\Services\BaseService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -12,8 +13,14 @@ use Illuminate\Support\Facades\Validator;
 abstract class Controller
 {
     use ApiResponse;
-    protected $service;
-    protected $name;
+    protected BaseService $service;
+    protected string $name;
+
+    public function __construct(BaseService $service, string $name)
+    {
+        $this->service = $service;
+        $this->name = $name;
+    }
 
     public function index(): \Illuminate\Http\JsonResponse
     {

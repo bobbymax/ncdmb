@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Http\Resources\TransactionResource;
+use App\Repositories\ExpenditureRepository;
+use App\Repositories\FundRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\TransactionRepository;
 use App\Services\TransactionService;
@@ -13,11 +16,16 @@ class TransactionServiceProvider extends ServiceProvider
      *
      * @return void
      */
-    public function register()
+    public function register(): void
     {
         // Bind the TransactionRepository to TransactionService
         $this->app->bind(TransactionService::class, function ($app) {
-            return new TransactionService($app->make(TransactionRepository::class));
+            $transactionRepository = $app->make(TransactionRepository::class);
+            $transactionResource  = $app->make(TransactionResource::class);
+            $expenditureRepository = $app->make(ExpenditureRepository::class);
+            $fundRepository = $app->make(FundRepository::class);
+
+            return new TransactionService($transactionRepository, $transactionResource, $expenditureRepository, $fundRepository);
         });
     }
 }

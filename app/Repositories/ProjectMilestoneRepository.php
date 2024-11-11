@@ -19,7 +19,7 @@ class ProjectMilestoneRepository extends BaseRepository
     {
         return [
             ...$data,
-            'code' => $this->generate('code', 'MLS'),
+            'code' => $data['code'] ?? $this->generate('code', 'MLS'),
             'expected_completion_date' => Carbon::parse($data['expected_completion_date']),
             'actual_completion_date' => isset($data['actual_completion_date']) ? Carbon::parse($data['actual_completion_date']) : null,
         ];
