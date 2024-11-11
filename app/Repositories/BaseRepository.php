@@ -67,7 +67,7 @@ abstract class BaseRepository implements IRepository
                 throw new DataNotFound();
             }
 
-            $record->update($data);
+            $record->update($this->parse($data));
 
             return $record;
         } catch (\Exception $e) {
@@ -90,6 +90,10 @@ abstract class BaseRepository implements IRepository
         }
     }
 
+    /**
+     * @throws CodeGenerationErrorException
+     * @throws \Exception
+     */
     public function generate($column, $prefix): string
     {
         try {
@@ -135,5 +139,10 @@ abstract class BaseRepository implements IRepository
         } catch (\Exception $e) {
             throw new \Exception('Error fetching collection: ' . $e->getMessage());
         }
+    }
+
+    public function instanceOfModel(): \Illuminate\Database\Eloquent\Builder
+    {
+        return $this->model->newModelQuery();
     }
 }

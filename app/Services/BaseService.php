@@ -80,5 +80,10 @@ abstract class BaseService implements IService
         }
     }
 
+    public function instanceQuery()
+    {
+        return $this->repository->instanceOfModel();
+    }
+
     abstract public function rules($action = "store");
 }

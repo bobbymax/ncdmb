@@ -46,8 +46,72 @@ class User extends Authenticatable
         ];
     }
 
-    public function reviews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function advances(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(Review::class);
+        return $this->hasMany(TouringAdvance::class);
+    }
+
+    public function batches(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(PaymentBatch::class, 'batch_id');
+    }
+    public function boardProjects(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(BoardProject::class);
+    }
+
+    public function budgetProjectActivities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(BudgetProjectActivity::class);
+    }
+
+    public function contracts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProjectContract::class);
+    }
+
+    public function expenditures(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Expenditure::class, 'user_id');
+    }
+
+    public function role(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Department::class);
+    }
+
+    public function gradeLevel(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(GradeLevel::class);
+    }
+
+    public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Location::class, 'location_id');
+    }
+
+    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Expenditure::class, 'staff_id');
+    }
+
+    public function uploads(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Upload::class);
+    }
+
+    public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Transaction::class);
+    }
+
+    public function paymentsReceived(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Transaction::class, 'staff_id');
     }
 }
