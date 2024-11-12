@@ -47,9 +47,19 @@ class Department extends Model
         return $this->hasMany(Expenditure::class, 'department_id');
     }
 
+    public function flightReservations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(FlightReservation::class);
+    }
+
     public function funds(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Fund::class);
+    }
+
+    public function mandates(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Mandate::class);
     }
 
     public function products(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -60,6 +70,11 @@ class Department extends Model
     public function requisitions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Requisition::class);
+    }
+
+    public function reservedFunds(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Reserve::class);
     }
 
     public function supplies(): \Illuminate\Database\Eloquent\Relations\HasMany

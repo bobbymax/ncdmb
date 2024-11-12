@@ -27,6 +27,16 @@ class Fund extends Model
         return $this->hasMany(Expenditure::class, 'fund_id');
     }
 
+    public function flightReservations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(FlightReservation::class);
+    }
+
+    public function mandates(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Mandate::class);
+    }
+
     public function subBudgetHead(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(SubBudgetHead::class, 'sub_budget_head_id');
@@ -40,6 +50,11 @@ class Fund extends Model
     public function budgetCode(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(BudgetCode::class, 'budget_code_id');
+    }
+
+    public function reservedFunds(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Reserve::class);
     }
 
     public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany

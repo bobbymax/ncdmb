@@ -21,4 +21,9 @@ class ProjectMilestone extends Model
     {
         return $this->hasMany(Expenditure::class);
     }
+
+    public function mandates(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Mandate::class);
+    }
 }

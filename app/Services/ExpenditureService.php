@@ -6,6 +6,7 @@ use App\Http\Resources\ExpenditureResource;
 use App\Repositories\ClaimRepository;
 use App\Repositories\ExpenditureRepository;
 use App\Repositories\FundRepository;
+use App\Repositories\MandateRepository;
 use App\Repositories\ProjectMilestoneRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -15,17 +16,20 @@ class ExpenditureService extends BaseService
     protected FundRepository $fundRepository;
     protected ClaimRepository $claimRepository;
     protected ProjectMilestoneRepository $projectMilestoneRepository;
+    protected MandateRepository $mandateRepository;
     public function __construct(
         ExpenditureRepository $expenditureRepository,
         ExpenditureResource $expenditureResource,
         FundRepository $fundRepository,
         ClaimRepository $claimRepository,
-        ProjectMilestoneRepository $projectMilestoneRepository
+        ProjectMilestoneRepository $projectMilestoneRepository,
+        MandateRepository $mandateRepository,
     ) {
         parent::__construct($expenditureRepository, $expenditureResource);
         $this->fundRepository = $fundRepository;
         $this->claimRepository = $claimRepository;
         $this->projectMilestoneRepository = $projectMilestoneRepository;
+        $this->mandateRepository = $mandateRepository;
     }
 
     public function rules($action = "store"): array
@@ -37,6 +41,7 @@ class ExpenditureService extends BaseService
             'staff_id' => 'sometimes|integer|min:0|exists:users,id',
             'project_milestone_id' => 'sometimes|integer|min:0|exists:project_milestones,id',
             'claim_id' => 'sometimes|integer|min:0|exists:claims,id',
+            'mandate_id' => 'sometimes|integer|min:0|exists:mandates,id',
             'beneficiary_name' => 'required|string|max:255',
             'payment_description' => 'required|string|min:5',
             'additional_info' => 'nullable|string|min:5',
@@ -49,14 +54,6 @@ class ExpenditureService extends BaseService
             'status' => 'nullable|string|in:pending,cleared,queried,paid,reversed,refunded',
             'budget_year' => 'required|integer|digits:4',
         ];
-    }
-
-    public function index()
-    {
-        return $this->repository->instanceOfModel()
-                ->where('department_id', Auth::user()->department_id)
-                ->where('status', 'reversed')
-                ->latest()->get();
     }
 
     public function store(array $data)
@@ -81,12 +78,82 @@ class ExpenditureService extends BaseService
                     $projectMilestone = $this->projectMilestoneRepository->find($expenditure->project_milestone_id);
 
                     $projectMilestone->update([
-                        'stage' => 'raise-payment'
+                        'stage' => 'raise-payment',
+                        'status' => 'in-progress'
                     ]);
+                } else if ($expenditure->payment_category === 'mandate') {
+
+                    if (isset($data['mandate_id']) && (int) $data['mandate_id'] > 0) {
+                        $mandate = $this->mandateRepository->find($data['mandate_id']);
+
+                        if ($mandate) {
+                            $mandate->update([
+                                'expenditure_id' => $expenditure->id,
+                                'status' => 'raised'
+                            ]);
+                        }
+                    }
                 }
             }
 
             return $expenditure;
+        });
+    }
+
+    public function destroy(int $id)
+    {
+        return DB::transaction(function () use ($id) {
+
+            $expenditure = $this->repository->find($id);
+
+            if ($expenditure) {
+                $fund = $this->fundRepository->find($expenditure->fund_id);
+
+                if (!$fund) {
+                    return false;
+                }
+
+                if ($expenditure->type === 'staff-payment' && $expenditure->payment_category !== 'other') {
+                    $claim = $this->claimRepository->find($expenditure->claim_id);
+
+                    $claim->update([
+                        'status' => 'registered'
+                    ]);
+
+                } else if (($expenditure->type === 'third-party-payment')) {
+                    if ($expenditure->payment_category === 'milestone') {
+                        $projectMilestone = $this->projectMilestoneRepository->find($expenditure->project_milestone_id);
+
+                        $projectMilestone->update([
+                            'stage' => 'payment-mandate',
+                            'status' => 'pending'
+                        ]);
+                    } else if ($expenditure->payment_category === 'mandate') {
+
+                        $mandate = $this->mandateRepository->find($expenditure->mandate_id);
+
+                        if ($mandate) {
+                            $mandate->update([
+                                'expenditure_id' => 0,
+                                'status' => 'pending'
+                            ]);
+                        }
+                    }
+                }
+
+                $amount = $expenditure->total_amount_raised;
+
+                $fund->total_expected_spent_amount -= $amount;
+                $fund->total_actual_spent_amount -= $amount;
+                $fund->total_booked_balance += $amount;
+                $fund->total_actual_balance += $amount;
+                $fund->save();
+
+
+                $expenditure->update(['status' => 'reversed']);
+            }
+
+            return true;
         });
     }
 }

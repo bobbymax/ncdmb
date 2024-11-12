@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\Resources\RequisitionResource;
+use App\Repositories\RequisitionItemRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\RequisitionRepository;
 use App\Services\RequisitionService;
@@ -20,8 +21,9 @@ class RequisitionServiceProvider extends ServiceProvider
         $this->app->bind(RequisitionService::class, function ($app) {
             $requisitionRepository = $app->make(RequisitionRepository::class);
             $requisitionResource = $app->make(RequisitionResource::class);
+            $requisitionItemRepository = $app->make(RequisitionItemRepository::class);
 
-            return new RequisitionService($requisitionRepository, $requisitionResource);
+            return new RequisitionService($requisitionRepository, $requisitionResource, $requisitionItemRepository);
         });
     }
 }

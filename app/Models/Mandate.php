@@ -2,31 +2,16 @@
 
 namespace App\Models;
 
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Expenditure extends Model
+class Mandate extends Model
 {
     use HasFactory;
 
     protected $guarded = [''];
 
     // Model Relationships or Scope Here...
-    public function batch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(PaymentBatch::class, 'batch_id');
-    }
-    public function beneficiary(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(User::class, 'staff_id');
-    }
-
-    public function claim(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Claim::class, 'claim_id');
-    }
-
     public function controller(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -42,24 +27,19 @@ class Expenditure extends Model
         return $this->belongsTo(Fund::class, 'fund_id');
     }
 
-    public function mandate(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(Mandate::class, 'expenditure_id');
-    }
-
     public function projectMilestone(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(ProjectMilestone::class, 'project_milestone_id');
     }
 
-    public function reserves(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function expenditure(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->hasMany(Reserve::class, 'expenditure_id');
+        return $this->belongsTo(Expenditure::class, 'expenditure_id');
     }
 
-    public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function flightItineraries(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(FlightItinerary::class, 'mandate_id');
     }
 
     public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo

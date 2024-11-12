@@ -27,6 +27,11 @@ class Vendor extends Model
         return $this->hasMany(Expenditure::class, 'vendor_id');
     }
 
+    public function mandates(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Mandate::class);
+    }
+
     public function uploads(): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
         return $this->morphMany(Upload::class, 'uploadable');

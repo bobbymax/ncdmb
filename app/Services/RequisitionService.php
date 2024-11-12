@@ -4,15 +4,21 @@ namespace App\Services;
 
 use App\Http\Resources\RequisitionResource;
 use App\Models\Requisition;
+use App\Repositories\RequisitionItemRepository;
 use App\Repositories\RequisitionRepository;
+use Illuminate\Support\Facades\DB;
 
 class RequisitionService extends BaseService
 {
+    protected RequisitionItemRepository $requisitionItemRepository;
+
     public function __construct(
         RequisitionRepository $requisitionRepository,
-        RequisitionResource $requisitionResource
+        RequisitionResource $requisitionResource,
+        RequisitionItemRepository $requisitionItemRepository
     ) {
         parent::__construct($requisitionRepository, $requisitionResource);
+        $this->requisitionItemRepository = $requisitionItemRepository;
     }
 
     public function rules($action = "store"): array
@@ -24,5 +30,23 @@ class RequisitionService extends BaseService
             'date_approved_or_rejected' => 'sometimes|nullable|date',
             'items' => 'required|array',
         ];
+    }
+
+    public function store(array $data)
+    {
+        return  DB::transaction(function () use ($data) {
+            $requisition = parent::store($data);
+
+            if ($requisition && isset($data['items'])) {
+                foreach ($data['items'] as $item) {
+                    $this->requisitionItemRepository->create([
+                        'requisition_id' => $requisition->id,
+                        ...$item,
+                    ]);
+                }
+            }
+
+            return $requisition;
+        });
     }
 }

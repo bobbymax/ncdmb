@@ -38,5 +38,9 @@ return [
     App\Providers\StoreSupplyServiceProvider::class,
     App\Providers\ProductStockServiceProvider::class,
     App\Providers\RequisitionServiceProvider::class,
-    App\Providers\RequisitionItemServiceProvider::class
+    App\Providers\RequisitionItemServiceProvider::class,
+    App\Providers\FlightReservationServiceProvider::class,
+    App\Providers\FlightItineraryServiceProvider::class,
+    App\Providers\MandateServiceProvider::class,
+    App\Providers\ReserveServiceProvider::class
 ];

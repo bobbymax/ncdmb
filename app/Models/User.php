@@ -75,14 +75,34 @@ class User extends Authenticatable
         return $this->hasMany(Expenditure::class, 'user_id');
     }
 
+    public function mandatesGenerated(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Mandate::class);
+    }
+
     public function role(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Role::class);
     }
 
+    public function treatedItineraries(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(FlightItinerary::class, 'user_id');
+    }
+
+    public function flightItineraries(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(FlightItinerary::class, FlightItinerary::class);
+    }
+
     public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function flightReservations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(FlightReservation::class);
     }
 
     public function gradeLevel(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -103,6 +123,16 @@ class User extends Authenticatable
     public function requisitions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Requisition::class);
+    }
+
+    public function reservedFunds(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Reserve::class, 'user_id');
+    }
+
+    public function handleReserves(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Reserve::class, 'staff_id');
     }
 
     public function supplies(): \Illuminate\Database\Eloquent\Relations\HasMany
