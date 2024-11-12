@@ -42,5 +42,10 @@ return [
     App\Providers\FlightReservationServiceProvider::class,
     App\Providers\FlightItineraryServiceProvider::class,
     App\Providers\MandateServiceProvider::class,
-    App\Providers\ReserveServiceProvider::class
+    App\Providers\ReserveServiceProvider::class,
+    App\Providers\HotelServiceProvider::class,
+    App\Providers\HotelReservationServiceProvider::class,
+    App\Providers\BuildingServiceProvider::class,
+    App\Providers\RoomServiceProvider::class,
+    App\Providers\MeetingServiceProvider::class
 ];

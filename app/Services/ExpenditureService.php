@@ -8,7 +8,6 @@ use App\Repositories\ExpenditureRepository;
 use App\Repositories\FundRepository;
 use App\Repositories\MandateRepository;
 use App\Repositories\ProjectMilestoneRepository;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 class ExpenditureService extends BaseService

@@ -62,6 +62,16 @@ class Department extends Model
         return $this->hasMany(Mandate::class);
     }
 
+    public function meetings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Meeting::class, 'department_id');
+    }
+
+    public function hotelReservations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(HotelReservation::class);
+    }
+
     public function products(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Product::class);

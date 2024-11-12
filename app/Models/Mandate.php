@@ -27,6 +27,11 @@ class Mandate extends Model
         return $this->belongsTo(Fund::class, 'fund_id');
     }
 
+    public function hotelReservations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(HotelReservation::class, 'mandate_id');
+    }
+
     public function projectMilestone(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(ProjectMilestone::class, 'project_milestone_id');

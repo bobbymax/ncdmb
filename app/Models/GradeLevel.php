@@ -22,4 +22,9 @@ class GradeLevel extends Model
     {
         return $this->hasMany(Remuneration::class);
     }
+
+    public function hotels(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(Hotel::class, 'hotelable');
+    }
 }

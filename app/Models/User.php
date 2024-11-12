@@ -110,9 +110,29 @@ class User extends Authenticatable
         return $this->belongsTo(GradeLevel::class);
     }
 
+    public function hotelReservations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(HotelReservation::class);
+    }
+
     public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Location::class, 'location_id');
+    }
+
+    public function meetings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Meeting::class, 'user_id');
+    }
+
+    public function attendances(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphedByMany(Meeting::class, 'userable');
+    }
+
+    public function scheduledMeetings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Meeting::class, 'staff_id');
     }
 
     public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -133,6 +153,11 @@ class User extends Authenticatable
     public function handleReserves(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Reserve::class, 'staff_id');
+    }
+
+    public function hotelReservationRequests(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(HotelReservation::class, 'staff_id');
     }
 
     public function supplies(): \Illuminate\Database\Eloquent\Relations\HasMany
