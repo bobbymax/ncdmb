@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\VendorResource;
 use App\Repositories\UploadRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\VendorRepository;
@@ -20,10 +19,9 @@ class VendorServiceProvider extends ServiceProvider
         // Bind the VendorRepository to VendorService
         $this->app->bind(VendorService::class, function ($app) {
             $vendorRepository = $app->make(VendorRepository::class);
-            $vendorResource = $app->make(VendorResource::class);
             $uploadRepository = $app->make(UploadRepository::class);
 
-            return new VendorService($vendorRepository, $vendorResource, $uploadRepository);
+            return new VendorService($vendorRepository, $uploadRepository);
         });
     }
 }

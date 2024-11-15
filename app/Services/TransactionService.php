@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Resources\TransactionResource;
 use App\Repositories\ExpenditureRepository;
 use App\Repositories\FundRepository;
 use App\Repositories\TransactionRepository;
@@ -14,11 +13,10 @@ class TransactionService extends BaseService
     protected FundRepository $fundRepository;
     public function __construct(
         TransactionRepository $transactionRepository,
-        TransactionResource $transactionResource,
         ExpenditureRepository $expenditureRepository,
         FundRepository $fundRepository
     ) {
-        parent::__construct($transactionRepository, $transactionResource);
+        parent::__construct($transactionRepository);
         $this->expenditureRepository = $expenditureRepository;
         $this->fundRepository = $fundRepository;
     }

@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Resources\DepartmentResource;
+
 use App\Repositories\DepartmentRepository;
 
 class DepartmentService extends BaseService
 {
-    public function __construct(DepartmentRepository $departmentRepository, DepartmentResource $departmentResource)
+    public function __construct(DepartmentRepository $departmentRepository)
     {
-        parent::__construct($departmentRepository, $departmentResource);
+        parent::__construct($departmentRepository);
     }
 
     public function rules($action = "store"): array

@@ -2,16 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Resources\PermissionResource;
 use App\Repositories\PermissionRepository;
 
 class PermissionService extends BaseService
 {
     public function __construct(
-        PermissionRepository $permissionRepository,
-        PermissionResource $permissionResource
+        PermissionRepository $permissionRepository
     ) {
-        parent::__construct($permissionRepository, $permissionResource);
+        parent::__construct($permissionRepository);
     }
 
     public function rules($action = "store"): array

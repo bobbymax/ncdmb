@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\PageResource;
 use App\Repositories\PermissionRepository;
 use App\Repositories\RoleRepository;
 use Illuminate\Support\ServiceProvider;
@@ -21,10 +20,9 @@ class PageServiceProvider extends ServiceProvider
         // Bind the PageRepository to PageService
         $this->app->bind(PageService::class, function ($app) {
             $pageRepository = $app->make(PageRepository::class);
-            $pageResource = $app->make(PageResource::class);
             $permissionRepository = $app->make(PermissionRepository::class);
             $roleRepository = $app->make(RoleRepository::class);
-            return new PageService($pageRepository, $pageResource, $permissionRepository, $roleRepository);
+            return new PageService($pageRepository, $permissionRepository, $roleRepository);
         });
     }
 }

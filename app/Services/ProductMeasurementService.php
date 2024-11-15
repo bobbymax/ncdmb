@@ -2,16 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Resources\ProductMeasurementResource;
 use App\Repositories\ProductMeasurementRepository;
 
 class ProductMeasurementService extends BaseService
 {
     public function __construct(
-        ProductMeasurementRepository $productMeasurementRepository,
-        ProductMeasurementResource $productMeasurementResource
+        ProductMeasurementRepository $productMeasurementRepository
     ) {
-        parent::__construct($productMeasurementRepository, $productMeasurementResource);
+        parent::__construct($productMeasurementRepository);
     }
 
     public function rules($action = "store"): array

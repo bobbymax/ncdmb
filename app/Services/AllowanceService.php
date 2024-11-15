@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Resources\AllowanceResource;
 use App\Repositories\AllowanceRepository;
 use App\Repositories\GradeLevelRepository;
 use App\Repositories\RemunerationRepository;
@@ -15,11 +14,10 @@ class AllowanceService extends BaseService
 
     public function __construct(
         AllowanceRepository $allowanceRepository,
-        AllowanceResource $allowanceResource,
         RemunerationRepository $remunerationRepository,
         GradeLevelRepository $gradeLevelRepository
     ) {
-        parent::__construct($allowanceRepository, $allowanceResource);
+        parent::__construct($allowanceRepository);
         $this->remunerationRepository = $remunerationRepository;
         $this->gradeLevelRepository = $gradeLevelRepository;
     }

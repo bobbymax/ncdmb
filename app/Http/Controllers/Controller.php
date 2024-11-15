@@ -8,6 +8,7 @@ use App\Handlers\ValidationErrors;
 use App\Services\BaseService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Validator;
 
 abstract class Controller
@@ -15,17 +16,19 @@ abstract class Controller
     use ApiResponse;
     protected BaseService $service;
     protected string $name;
+    protected string $jsonResource;
 
-    public function __construct(BaseService $service, string $name)
+    public function __construct(BaseService $service, string $name, string $jsonResource)
     {
         $this->service = $service;
         $this->name = $name;
+        $this->jsonResource = $jsonResource;
     }
 
     public function index(): \Illuminate\Http\JsonResponse
     {
         try {
-            return $this->success($this->service->index());
+            return $this->success($this->jsonResource::collection($this->service->index()));
         } catch (\Exception $e) {
             return $this->error([], $e->getMessage(), 422);
         }
@@ -42,7 +45,7 @@ abstract class Controller
             }
 
             $resource = $this->service->store($request->except('id'));
-            return $this->success($resource, $this->stored($this->name), 201);
+            return $this->success(new $this->jsonResource($resource), $this->stored($this->name), 201);
 
         } catch (RecordCreationUnsuccessful $e) {
 
@@ -58,7 +61,7 @@ abstract class Controller
     public function show($id): \Illuminate\Http\JsonResponse
     {
         try {
-            return $this->success($this->service->show((int) $id));
+            return $this->success(new $this->jsonResource($this->service->show((int) $id)));
         } catch (DataNotFound $e) {
             return $this->error(null, $e->getMessage(), 404);
         } catch (\Exception $e) {
@@ -70,7 +73,7 @@ abstract class Controller
     {
         try {
 
-            $validator = Validator::make($request->all(), $this->service->rules());
+            $validator = Validator::make($request->all(), $this->service->rules('update'));
 
             if ($validator->fails()) {
                 $error = new ValidationErrors($validator->errors());
@@ -78,7 +81,7 @@ abstract class Controller
             }
 
             $updated = $this->service->update((int) $id, $request->except('id'));
-            return $this->success($updated, $this->updated($this->name));
+            return $this->success(new $this->jsonResource($updated), $this->updated($this->name));
 
         } catch (DataNotFound|\Exception $e) {
             return $this->error(null, $e->getMessage(), 422);

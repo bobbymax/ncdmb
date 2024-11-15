@@ -2,8 +2,7 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\FlightItineraryResource;
-use App\Repositories\FundRepository;
+
 use App\Repositories\ReserveRepository;
 use App\Repositories\UploadRepository;
 use Illuminate\Support\ServiceProvider;
@@ -22,11 +21,10 @@ class FlightItineraryServiceProvider extends ServiceProvider
         // Bind the FlightItineraryRepository to FlightItineraryService
         $this->app->bind(FlightItineraryService::class, function ($app) {
             $flightItineraryRepository = $app->make(FlightItineraryRepository::class);
-            $flightItineraryResource = $app->make(FlightItineraryResource::class);
             $uploadRepository = $app->make(UploadRepository::class);
             $reserveRepository = $app->make(ReserveRepository::class);
 
-            return new FlightItineraryService($flightItineraryRepository, $flightItineraryResource, $uploadRepository, $reserveRepository);
+            return new FlightItineraryService($flightItineraryRepository, $uploadRepository, $reserveRepository);
         });
     }
 }

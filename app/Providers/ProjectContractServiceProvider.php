@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\ProjectContractResource;
+
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\ProjectContractRepository;
 use App\Services\ProjectContractService;
@@ -19,8 +19,7 @@ class ProjectContractServiceProvider extends ServiceProvider
         // Bind the ProjectContractRepository to ProjectContractService
         $this->app->bind(ProjectContractService::class, function ($app) {
             $projectContractRepository = $app->make(ProjectContractRepository::class);
-            $projectContractResource = $app->make(ProjectContractResource::class);
-            return new ProjectContractService($projectContractRepository, $projectContractResource);
+            return new ProjectContractService($projectContractRepository);
         });
     }
 }

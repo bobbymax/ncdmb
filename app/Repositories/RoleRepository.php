@@ -16,9 +16,9 @@ class RoleRepository extends BaseRepository
     {
         return [
             ...$data,
-            'label' => Str::slug($data['name']),
-            'issued_date' => Carbon::parse($data['issued_date']) ?? null,
-            'expired_date' => Carbon::parse($data['expired_date']) ?? null,
+            'slug' => Str::slug($data['name']),
+            'issued_date' => isset($data['issued_date']) ? Carbon::parse($data['issued_date']) : null,
+            'expired_date' => isset($data['expired_date']) ? Carbon::parse($data['expired_date']) : null,
         ];
     }
 }

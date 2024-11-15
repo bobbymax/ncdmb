@@ -2,16 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Resources\ProductStockResource;
 use App\Repositories\ProductStockRepository;
 
 class ProductStockService extends BaseService
 {
     public function __construct(
-        ProductStockRepository $productStockRepository,
-        ProductStockResource $productStockResource
+        ProductStockRepository $productStockRepository
     ) {
-        parent::__construct($productStockRepository, $productStockResource);
+        parent::__construct($productStockRepository);
     }
 
     public function rules($action = "store"): array

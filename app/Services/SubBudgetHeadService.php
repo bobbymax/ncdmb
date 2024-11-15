@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Resources\SubBudgetHeadResource;
+
 use App\Repositories\SubBudgetHeadRepository;
 
 class SubBudgetHeadService extends BaseService
 {
-    public function __construct(SubBudgetHeadRepository $subBudgetHeadRepository, SubBudgetHeadResource $subBudgetHeadResource)
+    public function __construct(SubBudgetHeadRepository $subBudgetHeadRepository)
     {
-        parent::__construct($subBudgetHeadRepository, $subBudgetHeadResource);
+        parent::__construct($subBudgetHeadRepository);
     }
 
     public function rules($action = "store"): array

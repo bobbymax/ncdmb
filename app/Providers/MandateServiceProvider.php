@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\MandateResource;
 use App\Repositories\FlightItineraryRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\MandateRepository;
@@ -20,10 +19,9 @@ class MandateServiceProvider extends ServiceProvider
         // Bind the MandateRepository to MandateService
         $this->app->bind(MandateService::class, function ($app) {
             $mandateRepository = $app->make(MandateRepository::class);
-            $mandateResource = $app->make(MandateResource::class);
             $flightItineraryRepository = $app->make(FlightItineraryRepository::class);
 
-            return new MandateService($mandateRepository, $mandateResource, $flightItineraryRepository);
+            return new MandateService($mandateRepository, $flightItineraryRepository);
         });
     }
 }

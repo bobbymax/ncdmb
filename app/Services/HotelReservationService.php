@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Resources\HotelReservationResource;
 use App\Models\HotelReservation;
 use App\Repositories\HotelReservationRepository;
 use App\Repositories\ReserveRepository;
@@ -16,11 +15,10 @@ class HotelReservationService extends BaseService
     protected ReserveRepository $reserveRepository;
     public function __construct(
         HotelReservationRepository $hotelReservationRepository,
-        HotelReservationResource $hotelReservationResource,
         UploadRepository $uploadRepository,
         ReserveRepository $reserveRepository
     ) {
-        parent::__construct($hotelReservationRepository, $hotelReservationResource);
+        parent::__construct($hotelReservationRepository);
         $this->uploadRepository = $uploadRepository;
         $this->reserveRepository = $reserveRepository;
     }

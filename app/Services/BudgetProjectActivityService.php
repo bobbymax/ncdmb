@@ -2,16 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Resources\BudgetProjectActivityResource;
 use App\Repositories\BudgetProjectActivityRepository;
 
 class BudgetProjectActivityService extends BaseService
 {
     public function __construct(
-        BudgetProjectActivityRepository $budgetProjectActivityRepository,
-        BudgetProjectActivityResource $budgetProjectActivityResource
+        BudgetProjectActivityRepository $budgetProjectActivityRepository
     ) {
-        parent::__construct($budgetProjectActivityRepository, $budgetProjectActivityResource);
+        parent::__construct($budgetProjectActivityRepository);
     }
 
     public function rules($action = "store"): array

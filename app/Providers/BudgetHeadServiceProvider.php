@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\BudgetHeadResource;
+
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\BudgetHeadRepository;
 use App\Services\BudgetHeadService;
@@ -19,8 +19,7 @@ class BudgetHeadServiceProvider extends ServiceProvider
         // Bind the BudgetHeadRepository to BudgetHeadService
         $this->app->bind(BudgetHeadService::class, function ($app) {
             $budgetHeadRepository = $app->make(BudgetHeadRepository::class);
-            $budgetHeadResource = $app->make(BudgetHeadResource::class);
-            return new BudgetHeadService($budgetHeadRepository, $budgetHeadResource);
+            return new BudgetHeadService($budgetHeadRepository);
         });
     }
 }

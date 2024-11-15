@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Http\Resources\ClaimResource;
+
 use App\Repositories\ClaimRepository;
 use App\Repositories\ExpenseRepository;
 use Illuminate\Support\Facades\DB;
@@ -13,10 +13,9 @@ class ClaimService extends BaseService
 
     public function __construct(
         ClaimRepository $claimRepository,
-        ClaimResource $claimResource,
         ExpenseRepository $expenseRepository
     ) {
-        parent::__construct($claimRepository, $claimResource);
+        parent::__construct($claimRepository);
         $this->expenseRepository = $expenseRepository;
     }
 

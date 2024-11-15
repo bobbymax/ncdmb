@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Resources\FundResource;
+
 use App\Repositories\FundRepository;
 
 class FundService extends BaseService
 {
-    public function __construct(FundRepository $fundRepository, FundResource $fundResource)
+    public function __construct(FundRepository $fundRepository)
     {
-        parent::__construct($fundRepository, $fundResource);
+        parent::__construct($fundRepository);
     }
 
     public function rules($action = "store"): array

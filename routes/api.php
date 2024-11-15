@@ -8,7 +8,7 @@ Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
 });
 
 Route::group(['middleware' => ['cors', 'json.response']], function () {
-//    Route::post('/login', [\App\Http\Controllers\AuthenticateUserController::class, 'login']);
+    Route::post('/login', [\App\Http\Controllers\AuthApiController::class, 'login']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('departments', \App\Http\Controllers\DepartmentController::class);

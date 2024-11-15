@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Http\Resources\MandateResource;
+
 use App\Repositories\FlightItineraryRepository;
 use App\Repositories\MandateRepository;
 use Illuminate\Support\Facades\DB;
@@ -12,10 +12,9 @@ class MandateService extends BaseService
     protected FlightItineraryRepository $flightItineraryRepository;
     public function __construct(
         MandateRepository $mandateRepository,
-        MandateResource $mandateResource,
         FlightItineraryRepository $flightItineraryRepository
     ) {
-        parent::__construct($mandateRepository, $mandateResource);
+        parent::__construct($mandateRepository);
         $this->flightItineraryRepository = $flightItineraryRepository;
     }
 

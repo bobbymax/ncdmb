@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\ProjectMilestoneResource;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\ProjectMilestoneRepository;
 use App\Services\ProjectMilestoneService;
@@ -19,8 +18,7 @@ class ProjectMilestoneServiceProvider extends ServiceProvider
         // Bind the ProjectMilestoneRepository to ProjectMilestoneService
         $this->app->bind(ProjectMilestoneService::class, function ($app) {
             $projectMilestoneRepository = $app->make(ProjectMilestoneRepository::class);
-            $projectMilestoneResource = $app->make(ProjectMilestoneResource::class);
-            return new ProjectMilestoneService($projectMilestoneRepository, $projectMilestoneResource);
+            return new ProjectMilestoneService($projectMilestoneRepository);
         });
     }
 }

@@ -2,12 +2,11 @@
 
 namespace App\Services;
 
-use App\Http\Resources\PageResource;
+
 use App\Repositories\PageRepository;
 use App\Repositories\PermissionRepository;
 use App\Repositories\RoleRepository;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class PageService extends BaseService
 {
@@ -16,11 +15,10 @@ class PageService extends BaseService
     private $bread = ["Browse", "Read", "Add", "Edit", "Delete"];
     public function __construct(
         PageRepository $pageRepository,
-        PageResource $pageResource,
         PermissionRepository $permissionRepository,
         RoleRepository $roleRepository
     ) {
-        parent::__construct($pageRepository, $pageResource);
+        parent::__construct($pageRepository);
         $this->permissionRepository = $permissionRepository;
         $this->roleRepository = $roleRepository;
     }

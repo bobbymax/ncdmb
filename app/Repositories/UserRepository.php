@@ -18,7 +18,7 @@ class UserRepository extends BaseRepository
         return [
             ...$data,
             'password' => Hash::make($password),
-            'date_joined' => Carbon::parse($data['date_joined']) ?? null
+            'date_joined' => isset($data['date_joined']) ? Carbon::parse($data['date_joined']) : null
         ];
     }
 }

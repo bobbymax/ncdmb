@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Resources\FlightReservationResource;
 use App\Models\FlightReservation;
 use App\Repositories\FlightReservationRepository;
 use App\Repositories\UploadRepository;
@@ -14,10 +13,9 @@ class FlightReservationService extends BaseService
 
     public function __construct(
         FlightReservationRepository $flightReservationRepository,
-        FlightReservationResource $flightReservationResource,
         UploadRepository $uploadRepository
     ) {
-        parent::__construct($flightReservationRepository, $flightReservationResource);
+        parent::__construct($flightReservationRepository);
         $this->uploadRepository = $uploadRepository;
     }
 

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Resources\TouringAdvanceResource;
 use App\Repositories\ClaimRepository;
 use App\Repositories\TouringAdvanceRepository;
 use Illuminate\Support\Facades\Auth;
@@ -13,10 +12,9 @@ class TouringAdvanceService extends BaseService
     protected ClaimRepository $claimRepository;
     public function __construct(
         TouringAdvanceRepository $touringAdvanceRepository,
-        TouringAdvanceResource $touringAdvanceResource,
         ClaimRepository $claimRepository
     ) {
-        parent::__construct($touringAdvanceRepository, $touringAdvanceResource);
+        parent::__construct($touringAdvanceRepository);
         $this->claimRepository = $claimRepository;
     }
 

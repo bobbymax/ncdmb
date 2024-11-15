@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\BoardProjectResource;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\BoardProjectRepository;
 use App\Services\BoardProjectService;
@@ -19,8 +18,7 @@ class BoardProjectServiceProvider extends ServiceProvider
         // Bind the BoardProjectRepository to BoardProjectService
         $this->app->bind(BoardProjectService::class, function ($app) {
             $boardProjectRepository = $app->make(BoardProjectRepository::class);
-            $boardProjectResource = $app->make(BoardProjectResource::class);
-            return new BoardProjectService($boardProjectRepository, $boardProjectResource);
+            return new BoardProjectService($boardProjectRepository);
         });
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Resources\FlightItineraryResource;
 use App\Models\FlightItinerary;
 use App\Repositories\FlightItineraryRepository;
 use App\Repositories\ReserveRepository;
@@ -16,11 +15,10 @@ class FlightItineraryService extends BaseService
     protected ReserveRepository $reserveRepository;
     public function __construct(
         FlightItineraryRepository $flightItineraryRepository,
-        FlightItineraryResource $flightItineraryResource,
         UploadRepository $uploadRepository,
         ReserveRepository $reserveRepository,
     ) {
-        parent::__construct($flightItineraryRepository, $flightItineraryResource);
+        parent::__construct($flightItineraryRepository);
         $this->uploadRepository = $uploadRepository;
         $this->reserveRepository = $reserveRepository;
     }

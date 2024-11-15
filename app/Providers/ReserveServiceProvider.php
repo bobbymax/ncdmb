@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\ReserveResource;
+
 use App\Repositories\ExpenditureRepository;
 use App\Repositories\FundRepository;
 use App\Repositories\UploadRepository;
@@ -22,12 +22,11 @@ class ReserveServiceProvider extends ServiceProvider
         // Bind the ReserveRepository to ReserveService
         $this->app->bind(ReserveService::class, function ($app) {
             $reserveRepository = $app->make(ReserveRepository::class);
-            $reserveResource = $app->make(ReserveResource::class);
             $uploadRepository = $app->make(UploadRepository::class);
             $fundRepository = $app->make(FundRepository::class);
             $expenditureRepository = $app->make(ExpenditureRepository::class);
 
-            return new ReserveService($reserveRepository, $reserveResource, $uploadRepository, $fundRepository, $expenditureRepository);
+            return new ReserveService($reserveRepository, $uploadRepository, $fundRepository, $expenditureRepository);
         });
     }
 }

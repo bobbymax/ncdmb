@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\FlightReservationResource;
 use App\Repositories\UploadRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\FlightReservationRepository;
@@ -20,10 +19,9 @@ class FlightReservationServiceProvider extends ServiceProvider
         // Bind the FlightReservationRepository to FlightReservationService
         $this->app->bind(FlightReservationService::class, function ($app) {
             $flightReservationRepository = $app->make(FlightReservationRepository::class);
-            $flightReservationResource = $app->make(FlightReservationResource::class);
             $uploadRepository = $app->make(UploadRepository::class);
 
-            return new FlightReservationService($flightReservationRepository, $flightReservationResource, $uploadRepository);
+            return new FlightReservationService($flightReservationRepository, $uploadRepository);
         });
     }
 }

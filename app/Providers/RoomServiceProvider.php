@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\RoomResource;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\RoomRepository;
 use App\Services\RoomService;
@@ -19,9 +18,8 @@ class RoomServiceProvider extends ServiceProvider
         // Bind the RoomRepository to RoomService
         $this->app->bind(RoomService::class, function ($app) {
             $roomRepository = $app->make(RoomRepository::class);
-            $roomResource = $app->make(RoomResource::class);
 
-            return new RoomService($roomRepository, $roomResource);
+            return new RoomService($roomRepository);
         });
     }
 }

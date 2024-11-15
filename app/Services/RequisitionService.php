@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Resources\RequisitionResource;
-use App\Models\Requisition;
 use App\Repositories\RequisitionItemRepository;
 use App\Repositories\RequisitionRepository;
 use Illuminate\Support\Facades\DB;
@@ -14,10 +12,9 @@ class RequisitionService extends BaseService
 
     public function __construct(
         RequisitionRepository $requisitionRepository,
-        RequisitionResource $requisitionResource,
         RequisitionItemRepository $requisitionItemRepository
     ) {
-        parent::__construct($requisitionRepository, $requisitionResource);
+        parent::__construct($requisitionRepository);
         $this->requisitionItemRepository = $requisitionItemRepository;
     }
 

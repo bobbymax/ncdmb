@@ -2,14 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Resources\RoleResource;
+
 use App\Repositories\RoleRepository;
 
 class RoleService extends BaseService
 {
-    public function __construct(RoleRepository $roleRepository, RoleResource $roleResource)
+    public function __construct(RoleRepository $roleRepository)
     {
-        parent::__construct($roleRepository, $roleResource);
+        parent::__construct($roleRepository);
     }
 
     public function rules($action = "store"): array
@@ -17,8 +17,8 @@ class RoleService extends BaseService
         return [
             'name' => 'required|string|max:255',
             'slots' => 'required|integer|min:1',
-            'issued_date' => 'required|date',
-            'expired_date' => 'required|date',
+            'issued_date' => 'nullable|date',
+            'expired_date' => 'nullable|date',
         ];
     }
 }

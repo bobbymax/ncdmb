@@ -2,16 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Resources\BudgetCodeResource;
 use App\Repositories\BudgetCodeRepository;
 
 class BudgetCodeService extends BaseService
 {
     public function __construct(
-        BudgetCodeRepository $budgetCodeRepository,
-        BudgetCodeResource $budgetCodeResource
+        BudgetCodeRepository $budgetCodeRepository
     ) {
-        parent::__construct($budgetCodeRepository, $budgetCodeResource);
+        parent::__construct($budgetCodeRepository);
     }
 
     public function rules($action = 'store'): array

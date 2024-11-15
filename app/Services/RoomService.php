@@ -2,16 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Resources\RoomResource;
 use App\Repositories\RoomRepository;
 
 class RoomService extends BaseService
 {
     public function __construct(
-        RoomRepository $roomRepository,
-        RoomResource $roomResource
+        RoomRepository $roomRepository
     ) {
-        parent::__construct($roomRepository, $roomResource);
+        parent::__construct($roomRepository);
     }
 
     public function rules($action = "store"): array

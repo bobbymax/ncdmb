@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
-use App\Http\Resources\SettingResource;
 use App\Repositories\SettingRepository;
 
 class SettingService extends BaseService
 {
-    public function __construct(SettingRepository $settingRepository, SettingResource $settingResource)
+    public function __construct(SettingRepository $settingRepository)
     {
-        parent::__construct($settingRepository, $settingResource);
+        parent::__construct($settingRepository);
     }
 
     public function rules($action = "store"): array

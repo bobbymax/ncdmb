@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Resources\ReserveResource;
 use App\Repositories\ExpenditureRepository;
 use App\Repositories\FundRepository;
 use App\Repositories\ReserveRepository;
@@ -17,12 +16,11 @@ class ReserveService extends BaseService
     protected ExpenditureRepository $expenditureRepository;
     public function __construct(
         ReserveRepository $reserveRepository,
-        ReserveResource $reserveResource,
         UploadRepository $uploadRepository,
         FundRepository $fundRepository,
         ExpenditureRepository $expenditureRepository
     ) {
-        parent::__construct($reserveRepository, $reserveResource);
+        parent::__construct($reserveRepository);
         $this->uploadRepository = $uploadRepository;
         $this->fundRepository = $fundRepository;
         $this->expenditureRepository = $expenditureRepository;

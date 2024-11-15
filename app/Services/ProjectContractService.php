@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
-use App\Http\Resources\ProjectContractResource;
 use App\Repositories\ProjectContractRepository;
 
 class ProjectContractService extends BaseService
 {
-    public function __construct(ProjectContractRepository $projectContractRepository, ProjectContractResource $projectContractResource)
+    public function __construct(ProjectContractRepository $projectContractRepository)
     {
-        parent::__construct($projectContractRepository, $projectContractResource);
+        parent::__construct($projectContractRepository);
     }
 
     public function rules($action = "store"): array

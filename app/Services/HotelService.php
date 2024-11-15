@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Resources\HotelResource;
 use App\Repositories\GradeLevelRepository;
 use App\Repositories\HotelRepository;
 use Illuminate\Support\Facades\DB;
@@ -12,10 +11,9 @@ class HotelService extends BaseService
     protected GradeLevelRepository $gradeLevelRepository;
     public function __construct(
         HotelRepository $hotelRepository,
-        HotelResource $hotelResource,
         GradeLevelRepository $gradeLevelRepository
     ) {
-        parent::__construct($hotelRepository, $hotelResource);
+        parent::__construct($hotelRepository);
         $this->gradeLevelRepository = $gradeLevelRepository;
     }
 

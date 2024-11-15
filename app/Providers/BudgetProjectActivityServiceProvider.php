@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\BudgetProjectActivityResource;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\BudgetProjectActivityRepository;
 use App\Services\BudgetProjectActivityService;
@@ -19,8 +18,7 @@ class BudgetProjectActivityServiceProvider extends ServiceProvider
         // Bind the BudgetProjectActivityRepository to BudgetProjectActivityService
         $this->app->bind(BudgetProjectActivityService::class, function ($app) {
             $budgetProjectActivityRepository = $app->make(BudgetProjectActivityRepository::class);
-            $budgetProjectActivityResource = $app->make(BudgetProjectActivityResource::class);
-            return new BudgetProjectActivityService($budgetProjectActivityRepository, $budgetProjectActivityResource);
+            return new BudgetProjectActivityService($budgetProjectActivityRepository);
         });
     }
 }

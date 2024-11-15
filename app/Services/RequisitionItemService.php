@@ -2,16 +2,15 @@
 
 namespace App\Services;
 
-use App\Http\Resources\RequisitionItemResource;
+
 use App\Repositories\RequisitionItemRepository;
 
 class RequisitionItemService extends BaseService
 {
     public function __construct(
-        RequisitionItemRepository $requisitionItemRepository,
-        RequisitionItemResource $requisitionItemResource
+        RequisitionItemRepository $requisitionItemRepository
     ) {
-        parent::__construct($requisitionItemRepository, $requisitionItemResource);
+        parent::__construct($requisitionItemRepository);
     }
 
     public function rules($action = "store"): array

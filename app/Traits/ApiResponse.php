@@ -36,4 +36,9 @@ trait ApiResponse
             'data' => $data
         ], $code);
     }
+
+    protected function noContent(): \Illuminate\Http\JsonResponse
+    {
+        return response()->json([]);
+    }
 }

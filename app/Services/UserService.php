@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
-use App\Http\Resources\UserResource;
 use App\Repositories\UserRepository;
 
 class UserService extends BaseService
 {
-    public function __construct(UserRepository $userRepository, UserResource $userResource)
+    public function __construct(UserRepository $userRepository)
     {
-        parent::__construct($userRepository, $userResource);
+        parent::__construct($userRepository);
     }
 
     public function rules($action = "store"): array

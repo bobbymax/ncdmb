@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\PaymentBatchResource;
 use App\Repositories\ExpenditureRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\PaymentBatchRepository;
@@ -20,10 +19,9 @@ class PaymentBatchServiceProvider extends ServiceProvider
         // Bind the PaymentBatchRepository to PaymentBatchService
         $this->app->bind(PaymentBatchService::class, function ($app) {
             $paymentBatchRepository = $app->make(PaymentBatchRepository::class);
-            $paymentBatchResource = $app->make(PaymentBatchResource::class);
             $expenditureRepository = $app->make(ExpenditureRepository::class);
 
-            return new PaymentBatchService($paymentBatchRepository, $paymentBatchResource, $expenditureRepository);
+            return new PaymentBatchService($paymentBatchRepository, $expenditureRepository);
         });
     }
 }

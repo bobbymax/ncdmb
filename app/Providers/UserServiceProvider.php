@@ -2,7 +2,6 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\UserResource;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\UserRepository;
 use App\Services\UserService;
@@ -19,8 +18,7 @@ class UserServiceProvider extends ServiceProvider
         // Bind the UserRepository to UserService
         $this->app->bind(UserService::class, function ($app) {
             $userRepository = $app->make(UserRepository::class);
-            $userResource = $app->make(UserResource::class);
-            return new UserService($userRepository, $userResource);
+            return new UserService($userRepository);
         });
     }
 }

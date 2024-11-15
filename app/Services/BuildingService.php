@@ -2,16 +2,15 @@
 
 namespace App\Services;
 
-use App\Http\Resources\BuildingResource;
+
 use App\Repositories\BuildingRepository;
 
 class BuildingService extends BaseService
 {
     public function __construct(
-        BuildingRepository $buildingRepository,
-        BuildingResource $buildingResource
+        BuildingRepository $buildingRepository
     ) {
-        parent::__construct($buildingRepository, $buildingResource);
+        parent::__construct($buildingRepository);
     }
 
     public function rules($action = "store"): array

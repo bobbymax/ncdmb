@@ -2,16 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Resources\StoreSupplyResource;
 use App\Repositories\StoreSupplyRepository;
 
 class StoreSupplyService extends BaseService
 {
     public function __construct(
-        StoreSupplyRepository $storeSupplyRepository,
-        StoreSupplyResource $storeSupplyResource
+        StoreSupplyRepository $storeSupplyRepository
     ) {
-        parent::__construct($storeSupplyRepository, $storeSupplyResource);
+        parent::__construct($storeSupplyRepository);
     }
 
     public function rules($action = "store"): array

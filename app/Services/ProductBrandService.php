@@ -2,16 +2,14 @@
 
 namespace App\Services;
 
-use App\Http\Resources\ProductBrandResource;
 use App\Repositories\ProductBrandRepository;
 
 class ProductBrandService extends BaseService
 {
     public function __construct(
-        ProductBrandRepository $productBrandRepository,
-        ProductBrandResource $productBrandResource
+        ProductBrandRepository $productBrandRepository
     ) {
-        parent::__construct($productBrandRepository, $productBrandResource);
+        parent::__construct($productBrandRepository);
     }
 
     public function rules($action = "store"): array

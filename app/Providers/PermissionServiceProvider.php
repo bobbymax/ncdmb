@@ -2,7 +2,7 @@
 
 namespace App\Providers;
 
-use App\Http\Resources\PermissionResource;
+
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\PermissionRepository;
 use App\Services\PermissionService;
@@ -19,8 +19,7 @@ class PermissionServiceProvider extends ServiceProvider
         // Bind the PermissionRepository to PermissionService
         $this->app->bind(PermissionService::class, function ($app) {
             $permissionRepository = $app->make(PermissionRepository::class);
-            $permissionResource  = $app->make(PermissionResource::class);
-            return new PermissionService($permissionRepository, $permissionResource);
+            return new PermissionService($permissionRepository);
         });
     }
 }

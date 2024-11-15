@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Http\Resources\MeetingResource;
+
 use App\Models\Meeting;
 use App\Repositories\MeetingRepository;
 use App\Repositories\ReserveRepository;
@@ -18,12 +18,11 @@ class MeetingService extends BaseService
     protected UserRepository $userRepository;
     public function __construct(
         MeetingRepository $meetingRepository,
-        MeetingResource $meetingResource,
         UploadRepository $uploadRepository,
         ReserveRepository $reserveRepository,
         UserRepository $userRepository
     ) {
-        parent::__construct($meetingRepository, $meetingResource);
+        parent::__construct($meetingRepository);
         $this->uploadRepository = $uploadRepository;
         $this->reserveRepository = $reserveRepository;
         $this->userRepository = $userRepository;

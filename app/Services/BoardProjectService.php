@@ -2,16 +2,15 @@
 
 namespace App\Services;
 
-use App\Http\Resources\BoardProjectResource;
+
 use App\Repositories\BoardProjectRepository;
 
 class BoardProjectService extends BaseService
 {
     public function __construct(
-        BoardProjectRepository $boardProjectRepository,
-        BoardProjectResource $boardProjectResource
+        BoardProjectRepository $boardProjectRepository
     ) {
-        parent::__construct($boardProjectRepository, $boardProjectResource);
+        parent::__construct($boardProjectRepository);
     }
 
     public function rules($action = "store"): array

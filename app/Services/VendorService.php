@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Http\Resources\VendorResource;
 use App\Models\Vendor;
 use App\Repositories\UploadRepository;
 use App\Repositories\VendorRepository;
@@ -15,10 +14,9 @@ class VendorService extends BaseService
 
     public function __construct(
         VendorRepository $vendorRepository,
-        VendorResource $vendorResource,
         UploadRepository $uploadRepository
     ) {
-        parent::__construct($vendorRepository, $vendorResource);
+        parent::__construct($vendorRepository);
         $this->uploadRepository = $uploadRepository;
     }
 

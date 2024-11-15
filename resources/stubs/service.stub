@@ -2,16 +2,13 @@
 
 namespace App\Services;
 
-use App\Http\Resources\{{ class }}Resource;
 use App\Repositories\{{ class }}Repository;
 
 class {{ class }}Service extends BaseService
 {
-    public function __construct(
-        {{ class }}Repository ${{ camel }}Repository,
-        {{ class }}Resource ${{ camel }}Resource
-    ) {
-        parent::__construct(${{ camel }}Repository, ${{ camel }}Resource);
+    public function __construct({{ class }}Repository ${{ camel }}Repository)
+    {
+        parent::__construct(${{ camel }}Repository);
     }
 
     public function rules($action = "store"): array

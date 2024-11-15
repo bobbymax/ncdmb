@@ -2,14 +2,13 @@
 
 namespace App\Services;
 
-use App\Http\Resources\GradeLevelResource;
 use App\Repositories\GradeLevelRepository;
 
 class GradeLevelService extends BaseService
 {
-    public function __construct(GradeLevelRepository $gradeLevelRepository, GradeLevelResource $gradeLevelResource)
+    public function __construct(GradeLevelRepository $gradeLevelRepository)
     {
-        parent::__construct($gradeLevelRepository, $gradeLevelResource);
+        parent::__construct($gradeLevelRepository);
     }
 
     public function rules($action = "store"): array
