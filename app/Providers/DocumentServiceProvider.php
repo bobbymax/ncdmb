@@ -1,0 +1,25 @@
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\ServiceProvider;
+use App\Repositories\DocumentRepository;
+use App\Services\DocumentService;
+
+class DocumentServiceProvider extends ServiceProvider
+{
+    /**
+     * Register services and bind the repository to the service.
+     *
+     * @return void
+     */
+    public function register(): void
+    {
+        // Bind the DocumentRepository to DocumentService
+        $this->app->bind(DocumentService::class, function ($app) {
+            $documentRepository = $app->make(DocumentRepository::class);
+
+            return new DocumentService($documentRepository);
+        });
+    }
+}

@@ -22,6 +22,7 @@ class PageRepository extends BaseRepository
             'is_disabled' => $data['is_disabled'] ?? false,
             'description' => $data['description'] ?? null,
             'icon' => $data['icon'] ?? null,
+            'meta_data' => isset($data['meta_data']) ? json_encode($data['meta_data']) : null,
         ];
     }
 }

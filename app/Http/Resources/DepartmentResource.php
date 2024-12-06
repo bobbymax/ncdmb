@@ -14,6 +14,9 @@ class DepartmentResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            ...parent::toArray($request),
+            'parent' => $this->parentId > 0 ? $this->parent->abv : "NONE",
+        ];
     }
 }

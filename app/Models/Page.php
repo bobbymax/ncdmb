@@ -21,4 +21,9 @@ class Page extends Model
     {
         return $this->morphToMany(Role::class, 'roleable');
     }
+
+    public function parent(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
 }

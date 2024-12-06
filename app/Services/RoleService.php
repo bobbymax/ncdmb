@@ -15,6 +15,7 @@ class RoleService extends BaseService
     public function rules($action = "store"): array
     {
         return [
+            'department_id' => 'required|integer|exists:departments,id',
             'name' => 'required|string|max:255',
             'slots' => 'required|integer|min:1',
             'issued_date' => 'nullable|date',

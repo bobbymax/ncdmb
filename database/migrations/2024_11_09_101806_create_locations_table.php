@@ -19,6 +19,7 @@ return new class extends Migration
             $table->text('address')->nullable();
             $table->boolean('is_closed')->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

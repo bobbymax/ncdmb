@@ -28,6 +28,7 @@ class UserService extends BaseService
             'gender' => 'required|string|in:male,female',
             'job_title' => 'nullable|string|max:255',
             'type' => 'required|string|in:permanent,contract,adhoc,secondment,support,admin',
+            'default_page_id' => 'sometimes|integer',
         ];
 
         if ($action == "store") {

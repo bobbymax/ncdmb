@@ -16,11 +16,12 @@ class PackContainer
         ];
     }
 
-    public static function role(): array
+    public static function role($department): array
     {
         return [
             'name' => 'Enterprise Administrator',
-            'slots' => 1
+            'slots' => 1,
+            'department_id' => $department?->id,
         ];
     }
 
@@ -59,18 +60,19 @@ class PackContainer
             'gender' => 'female',
             'type' => 'admin',
             'job_title' => 'Enterprise System Administrator',
+            'default_page_id' => 1
         ];
     }
 
     public static function pages(array $roles): array
     {
         return [
-            ['name' => 'Admin Centre', 'path' => '/admin-center', 'type' => 'view', 'roles' => $roles, 'is_menu' => true, 'parent_id' => 0],
-            ['name' => 'Pages', 'path' => '/admin-center/pages', 'type' => 'index', 'roles' => $roles, 'is_menu' => true, 'parent_id' => 1],
-            ['name' => 'Roles', 'path' => '/admin-center/roles', 'type' => 'index', 'roles' => $roles, 'is_menu' => true, 'parent_id' => 1],
-            ['name' => 'Departments', 'path' => '/admin-center/departments', 'type' => 'index', 'roles' => $roles, 'is_menu' => true, 'parent_id' => 1],
-            ['name' => 'Grade Levels', 'path' => '/admin-center/grade-levels', 'type' => 'index', 'roles' => $roles, 'is_menu' => true, 'parent_id' => 1],
-            ['name' => 'Employees', 'path' => '/admin-center/employees', 'type' => 'index', 'roles' => $roles, 'is_menu' => true, 'parent_id' => 1],
+            ['name' => 'Admin Centre', 'icon' => 'ri-settings-3-line', 'path' => '/admin-centre', 'type' => 'app', 'roles' => $roles, 'is_menu' => true, 'parent_id' => 0, 'is_default' => true],
+            ['name' => 'Pages', 'icon' => 'ri-pages-line', 'path' => '/admin-centre/pages', 'type' => 'index', 'roles' => $roles, 'is_menu' => true, 'parent_id' => 1],
+            ['name' => 'Roles', 'icon' => 'ri-admin-line', 'path' => '/admin-centre/roles', 'type' => 'index', 'roles' => $roles, 'is_menu' => true, 'parent_id' => 1],
+            ['name' => 'Departments', 'icon' => 'ri-building-4-line', 'path' => '/admin-centre/departments', 'type' => 'index', 'roles' => $roles, 'is_menu' => true, 'parent_id' => 1],
+            ['name' => 'Grade Levels', 'icon' => 'ri-stairs-line', 'path' => '/admin-centre/grade-levels', 'type' => 'index', 'roles' => $roles, 'is_menu' => true, 'parent_id' => 1],
+            ['name' => 'Employees', 'icon' => 'ri-group-line', 'path' => '/admin-centre/employees', 'type' => 'index', 'roles' => $roles, 'is_menu' => true, 'parent_id' => 1],
         ];
     }
 }

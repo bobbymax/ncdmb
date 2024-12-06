@@ -19,10 +19,13 @@ return new class extends Migration
             $table->string('path')->unique()->nullable();
             $table->string('icon')->nullable();
             $table->text('description')->nullable();
-            $table->enum('type', ['index', 'view', 'form', 'external', 'dashboard', 'report'])->default('index');
+            $table->enum('type', ['app', 'index', 'view', 'form', 'external', 'dashboard', 'report'])->default('index');
+            $table->json('meta_data')->nullable();
             $table->boolean('is_menu')->default(false);
             $table->boolean('is_disabled')->default(false);
+            $table->boolean('is_default')->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

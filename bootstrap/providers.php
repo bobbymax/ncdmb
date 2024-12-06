@@ -47,5 +47,15 @@ return [
     App\Providers\HotelReservationServiceProvider::class,
     App\Providers\BuildingServiceProvider::class,
     App\Providers\RoomServiceProvider::class,
-    App\Providers\MeetingServiceProvider::class
+    App\Providers\MeetingServiceProvider::class,
+    App\Providers\WorkflowServiceProvider::class,
+    App\Providers\GroupServiceProvider::class,
+    App\Providers\WorkflowStageServiceProvider::class,
+    App\Providers\DocumentTypeServiceProvider::class,
+    App\Providers\DocumentCategoryServiceProvider::class,
+    App\Providers\DocumentActionServiceProvider::class,
+    App\Providers\DocumentServiceProvider::class,
+    App\Providers\DocumentRequirementServiceProvider::class,
+    App\Providers\DocumentDraftServiceProvider::class,
+    App\Providers\DocumentCommentServiceProvider::class
 ];

@@ -17,8 +17,8 @@ class DepartmentService extends BaseService
         $rules = [
             'name' => 'required|string|max:255',
             'abv' => 'required|string|max:255',
-            'department_payment_code' => 'required|string|max:10',
-            'parentId' => 'required|integer|min:0',
+            'department_payment_code' => 'sometimes|nullable|integer|max:10',
+            'parentId' => 'sometimes|integer|min:0',
             'type' => 'required|string|in:directorate,division,department,unit',
             'bco' => 'sometimes|integer|min:0',
             'bo' => 'sometimes|integer|min:0',

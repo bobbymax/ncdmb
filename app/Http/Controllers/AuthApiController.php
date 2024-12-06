@@ -7,15 +7,51 @@ use App\Services\UserService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cookie;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 
-class AuthApiController extends Controller
+class AuthApiController extends BaseController
 {
     use ApiResponse;
 
     public function __construct(UserService $userService)
     {
         parent::__construct($userService, 'Authentication', AuthUserResource::class);
+    }
+
+    public function refreshToken(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // Validate the refresh token
+        $refreshToken = $request->refresh_token;
+
+        if (!$refreshToken) {
+            return $this->error(null,'Refresh token is missing', 400);
+        }
+
+        // Decode the refresh token and validate it
+        $user = $this->service->getRecordByColumn('refresh_token', $refreshToken);
+
+        if (!$user) {
+            return $this->error(null,'Refresh token is invalid', 401);
+        }
+
+        // Optionally, check if the refresh token has expired
+        // For simplicity, assuming it's still valid
+
+        // Generate a new access token
+        $newAccessToken = $user->createToken('authToken')->plainTextToken;
+
+        // Optionally: Generate a new refresh token
+        $newRefreshToken = Hash::make(uniqid()); // Simple example, customize as needed
+        $user->update(['refresh_token' => $newRefreshToken]);
+
+        return response()->json([
+            'token' => $newAccessToken,
+            'refresh_token' => $newRefreshToken, // If you're issuing a new one
+            'staff' => new $this->jsonResource($user)
+        ]);
     }
 
     public function login(Request $request): \Illuminate\Http\JsonResponse
@@ -43,14 +79,29 @@ class AuthApiController extends Controller
 
         Auth::user()->tokens()->delete();
 
-        $token = Auth::user()->createToken('authToken')->plainTextToken;
+        $user = Auth::user();
 
-        return $this->success(['token' => $token, 'staff' => new $this->jsonResource(Auth::user())], 'You have logged in successfully!!');
+        $token = $user->createToken('authToken')->plainTextToken;
+        $refreshToken = Hash::make(uniqid());
+
+        $user->update(['refresh_token' => $refreshToken]);
+
+
+        return $this->success([
+            'token' => $token,
+            'refresh_token' => $refreshToken,
+            'staff' => new $this->jsonResource(Auth::user())
+        ], 'You have logged in successfully!!');
     }
 
     public function logout(): \Illuminate\Http\JsonResponse
     {
-        Auth::user()->tokens()->delete();
+        $user = Auth::user();
+        $user->tokens()->delete();
+        $user->update(['refresh_token' => null]);
+        Session::flush();
+        Session::regenerate();
+        Cookie::queue(Cookie::forget('staff_portal_session'));
 
         return $this->success([
             'data' => null,

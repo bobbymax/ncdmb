@@ -71,7 +71,11 @@ abstract class BaseService implements IService
     public function update(int $id, array $data)
     {
         try {
-            return $this->repository->find($id);
+            $record = $this->repository->find($id);
+            if ($record) {
+                $record->update($data);
+            }
+            return $record;
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }

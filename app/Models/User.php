@@ -66,6 +66,11 @@ class User extends Authenticatable
         return $this->hasMany(ProjectContract::class);
     }
 
+    public function documentComments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DocumentComment::class);
+    }
+
     public function expenditures(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Expenditure::class, 'user_id');
@@ -94,6 +99,16 @@ class User extends Authenticatable
     public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function documentDrafts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DocumentDraft::class, 'created_by_user_id');
+    }
+
+    public function authorisedDocumentDrafts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DocumentDraft::class, 'authorising_staff_id');
     }
 
     public function flightReservations(): \Illuminate\Database\Eloquent\Relations\HasMany

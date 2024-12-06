@@ -17,7 +17,7 @@ class UserRepository extends BaseRepository
         $password = strtolower($data['firstname']) . strtolower($data['surname']);
         return [
             ...$data,
-            'password' => Hash::make($password),
+            'password' => $data['password'] ?? Hash::make($password),
             'date_joined' => isset($data['date_joined']) ? Carbon::parse($data['date_joined']) : null
         ];
     }

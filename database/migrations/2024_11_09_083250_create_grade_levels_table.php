@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('name');
             $table->enum('type', ['system', 'board'])->default('board');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

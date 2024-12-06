@@ -43,6 +43,9 @@ abstract class BaseRepository implements IRepository
         }
     }
 
+    /**
+     * @throws \Exception
+     */
     public function create(array $data)
     {
         try {

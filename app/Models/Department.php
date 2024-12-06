@@ -87,6 +87,11 @@ class Department extends Model
         return $this->hasMany(Reserve::class);
     }
 
+    public function roles(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Role::class);
+    }
+
     public function supplies(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(StoreSupply::class);
@@ -100,5 +105,10 @@ class Department extends Model
     public function uploads(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Upload::class);
+    }
+
+    public function parent(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parentId');
     }
 }

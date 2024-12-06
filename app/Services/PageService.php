@@ -28,17 +28,19 @@ class PageService extends BaseService
         $rules = [
             'parent_id' => 'required|integer|min:0',
             'name' => 'required|string|max:255',
-            'path' => 'sometimes|string|max:255',
+            'path' => 'required|string|max:255',
             'icon' => 'nullable|string|max:255',
-            'type' => 'required|string|max:255|in:index,view,form,external,dashboard,report',
+            'type' => 'required|string|max:255|in:app,index,view,form,external,dashboard,report',
             'description' => 'nullable|string|min:5',
+            'meta_data' => 'nullable|string',
             'roles' => 'required|array',
             'is_menu' => 'sometimes|nullable|boolean',
             'is_disabled' => 'sometimes|nullable|boolean',
+            'is_default' => 'sometimes|nullable|boolean',
         ];
 
         if ($action == "store") {
-            $rules['path'] .= '|unique:modules';
+            $rules['path'] .= '|unique:pages';
         }
 
         return $rules;

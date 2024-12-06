@@ -57,10 +57,10 @@ class GenerateAdminUser extends Command
      */
     public function handle(): void
     {
-        $this->info('Creating Admin Role...');
-        $role = $this->roleService->store(PackContainer::role());
         $this->info('Creating Admin Department...');
         $department = $this->departmentService->store(PackContainer::department());
+        $this->info('Creating Admin Role...');
+        $role = $this->roleService->store(PackContainer::role($department));
         $this->info('Creating Admin Grade Level...');
         $gradeLevel = $this->gradeLevelService->store(PackContainer::grade());
         $this->info('Creating Admin Location...');

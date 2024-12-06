@@ -25,6 +25,8 @@ return new class extends Migration
             $table->decimal('total_amount_approved', 30, 2)->default(0);
             $table->decimal('total_amount_retired', 30, 2)->default(0);
             $table->enum('type', ['claim', 'retirement'])->default('claim');
+            $table->string('authority_to_travel_path')->nullable();
+            $table->string('approval_memo_path')->nullable();
             $table->enum('category', ['residence', 'non-residence'])->default('non-residence');
             $table->enum('status', ['pending', 'registered', 'raised', 'batched', 'queried', 'paid', 'draft'])->default('pending');
             $table->boolean('retired')->default(false);

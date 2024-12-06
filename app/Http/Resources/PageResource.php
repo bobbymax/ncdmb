@@ -14,6 +14,9 @@ class PageResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            ...parent::toArray($request),
+            'parent' => $this->parent_id > 0 ? $this->parent->name : "None",
+        ];
     }
 }

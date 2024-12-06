@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\{{ class }}Resource;
 use App\Services\{{ class }}Service;
 
-class {{ class }}Controller extends Controller
+class {{ class }}Controller extends BaseController
 {
     public function __construct({{ class }}Service ${{ camel }}Service) {
         parent::__construct(${{ camel }}Service, '{{ class }}', {{ class }}Resource::class);

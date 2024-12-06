@@ -34,6 +34,7 @@ return new class extends Migration
             $table->boolean('is_logged_in')->default(false)->after('change_password');
             $table->bigInteger('location_id')->default(0)->after('role_id');
             $table->string('avatar')->nullable()->after('location_id');
+            $table->bigInteger('default_page_id')->default(0)->after('avatar');
         });
     }
 
@@ -62,6 +63,7 @@ return new class extends Migration
             $table->dropColumn('is_logged_in');
             $table->dropColumn('location_id');
             $table->dropColumn('avatar');
+            $table->dropColumn('default_page_id');
         });
     }
 };

@@ -24,6 +24,7 @@ return new class extends Migration
             $table->bigInteger('director')->default(0);
             $table->boolean('is_blocked')->default(false);
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 
