@@ -3,16 +3,26 @@
 namespace App\Services;
 
 use App\Repositories\DocumentActionRepository;
+use App\Repositories\DocumentRequirementRepository;
+use App\Repositories\GroupRepository;
 use App\Repositories\WorkflowStageRepository;
 use Illuminate\Support\Facades\DB;
 
 class WorkflowStageService extends BaseService
 {
     protected DocumentActionRepository $documentActionRepository;
-    public function __construct(WorkflowStageRepository $workflowStageRepository, DocumentActionRepository $documentActionRepository)
-    {
+    protected DocumentRequirementRepository $documentRequirementRepository;
+    protected GroupRepository $groupRepository;
+    public function __construct(
+        WorkflowStageRepository $workflowStageRepository,
+        DocumentActionRepository $documentActionRepository,
+        DocumentRequirementRepository $documentRequirementRepository,
+        GroupRepository $groupRepository
+    ) {
         parent::__construct($workflowStageRepository);
         $this->documentActionRepository = $documentActionRepository;
+        $this->documentRequirementRepository = $documentRequirementRepository;
+        $this->groupRepository = $groupRepository;
     }
 
     public function rules($action = "store"): array
@@ -20,9 +30,12 @@ class WorkflowStageService extends BaseService
         return [
             'workflow_id' => 'required|integer|exists:workflows,id',
             'group_id' => 'required|integer|exists:groups,id',
+            'department_id' => 'required|integer|min:0',
             'name' => 'required|string|max:255',
             'order' => 'required|integer|min:0',
-            'actions' => 'required|array',
+            'selectedActions' => 'required|array',
+            'selectedDocumentsRequired' => 'nullable|sometimes|array',
+            'recipients' => 'required|array',
         ];
     }
 
@@ -32,11 +45,31 @@ class WorkflowStageService extends BaseService
             $stage = parent::store($data);
 
             if ($stage) {
-                foreach ($data['actions'] as $value) {
-                    $action = $this->documentActionRepository->find($value);
+                foreach ($data['selectedActions'] as $obj) {
+                    $action = $this->documentActionRepository->find($obj['value']);
 
                     if ($action && !in_array($action->id, $stage->actions->pluck('id')->toArray())) {
                         $stage->actions()->save($action);
+                    }
+                }
+
+                if (isset($data['selectedDocumentsRequired'])) {
+                    foreach ($data['selectedDocumentsRequired'] as $obj) {
+                        $documentRequirement = $this->documentRequirementRepository->find($obj['value']);
+
+                        if ($documentRequirement && !in_array($documentRequirement->id, $stage->requirements->pluck('id')->toArray())) {
+                            $stage->requirements()->save($documentRequirement);
+                        }
+                    }
+                }
+
+                if (isset($data['recipients'])) {
+                    foreach ($data['recipients'] as $obj) {
+                        $recipient = $this->groupRepository->find($obj['value']);
+
+                        if ($recipient && !in_array($recipient->id, $stage->recipients->pluck('id')->toArray())) {
+                            $stage->recipients()->save($recipient);
+                        }
                     }
                 }
             }

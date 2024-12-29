@@ -14,6 +14,10 @@ class DocumentTypeResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            ...parent::toArray($request),
+            'workflow' => new WorkflowResource($this->workflow),
+            'categories' => $this->categories
+        ];
     }
 }

@@ -28,9 +28,12 @@ class AllowanceService extends BaseService
             'name' => 'required|string|max:255',
             'parent_id' => 'sometimes|integer|min:0',
             'days_required' => 'required',
+            'departure_city_id' => 'sometimes|integer|min:0',
+            'destination_city_id' => 'sometimes|integer|min:0',
             'description' => 'nullable|string|min:3',
             'category' => 'required|string|in:parent,item',
-            'remunerations' => 'required|array',
+            'component' => 'required|string|max:255',
+            'selectedRemunerations' => 'sometimes|array',
         ];
     }
 
@@ -39,17 +42,18 @@ class AllowanceService extends BaseService
         return  DB::transaction(function () use ($data) {
             $allowance = parent::store($data);
 
-            if ($allowance) {
-                foreach ($data['remunerations'] as $value) {
-                    foreach ($value['grade_levels'] as $str) {
-                        $gradeLevel = $this->gradeLevelRepository->find($str);
+            if ($allowance && isset($data['selectedRemunerations']) && is_array($data['selectedRemunerations']) && count($data['selectedRemunerations']) > 0) {
+                foreach ($data['selectedRemunerations'] as $value) {
+                    foreach ($value['gradeLevels'] as $grade) {
+                        $gradeLevel = $this->gradeLevelRepository->find($grade['value']);
 
                         if ($gradeLevel) {
                             $this->remunerationRepository->create([
                                 'grade_level_id' => $gradeLevel->id,
                                 'allowance_id' => $allowance->id,
                                 'amount' => (float) $value['amount'],
-                                'start_date' => $value['start_date'],
+                                'start_date' => $value['start_date'] ?? null,
+                                'expiration_date' => $value['expiration_date'] ?? null,
                             ]);
                         }
                     }
@@ -57,6 +61,51 @@ class AllowanceService extends BaseService
             }
 
             return $allowance;
+        });
+    }
+
+    public function update(int $id, array $data)
+    {
+        return  DB::transaction(function () use ($id, $data) {
+            $allowance = parent::update($id, $data);
+
+            if ($allowance && isset($data['selectedRemunerations']) && is_array($data['selectedRemunerations']) && count($data['selectedRemunerations']) > 0) {
+                foreach ($data['selectedRemunerations'] as $value) {
+                    foreach ($value['gradeLevels'] as $grade) {
+                        $gradeLevel = $this->gradeLevelRepository->find($grade['value']);
+                        $remuneration = $this->remunerationRepository
+                            ->instanceOfModel()
+                            ->where('grade_level_id', $gradeLevel->id)
+                            ->where('allowance_id', $allowance->id)
+                            ->first();
+
+                        if ($gradeLevel && !$remuneration) {
+                            $this->remunerationRepository->create([
+                                'grade_level_id' => $gradeLevel->id,
+                                'allowance_id' => $allowance->id,
+                                'amount' => (float) $value['amount'],
+                                'start_date' => $value['start_date'] ?? null,
+                                'expiration_date' => $value['expiration_date'] ?? null,
+                            ]);
+                        }
+                    }
+                }
+            }
+
+            return $allowance;
+        });
+    }
+
+    public function destroy(int $id): bool
+    {
+        return DB::transaction(function () use ($id) {
+            $record = parent::show($id);
+
+            if ($record) {
+                $record->remunerations()->delete();
+            }
+
+            return parent::destroy($id);
         });
     }
 }

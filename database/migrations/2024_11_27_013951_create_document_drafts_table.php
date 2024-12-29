@@ -23,6 +23,8 @@ return new class extends Migration
             $table->foreign('current_workflow_stage_id')->references('id')->on('workflow_stages')->onDelete('cascade');
             $table->unsignedBigInteger('document_action_id');
             $table->foreign('document_action_id')->references('id')->on('document_actions')->onDelete('cascade');
+            $table->unsignedBigInteger('department_id');
+            $table->foreign('department_id')->references('id')->on('departments')->onDelete('cascade');
             $table->bigInteger('authorising_staff_id')->default(0);
             $table->unsignedBigInteger('document_draftable_id');
             $table->string('document_draftable_type');

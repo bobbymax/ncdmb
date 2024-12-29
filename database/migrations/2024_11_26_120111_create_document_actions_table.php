@@ -14,7 +14,13 @@ return new class extends Migration
         Schema::create('document_actions', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('label')->unique();
             $table->string('button_text')->nullable();
+            $table->string('url')->nullable();
+            $table->string('frontend_path')->nullable();
+            $table->string('icon')->nullable();
+            $table->enum('variant', ['primary', 'info', 'success', 'warning', 'danger', 'dark'])->default('primary');
+            $table->string('status')->nullable();
             $table->text('description')->nullable();
             $table->timestamps();
         });

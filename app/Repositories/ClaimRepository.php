@@ -29,12 +29,11 @@ class ClaimRepository extends BaseRepository
 
         return [
             ...$data,
-            'user_id' => $data['user_id'] && (int) $data['user_id'] > 0 ? $data['user_id'] : Auth::user()->id,
-            'department_id' => Auth::user()->department_id,
+            'user_id' => isset($data['user_id']) && (int) $data['user_id'] > 0 ? $data['user_id'] : Auth::user()->id,
+            'department_id' => isset($data['department_id']) && (int) $data['department_id'] > 0 ? $data['department_id'] : Auth::user()->department_id,
             'code' => $data['code'] !== "" ? $data['code'] : $this->generate("code", $prefix),
             'start_date' => Carbon::parse($data['start_date']),
-            'completion_date' => Carbon::parse($data['completion_date']),
-            'status' => $data['status'] && $data['status'] !== "" ? $data['status'] : ($data['type'] === 'retirement' ? 'pending' : 'registered'),
+            'end_date' => Carbon::parse($data['end_date']),
         ];
     }
 }

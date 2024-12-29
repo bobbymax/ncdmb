@@ -37,5 +37,13 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('documents', \App\Http\Controllers\DocumentController::class);
         Route::apiResource('documentDrafts', \App\Http\Controllers\DocumentDraftController::class);
         Route::apiResource('documentComments', \App\Http\Controllers\DocumentCommentController::class);
+
+        Route::apiResource('allowances', \App\Http\Controllers\AllowanceController::class);
+        Route::apiResource('remunerations', \App\Http\Controllers\RemunerationController::class);
+        Route::apiResource('claims', \App\Http\Controllers\ClaimController::class);
+        Route::apiResource('trips', \App\Http\Controllers\TripController::class);
+        Route::apiResource('expenses', \App\Http\Controllers\ExpenseController::class);
+        Route::apiResource('cities', \App\Http\Controllers\CityController::class);
+        Route::apiResource('tripCategories', \App\Http\Controllers\TripCategoryController::class);
     });
 });

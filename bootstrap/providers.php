@@ -57,5 +57,9 @@ return [
     App\Providers\DocumentServiceProvider::class,
     App\Providers\DocumentRequirementServiceProvider::class,
     App\Providers\DocumentDraftServiceProvider::class,
-    App\Providers\DocumentCommentServiceProvider::class
+    App\Providers\DocumentCommentServiceProvider::class,
+    App\Providers\StateServiceProvider::class,
+    App\Providers\CityServiceProvider::class,
+    App\Providers\TripServiceProvider::class,
+    App\Providers\TripCategoryServiceProvider::class
 ];

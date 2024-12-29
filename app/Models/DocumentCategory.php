@@ -12,4 +12,8 @@ class DocumentCategory extends Model
     protected $guarded = [''];
 
     // Model Relationships or Scope Here...
+    public function documentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(DocumentType::class, 'document_type_id');
+    }
 }

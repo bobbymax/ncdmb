@@ -15,6 +15,8 @@ class DocumentRequirementService extends BaseService
     {
         return [
             'name' => 'required|string|max:255',
+            'description' => 'nullable|string|max:255',
+            'priority' => 'required|string|in:low,medium,high',
         ];
     }
 }

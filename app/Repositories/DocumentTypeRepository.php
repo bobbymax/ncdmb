@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\DocumentType;
+use Illuminate\Support\Str;
 
 class DocumentTypeRepository extends BaseRepository
 {
@@ -12,6 +13,9 @@ class DocumentTypeRepository extends BaseRepository
 
     public function parse(array $data): array
     {
-        return $data;
+        return [
+            ...$data,
+            'label' => Str::slug($data['name']),
+        ];
     }
 }

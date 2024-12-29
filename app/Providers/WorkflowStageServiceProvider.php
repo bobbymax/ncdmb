@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Repositories\DocumentActionRepository;
+use App\Repositories\DocumentRequirementRepository;
+use App\Repositories\GroupRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\WorkflowStageRepository;
 use App\Services\WorkflowStageService;
@@ -20,8 +22,10 @@ class WorkflowStageServiceProvider extends ServiceProvider
         $this->app->bind(WorkflowStageService::class, function ($app) {
             $workflowStageRepository = $app->make(WorkflowStageRepository::class);
             $documentActionRepository = $app->make(DocumentActionRepository::class);
+            $documentRequirementRepository = $app->make(DocumentRequirementRepository::class);
+            $groupRepository = $app->make(GroupRepository::class);
 
-            return new WorkflowStageService($workflowStageRepository, $documentActionRepository);
+            return new WorkflowStageService($workflowStageRepository, $documentActionRepository, $documentRequirementRepository, $groupRepository);
         });
     }
 }

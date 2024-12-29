@@ -37,4 +37,9 @@ class Claim extends Model
     {
         return $this->hasOne(TouringAdvance::class);
     }
+
+    public function trips(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Trip::class);
+    }
 }

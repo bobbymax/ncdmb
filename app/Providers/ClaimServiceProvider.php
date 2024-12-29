@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
-
+use App\Repositories\DocumentRepository;
 use App\Repositories\ExpenseRepository;
+use App\Repositories\TripRepository;
+use App\Repositories\UploadRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\ClaimRepository;
 use App\Services\ClaimService;
@@ -21,7 +23,9 @@ class ClaimServiceProvider extends ServiceProvider
         $this->app->bind(ClaimService::class, function ($app) {
             $claimRepository = $app->make(ClaimRepository::class);
             $expenseRepository = $app->make(ExpenseRepository::class);
-            return new ClaimService($claimRepository, $expenseRepository);
+            $uploadRepository = $app->make(UploadRepository::class);
+            $documentRepository = $app->make(DocumentRepository::class);
+            return new ClaimService($claimRepository, $expenseRepository, $uploadRepository, $documentRepository);
         });
     }
 }

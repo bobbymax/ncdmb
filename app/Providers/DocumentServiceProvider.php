@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Repositories\DepartmentRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\DocumentRepository;
 use App\Services\DocumentService;
@@ -18,8 +19,9 @@ class DocumentServiceProvider extends ServiceProvider
         // Bind the DocumentRepository to DocumentService
         $this->app->bind(DocumentService::class, function ($app) {
             $documentRepository = $app->make(DocumentRepository::class);
+            $departmentRepository = $app->make(DepartmentRepository::class);
 
-            return new DocumentService($documentRepository);
+            return new DocumentService($documentRepository, $departmentRepository);
         });
     }
 }

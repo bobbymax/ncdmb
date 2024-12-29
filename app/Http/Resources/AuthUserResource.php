@@ -23,7 +23,8 @@ class AuthUserResource extends JsonResource
             'role_name' => $this->role->name,
             'role_label' => $this->role->slug,
             'pages' => $this->role->pages()->where('is_disabled', 0)->latest()->get(),
-            'default_page_id' => $this->default_page_id
+            'default_page_id' => $this->default_page_id,
+            'remunerations' => $this->gradeLevel->remunerations()->where('is_active', 1)->latest()->get(),
         ];
     }
 }

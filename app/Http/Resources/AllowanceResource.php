@@ -14,6 +14,11 @@ class AllowanceResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            ...parent::toArray($request),
+            'parent' => $this->parent_id > 0 ? $this->parent?->name : 'None',
+            'status' => $this->days_required == 1 ? 'Yes' : 'No',
+            'active' => $this->is_active == 1 ? 'Yes' : 'No',
+        ];
     }
 }

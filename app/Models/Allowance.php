@@ -17,4 +17,19 @@ class Allowance extends Model
     {
         return $this->hasMany(Remuneration::class);
     }
+
+    public function parent(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_id');
+    }
+
+    public function cities(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(City::class);
+    }
+
+    public function tripCategories(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(TripCategory::class, 'trip_categoryable');
+    }
 }

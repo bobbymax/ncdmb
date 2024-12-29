@@ -2,13 +2,17 @@
 
 namespace App\Services;
 
+use App\Repositories\DepartmentRepository;
 use App\Repositories\DocumentRepository;
+use Carbon\Carbon;
 
 class DocumentService extends BaseService
 {
-    public function __construct(DocumentRepository $documentRepository)
+    protected DepartmentRepository $departmentRepository;
+    public function __construct(DocumentRepository $documentRepository, DepartmentRepository $departmentRepository)
     {
         parent::__construct($documentRepository);
+        $this->departmentRepository = $departmentRepository;
     }
 
     public function rules($action = "store"): array

@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\DocumentCategory;
+use Illuminate\Support\Str;
 
 class DocumentCategoryRepository extends BaseRepository
 {
@@ -12,6 +13,9 @@ class DocumentCategoryRepository extends BaseRepository
 
     public function parse(array $data): array
     {
-        return $data;
+        return [
+            ...$data,
+            'label' => Str::slug($data['name']),
+        ];
     }
 }

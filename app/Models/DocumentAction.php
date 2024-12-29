@@ -14,6 +14,6 @@ class DocumentAction extends Model
     // Model Relationships or Scope Here...
     public function stages(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
-        return $this->morphedByMany(WorkflowStage::class, 'actionable');
+        return $this->morphedByMany(WorkflowStage::class, 'document_actionable');
     }
 }

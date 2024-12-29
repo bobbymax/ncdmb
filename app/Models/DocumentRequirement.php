@@ -18,8 +18,8 @@ class DocumentRequirement extends Model
         return $this->morphToMany(DocumentType::class, 'document_typeable');
     }
 
-    public function workflowStage(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function workflowStages(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
-        return $this->belongsTo(WorkflowStage::class, 'workflow_stage_id');
+        return $this->morphedByMany(WorkflowStage::class, 'document_requirementable');
     }
 }

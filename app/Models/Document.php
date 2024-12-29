@@ -28,6 +28,11 @@ class Document extends Model
         return $this->belongsTo(DocumentCategory::class);
     }
 
+    public function drafts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DocumentDraft::class);
+    }
+
     public function documentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(DocumentType::class);
