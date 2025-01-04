@@ -27,6 +27,8 @@ class PageService extends BaseService
     {
         $rules = [
             'parent_id' => 'required|integer|min:0',
+            'workflow_id' => 'sometimes|integer|min:0',
+            'document_type_id' => 'sometimes|integer|exists:document_types,id',
             'name' => 'required|string|max:255',
             'path' => 'required|string|max:255',
             'icon' => 'nullable|string|max:255',

@@ -61,5 +61,6 @@ return [
     App\Providers\StateServiceProvider::class,
     App\Providers\CityServiceProvider::class,
     App\Providers\TripServiceProvider::class,
-    App\Providers\TripCategoryServiceProvider::class
+    App\Providers\TripCategoryServiceProvider::class,
+    App\Providers\WorkflowStageCategoryServiceProvider::class
 ];

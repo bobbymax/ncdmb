@@ -13,7 +13,7 @@ class Claim extends Model
 
     // Model Relationships or Scope Here...
 
-    public function claimant(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function staff(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class);
     }
@@ -21,6 +21,11 @@ class Claim extends Model
     public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Department::class);
+    }
+
+    public function sponsor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'sponsoring_department_id');
     }
 
     public function expenditures(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -41,5 +46,10 @@ class Claim extends Model
     public function trips(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Trip::class);
+    }
+
+    public function document(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(Document::class, 'documentable');
     }
 }

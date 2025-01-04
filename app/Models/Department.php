@@ -17,6 +17,16 @@ class Department extends Model
         return $this->hasMany(User::class);
     }
 
+    public function sponsoredClaims(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Claim::class, 'sponsoring_department_id');
+    }
+
+    public function documentDrafts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DocumentDraft::class);
+    }
+
     public function advances(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(TouringAdvance::class);

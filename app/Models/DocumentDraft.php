@@ -17,6 +17,11 @@ class DocumentDraft extends Model
         return $this->hasMany(DocumentComment::class, 'document_draft_id');
     }
 
+    public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+
     public function document(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Document::class, 'document_id');

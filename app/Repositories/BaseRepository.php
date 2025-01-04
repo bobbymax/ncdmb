@@ -43,6 +43,11 @@ abstract class BaseRepository implements IRepository
         }
     }
 
+    public function insert(array $data): bool
+    {
+        return $this->model->newQuery()->insert($data);
+    }
+
     /**
      * @throws \Exception
      */
@@ -126,7 +131,7 @@ abstract class BaseRepository implements IRepository
             $record = $this->model->where($column, $operator, $value)->first();
 
             if (!$record) {
-                throw new DataNotFound();
+                return null;
             }
 
             return $record;

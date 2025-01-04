@@ -73,7 +73,7 @@ abstract class BaseService implements IService
         try {
             $record = $this->repository->find($id);
             if ($record) {
-                $record->update($data);
+                $this->repository->update($record->id, $data);
             }
             return $record;
         } catch (\Exception $e) {

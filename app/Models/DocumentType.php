@@ -26,9 +26,4 @@ class DocumentType extends Model
     {
         return $this->hasMany(Document::class);
     }
-
-    public function workflow(): \Illuminate\Database\Eloquent\Relations\HasOne
-    {
-        return $this->hasOne(Workflow::class);
-    }
 }

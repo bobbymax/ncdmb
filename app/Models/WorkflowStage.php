@@ -12,18 +12,23 @@ class WorkflowStage extends Model
     protected $guarded = [''];
 
     // Model Relationships or Scope Here...
+    public function workflowStageCategory(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(WorkflowStageCategory::class);
+    }
     public function actions(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
         return $this->morphToMany(DocumentAction::class, 'document_actionable');
-    }
-    public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Workflow::class);
     }
 
     public function group(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Group::class);
+    }
+
+    public function supportGroup(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Group::class, 'assistant_group_id');
     }
 
     public function requirements(): \Illuminate\Database\Eloquent\Relations\MorphToMany
@@ -34,5 +39,13 @@ class WorkflowStage extends Model
     public function recipients(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
         return $this->morphToMany(Group::class, 'groupable');
+    }
+
+    // Define the relationship with Workflow
+    public function workflows()
+    {
+        return $this->belongsToMany(Workflow::class, 'workflow_workflow_stage')
+            ->withPivot('order') // Include 'order' column in the relationship
+            ->withTimestamps(); // Track timestamps
     }
 }

@@ -11,14 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('workflows', function (Blueprint $table) {
+        Schema::create('workflow_stage_categories', function (Blueprint $table) {
             $table->id();
-            $table->bigInteger('document_type_id')->default(0);
-            $table->bigInteger('user_id')->default(0);
             $table->string('name');
-            $table->text('description')->nullable();
-            $table->enum('type', ['serialize', 'broadcast'])->default('serialize');
-            $table->enum('state', ['system', 'custom'])->default('system');
+            $table->string('label')->unique();
+            $table->string('icon_path')->nullable();
+            $table->longText('description')->nullable();
             $table->timestamps();
         });
     }
@@ -28,6 +26,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('workflows');
+        Schema::dropIfExists('workflow_stage_categories');
     }
 };

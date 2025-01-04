@@ -190,4 +190,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class, 'staff_id');
     }
+
+    public function groups(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(Group::class, 'groupable');
+    }
 }

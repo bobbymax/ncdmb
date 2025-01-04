@@ -22,6 +22,8 @@ return new class extends Migration
             $table->unsignedBigInteger('document_type_id');
             $table->foreign('document_type_id')->references('id')->on('document_types')->onDelete('cascade');
             $table->bigInteger('vendor_id')->default(0);
+            $table->bigInteger('document_reference_id')->default(0);
+            $table->bigInteger('document_action_id')->default(0);
             $table->unsignedBigInteger('documentable_id');
             $table->string('documentable_type');
             $table->string('title');

@@ -28,14 +28,18 @@ class WorkflowStageService extends BaseService
     public function rules($action = "store"): array
     {
         return [
-            'workflow_id' => 'required|integer|exists:workflows,id',
+            'workflow_stage_category_id' => 'required|integer|exists:workflow_stage_categories,id',
+            'assistant_group_id' => 'sometimes|integer|min:0',
+            'fallback_stage_id' => 'sometimes|integer|min:0',
             'group_id' => 'required|integer|exists:groups,id',
             'department_id' => 'required|integer|min:0',
             'name' => 'required|string|max:255',
-            'order' => 'required|integer|min:0',
             'selectedActions' => 'required|array',
             'selectedDocumentsRequired' => 'nullable|sometimes|array',
             'recipients' => 'required|array',
+            'flag' => 'required|string|in:pass,stall,fail',
+            'alert_recipients' => 'required',
+            'supporting_documents_verified' => 'required|boolean',
         ];
     }
 

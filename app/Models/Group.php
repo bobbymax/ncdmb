@@ -26,4 +26,9 @@ class Group extends Model
     {
         return $this->morphedByMany(WorkflowStage::class, 'groupable');
     }
+
+    public function users(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphedByMany(User::class, 'groupable');
+    }
 }

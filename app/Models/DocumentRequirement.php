@@ -22,4 +22,9 @@ class DocumentRequirement extends Model
     {
         return $this->morphedByMany(WorkflowStage::class, 'document_requirementable');
     }
+
+    public function categories(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphedByMany(DocumentCategory::class, 'document_requirementable');
+    }
 }

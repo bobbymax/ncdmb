@@ -9,6 +9,7 @@ use App\Interfaces\IController;
 use App\Services\BaseService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 abstract class BaseController extends Controller implements IController
@@ -82,7 +83,7 @@ abstract class BaseController extends Controller implements IController
             $updated = $this->service->update((int) $id, $request->except('id'));
             return $this->success(new $this->jsonResource($updated), $this->updated($this->name));
 
-        } catch (DataNotFound|\Exception $e) {
+        } catch (\Exception $e) {
             return $this->error(null, $e->getMessage(), 422);
         }
     }

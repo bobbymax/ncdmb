@@ -16,7 +16,8 @@ class DocumentCategoryResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'document_type' => $this->documentType->name
+            'document_type' => $this->documentType->name,
+            'workflow' => new WorkflowResource($this->workflow)
         ];
     }
 }

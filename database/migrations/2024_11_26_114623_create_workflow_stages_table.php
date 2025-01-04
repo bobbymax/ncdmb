@@ -13,13 +13,16 @@ return new class extends Migration
     {
         Schema::create('workflow_stages', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('workflow_id');
-            $table->foreign('workflow_id')->references('id')->on('workflows')->onDelete('cascade');
             $table->unsignedBigInteger('group_id');
             $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
+            $table->bigInteger('workflow_stage_category_id')->default(0);
+            $table->bigInteger('assistant_group_id')->default(0);
             $table->bigInteger('department_id')->default(0);
+            $table->bigInteger('fallback_stage_id')->default(0);
             $table->string('name');
-            $table->integer('order');
+            $table->boolean('alert_recipients')->default(false);
+            $table->boolean('supporting_documents_verified')->default(false);
+            $table->enum('flag', ['passed', 'failed', 'stalled'])->default('passed');
             $table->timestamps();
         });
     }

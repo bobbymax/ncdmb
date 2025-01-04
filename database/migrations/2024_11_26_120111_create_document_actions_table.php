@@ -16,11 +16,10 @@ return new class extends Migration
             $table->string('name');
             $table->string('label')->unique();
             $table->string('button_text')->nullable();
-            $table->string('url')->nullable();
-            $table->string('frontend_path')->nullable();
             $table->string('icon')->nullable();
             $table->enum('variant', ['primary', 'info', 'success', 'warning', 'danger', 'dark'])->default('primary');
             $table->string('status')->nullable();
+            $table->enum('process_status', ['next', 'stall', 'goto', 'end', 'complete'])->default('next');
             $table->text('description')->nullable();
             $table->timestamps();
         });

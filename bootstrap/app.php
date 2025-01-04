@@ -19,12 +19,14 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->api(append: [
             \App\Http\Middleware\Cors::class,
             \App\Http\Middleware\ForceJsonResponse::class,
+            \App\Http\Middleware\HandleFormDataPutRequests::class,
         ]);
 
         $middleware->alias([
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,
             'cors' => \App\Http\Middleware\Cors::class,
             'json.response' => \App\Http\Middleware\ForceJsonResponse::class,
+            'handle.formdata' => \App\Http\Middleware\HandleFormDataPutRequests::class,
         ]);
 
         //

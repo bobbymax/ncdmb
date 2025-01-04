@@ -22,6 +22,6 @@ class DocumentCreated
      */
     public function handle(DocumentControl $event): void
     {
-        HandleDocumentWorkflow::dispatch($event->document, $event->draftable_id, $event->draftable_type);
+        HandleDocumentWorkflow::dispatch($event->document);
     }
 }

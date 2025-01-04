@@ -29,6 +29,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('workflows', \App\Http\Controllers\WorkflowController::class);
         Route::apiResource('workflowStages', \App\Http\Controllers\WorkflowStageController::class);
         Route::apiResource('groups', \App\Http\Controllers\GroupController::class);
+        Route::apiResource('workflowStageCategories', \App\Http\Controllers\WorkflowStageCategoryController::class);
 
         Route::apiResource('documentTypes', \App\Http\Controllers\DocumentTypeController::class);
         Route::apiResource('documentRequirements', \App\Http\Controllers\DocumentRequirementController::class);
@@ -40,7 +41,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
 
         Route::apiResource('allowances', \App\Http\Controllers\AllowanceController::class);
         Route::apiResource('remunerations', \App\Http\Controllers\RemunerationController::class);
-        Route::apiResource('claims', \App\Http\Controllers\ClaimController::class);
+        Route::apiResource('claims', \App\Http\Controllers\ClaimController::class)->middleware('handle.formdata');
         Route::apiResource('trips', \App\Http\Controllers\TripController::class);
         Route::apiResource('expenses', \App\Http\Controllers\ExpenseController::class);
         Route::apiResource('cities', \App\Http\Controllers\CityController::class);

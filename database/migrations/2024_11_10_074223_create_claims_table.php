@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->unsignedBigInteger('department_id');
             $table->foreign('department_id')->references('id')->on('departments')->onDelete('cascade');
+            $table->bigInteger('document_category_id')->default(0);
             $table->string('code')->unique();
             $table->text('purpose');
             $table->date('start_date')->nullable();

@@ -12,9 +12,11 @@ class Workflow extends Model
     protected $guarded = [''];
 
     // Model Relationships or Scope Here...
-    public function workflowStages(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function workflowStages()
     {
-        return $this->hasMany(WorkflowStage::class);
+        return $this->belongsToMany(WorkflowStage::class, 'workflow_workflow_stage')
+            ->withPivot('order')
+            ->withTimestamps();
     }
 
     public function documentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo

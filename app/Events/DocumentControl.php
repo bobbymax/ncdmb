@@ -16,17 +16,13 @@ class DocumentControl
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public Document $document;
-    public int $draftable_id;
-    public string $draftable_type;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Document $document, int $draftable_id, string $draftable_type)
+    public function __construct(Document $document)
     {
         $this->document = $document;
-        $this->draftable_id = $draftable_id;
-        $this->draftable_type = $draftable_type;
     }
 
     /**
