@@ -42,10 +42,8 @@ class WorkflowStage extends Model
     }
 
     // Define the relationship with Workflow
-    public function workflows()
+    public function trackers(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->belongsToMany(Workflow::class, 'workflow_workflow_stage')
-            ->withPivot('order') // Include 'order' column in the relationship
-            ->withTimestamps(); // Track timestamps
+        return $this->hasMany(ProgressTracker::class, 'workflow_stage_id');
     }
 }

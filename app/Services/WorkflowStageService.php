@@ -37,7 +37,7 @@ class WorkflowStageService extends BaseService
             'selectedActions' => 'required|array',
             'selectedDocumentsRequired' => 'nullable|sometimes|array',
             'recipients' => 'required|array',
-            'flag' => 'required|string|in:pass,stall,fail',
+            'flag' => 'nullable|sometimes|string|in:pass,stall,fail',
             'alert_recipients' => 'required',
             'supporting_documents_verified' => 'required|boolean',
         ];

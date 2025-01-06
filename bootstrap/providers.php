@@ -62,5 +62,6 @@ return [
     App\Providers\CityServiceProvider::class,
     App\Providers\TripServiceProvider::class,
     App\Providers\TripCategoryServiceProvider::class,
-    App\Providers\WorkflowStageCategoryServiceProvider::class
+    App\Providers\WorkflowStageCategoryServiceProvider::class,
+    App\Providers\ProgressTrackerServiceProvider::class
 ];

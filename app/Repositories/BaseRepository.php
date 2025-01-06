@@ -48,6 +48,11 @@ abstract class BaseRepository implements IRepository
         return $this->model->newQuery()->insert($data);
     }
 
+    public function whereIn(string $field, array $values)
+    {
+        return $this->model->whereIn($field, $values)->get();
+    }
+
     /**
      * @throws \Exception
      */

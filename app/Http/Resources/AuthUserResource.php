@@ -14,6 +14,7 @@ class AuthUserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $pages = $this->role->pages()->where('is_disabled', 0)->latest()->get();
         return [
             'id' => $this->id,
             'name' => "{$this->firstname} {$this->surname}",
@@ -22,7 +23,7 @@ class AuthUserResource extends JsonResource
             'staff_no' => $this->staff_no,
             'role_name' => $this->role->name,
             'role_label' => $this->role->slug,
-            'pages' => $this->role->pages()->where('is_disabled', 0)->latest()->get(),
+            'pages' => PageResource::collection($pages),
             'default_page_id' => $this->default_page_id,
             'remunerations' => $this->gradeLevel->remunerations()->where('is_active', 1)->latest()->get(),
         ];

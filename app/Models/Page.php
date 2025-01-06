@@ -26,4 +26,14 @@ class Page extends Model
     {
         return $this->belongsTo(self::class, 'parent_id');
     }
+
+    public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Workflow::class, 'workflow_id');
+    }
+
+    public function documentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(DocumentType::class, 'document_type_id');
+    }
 }

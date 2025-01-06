@@ -30,6 +30,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('workflowStages', \App\Http\Controllers\WorkflowStageController::class);
         Route::apiResource('groups', \App\Http\Controllers\GroupController::class);
         Route::apiResource('workflowStageCategories', \App\Http\Controllers\WorkflowStageCategoryController::class);
+        Route::apiResource('progressTrackers', \App\Http\Controllers\ProgressTrackerController::class);
 
         Route::apiResource('documentTypes', \App\Http\Controllers\DocumentTypeController::class);
         Route::apiResource('documentRequirements', \App\Http\Controllers\DocumentRequirementController::class);

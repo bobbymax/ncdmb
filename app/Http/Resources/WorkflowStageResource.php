@@ -16,13 +16,12 @@ class WorkflowStageResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'workflow_name' => $this->workflow->name,
             'group_name' => $this->group->name,
             'support_group_name' => $this->assistant_group_id > 0 ? $this->supportGroup?->name : "",
             'actions' => $this->actions,
             'documentsRequired' => $this->requirements,
             'recipients' => $this->recipients,
-            'docType' => new DocumentTypeResource($this->docType)
+//            'docType' => new DocumentTypeResource($this->docType)
         ];
     }
 }

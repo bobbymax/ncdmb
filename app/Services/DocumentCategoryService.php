@@ -22,6 +22,7 @@ class DocumentCategoryService extends BaseService
             'name' => 'required|string|max:255',
             'description' => 'nullable|sometimes|string|min:3',
             'icon' => 'nullable|sometimes|string',
+            'selectedRequirements' => 'nullable|sometimes|array',
         ];
     }
 
@@ -30,25 +31,42 @@ class DocumentCategoryService extends BaseService
         return DB::transaction(function () use ($data) {
             $category = parent::store($data);
 
-            if ($category && !empty($data['requirements'])) {
-                // Fetch all requirements in a single query
-                $requirementIds = array_column($data['requirements'], 'value');
-                $requirements = $this->documentRequirementRepository
-                    ->whereIn('id', $requirementIds)
-                    ->get();
-
-                // Prepare new relationships
-                $newRequirements = $requirements->filter(function ($requirement) use ($category) {
-                    return !$requirement->categories->contains('id', $category->id);
-                });
-
-                // Attach new relationships
-                if ($newRequirements->isNotEmpty()) {
-                    $category->requirements()->saveMany($newRequirements);
-                }
+            if ($category && !empty($data['selectedRequirements'])) {
+                $this->updateRequirements($category, $data['selectedRequirements']);
             }
 
             return $category;
         });
+    }
+
+    public function update(int $id, array $data)
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $category = parent::update($id, $data);
+
+            if ($category && !empty($data['selectedRequirements'])) {
+                $this->updateRequirements($category, $data['selectedRequirements']);
+            }
+
+            return $category;
+        });
+    }
+
+    private function updateRequirements($category, array $requestRequirements): void
+    {
+        // Fetch all requirements in a single query
+        $requirementIds = array_column($requestRequirements, 'value');
+        $requirements = $this->documentRequirementRepository
+            ->whereIn('id', $requirementIds);
+
+        // Prepare new relationships
+        $newRequirements = $requirements->filter(function ($requirement) use ($category) {
+            return !$requirement->categories->contains('id', $category->id);
+        });
+
+        // Attach new relationships
+        if ($newRequirements->isNotEmpty()) {
+            $category->requirements()->saveMany($newRequirements);
+        }
     }
 }

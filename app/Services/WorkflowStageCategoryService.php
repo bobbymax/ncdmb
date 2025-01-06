@@ -27,7 +27,7 @@ class WorkflowStageCategoryService extends BaseService
         return [
             'name' => 'required|string|max:255',
             'description' => 'sometimes|nullable|string|min:5',
-            'icon_path_blob' => 'required|mimes:jpeg,jpg,png|max:1024',
+            'icon_path_blob' => 'nullable|sometimes|mimes:jpeg,jpg,png|max:1024',
         ];
     }
 
@@ -40,14 +40,12 @@ class WorkflowStageCategoryService extends BaseService
                 return null;
             }
 
-            if (!$data['icon_path_blob'] instanceof UploadedFile) {
-                return null;
+            if (isset($data['icon_path_blob']) && $data['icon_path_blob'] instanceof UploadedFile) {
+                $path = $this->processUpload($data['icon_path_blob'], $workflowStageCategory->id);
+
+                $workflowStageCategory->icon_path = $path;
+                $workflowStageCategory->save();
             }
-
-            $path = $this->processUpload($data['icon_path_blob'], $workflowStageCategory->id);
-
-            $workflowStageCategory->icon_path = $path;
-            $workflowStageCategory->save();
 
             return $workflowStageCategory;
         });
