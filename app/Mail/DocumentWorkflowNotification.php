@@ -3,6 +3,7 @@
 namespace App\Mail;
 
 use App\Models\DocumentDraft;
+use App\Models\ProgressTracker;
 use App\Models\WorkflowStage;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,7 +17,7 @@ class DocumentWorkflowNotification extends Mailable implements ShouldQueue
     use Queueable, SerializesModels;
 
     public DocumentDraft $draft;
-    public WorkflowStage $stage;
+    public ProgressTracker $progressTracker;
     public string $mode;
 
     /**
@@ -24,11 +25,11 @@ class DocumentWorkflowNotification extends Mailable implements ShouldQueue
      */
     public function __construct(
         DocumentDraft $draft,
-        WorkflowStage $stage,
+        ProgressTracker $progressTracker,
         string $mode = "next"
     ) {
         $this->draft = $draft;
-        $this->stage = $stage;
+        $this->progressTracker = $progressTracker;
         $this->mode = $mode;
     }
 

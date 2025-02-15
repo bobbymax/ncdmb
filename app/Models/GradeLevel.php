@@ -27,4 +27,9 @@ class GradeLevel extends Model
     {
         return $this->morphToMany(Hotel::class, 'hotelable');
     }
+
+    public function carder(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Carder::class, 'carder_id');
+    }
 }

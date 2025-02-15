@@ -22,6 +22,6 @@ class DocumentCreated
      */
     public function handle(DocumentControl $event): void
     {
-        HandleDocumentWorkflow::dispatch($event->document);
+        HandleDocumentWorkflow::dispatch($event->user, $event->document, $event->action, $event->targetStageOrder, $event->status, $event->signature);
     }
 }

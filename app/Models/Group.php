@@ -12,9 +12,9 @@ class Group extends Model
     protected $guarded = [''];
 
     // Model Relationships or Scope Here...
-    public function workflowStages(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function workflowStages(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
-        return $this->hasMany(WorkflowStage::class);
+        return $this->morphedByMany(WorkflowStage::class, 'groupable');
     }
 
     public function documentDrafts(): \Illuminate\Database\Eloquent\Relations\HasMany

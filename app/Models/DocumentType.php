@@ -27,8 +27,23 @@ class DocumentType extends Model
         return $this->hasMany(Document::class);
     }
 
+    public function drafts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DocumentDraft::class);
+    }
+
     public function pages(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Page::class, 'workflow_id');
+    }
+
+    public function stages(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(WorkflowStage::class, 'document_type_id');
+    }
+
+    public function template(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(FileTemplate::class, 'file_template_id');
     }
 }

@@ -22,6 +22,11 @@ class DocumentCategory extends Model
         return $this->belongsTo(Workflow::class, 'workflow_id');
     }
 
+    public function stages(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(WorkflowStage::class, 'document_category_id');
+    }
+
     public function requirements(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
         return $this->morphToMany(DocumentRequirement::class, 'document_requirementable');

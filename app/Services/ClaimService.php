@@ -4,6 +4,7 @@ namespace App\Services;
 
 
 use App\Events\DocumentControl;
+use App\Events\FirstDraft;
 use App\Models\Claim;
 use App\Models\Document;
 use App\Repositories\ClaimRepository;
@@ -54,6 +55,8 @@ class ClaimService extends BaseService
             'workflow_id' => 'required|integer|exists:workflows,id',
             'document_category_id' => 'required|integer|exists:document_categories,id',
             'document_type_id' => 'required|integer|exists:document_types,id',
+            'claimant_signature' => 'sometimes|nullable|string',
+            'approval_signature' => 'sometimes|nullable|string',
         ];
     }
 
@@ -77,7 +80,7 @@ class ClaimService extends BaseService
 
             if ($document) {
                 $this->processSupportingDocuments($data['supporting_documents'] ?? [], $document->id);
-                DocumentControl::dispatch($document);
+                FirstDraft::dispatch($document, Auth::user());
             }
 
             return $claim;
@@ -87,7 +90,7 @@ class ClaimService extends BaseService
     /**
      * @throws \Exception
      */
-    public function update(int $id, array $data)
+    public function update(int $id, array $data, $parsed = true)
     {
         return DB::transaction(function () use ($id, $data) {
             $claim = parent::update($id, $data);
@@ -101,6 +104,18 @@ class ClaimService extends BaseService
             }
 
             $this->processExpenses($data['expenses'] ?? '[]', $claim->id, true);
+
+            if (!empty($data['claimant_signature'])) {
+                $dataUrl = $data['claimant_signature'];
+                $path = $this->uploadRepository->uploadSignature($dataUrl);
+                $claim->update(['claimant_signature' => $path]);
+            }
+
+            if (!empty($data['approval_signature'])) {
+                $dataUrl = $data['approval_signature'];
+                $path = $this->uploadRepository->uploadSignature($dataUrl);
+                $claim->update(['approval_signature' => $path]);
+            }
 
             if (isset($data['deletedExpenses'])) {
                 $this->deleteExpenses($data['deletedExpenses']);
@@ -117,6 +132,28 @@ class ClaimService extends BaseService
         });
     }
 
+    public function manipulate(int $id, array $data)
+    {
+        return DB::transaction(function () use ($id, $data) {
+            $claim = parent::update($id, $data);
+
+            if (!$claim) {
+                return null;
+            }
+
+            $document = $claim->document;
+
+            if ($data['status'] === "registered" && $document) {
+                $dataUrl = $data['claimant_signature'];
+                $filePath = $this->uploadRepository->uploadSignature($dataUrl);
+//                DocumentControl::dispatch($document, 'first', 1, $data['status'], $filePath);
+                $this->uploadRepository->removeFile($filePath);
+            }
+
+            return $claim;
+        });
+    }
+
     /**
      * @throws ValidationException
      * @throws \Exception
@@ -127,7 +164,7 @@ class ClaimService extends BaseService
             $expenses = $this->validateAndParseJson($expensesJson, 'Invalid expenses format.');
             Log::info('Data Formatted First: ', $expenses);
 
-            foreach ($expenses as $expenseData) {
+            foreach ($expenses as &$expenseData) {
                 if ($isUpdate) {
                     $existingExpense = $this->expenseRepository->getRecordByColumn('identifier', $expenseData['identifier']);
                     if ($existingExpense) {
@@ -199,7 +236,6 @@ class ClaimService extends BaseService
         foreach ($deletedExpenses as $deletedExpense) {
             $expense = $this->expenseRepository->find($deletedExpense['id']);
             if ($expense) {
-//                $this->ensureAuthorized('delete', $expense);
                 $expense->delete();
             }
         }
@@ -215,17 +251,9 @@ class ClaimService extends BaseService
         foreach ($deletedUploads as $deletedUpload) {
             $upload = $this->uploadRepository->find($deletedUpload['id']);
             if ($upload && Storage::disk('public')->exists($upload->path)) {
-//                $this->ensureAuthorized('delete', $upload);
                 Storage::disk('public')->delete($upload->path);
                 $upload->delete();
             }
-        }
-    }
-
-    protected function ensureAuthorized(string $ability, $model): void
-    {
-        if (!Gate::allows($ability, $model)) {
-            abort(403, 'You are not authorized to perform this action.');
         }
     }
 
@@ -243,9 +271,13 @@ class ClaimService extends BaseService
     {
         return [
             'user_id' => Auth::id(),
+            'workflow_id' => $data['workflow_id'],
             'department_id' => $data['sponsoring_department_id'],
             'document_category_id' => $data['document_category_id'],
+            'document_reference_id' => $data['document_reference_id'] ?? 0,
             'document_type_id' => $data['document_type_id'],
+            'document_action_id' => $data['document_action_id'] ?? 0,
+            'vendor_id' => $data['vendor_id'] ?? 0,
             'title' => $claim->title,
             'description' => $claim->title,
             'documentable_id' => $claim->id,

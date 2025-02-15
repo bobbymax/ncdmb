@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 
@@ -56,6 +57,10 @@ class AuthApiController extends BaseController
 
     public function login(Request $request): \Illuminate\Http\JsonResponse
     {
+        $oldSession = Session::getId();
+
+        Log::info('Old Session details ' . $oldSession);
+
         $validation = Validator::make($request->all(), [
             'username' => 'required|string|max:255',
             'password' => 'required'
@@ -76,29 +81,17 @@ class AuthApiController extends BaseController
         if (!Auth::attempt($credentials)) {
             return $this->error(["username" => $credentials[$username], "password" => $credentials['password']], 'Invalid Credentials', 401);
         }
+//        $user = Auth::user();
+//        $token = $user->createToken('auth_token')->plainTextToken;
+        $request->session()->regenerate();
+        Session::setId($oldSession);
 
-        Auth::user()->tokens()->delete();
-
-        $user = Auth::user();
-
-        $token = $user->createToken('authToken')->plainTextToken;
-        $refreshToken = Hash::make(uniqid());
-
-        $user->update(['refresh_token' => $refreshToken]);
-
-
-        return $this->success([
-            'token' => $token,
-            'refresh_token' => $refreshToken,
-            'staff' => new $this->jsonResource(Auth::user())
-        ], 'You have logged in successfully!!');
+//        return $this->authWithCookie($user, $token);
+        return $this->success(null, 'Logged in successfully');
     }
 
     public function logout(): \Illuminate\Http\JsonResponse
     {
-        $user = Auth::user();
-        $user->tokens()->delete();
-        $user->update(['refresh_token' => null]);
         Session::flush();
         Session::regenerate();
         Cookie::queue(Cookie::forget('staff_portal_session'));

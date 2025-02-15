@@ -11,19 +11,28 @@ class DocumentAction extends Model
 
     protected $guarded = [''];
 
-    // Model Relationships or Scope Here...
-    public function stages(): \Illuminate\Database\Eloquent\Relations\MorphToMany
-    {
-        return $this->morphedByMany(WorkflowStage::class, 'document_actionable');
-    }
-
-    public function workflowStageCategory(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(WorkflowStageCategory::class, 'workflow_stage_category_id');
-    }
-
     public function documents(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Document::class, 'document_action_id');
+    }
+
+    public function trackers(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphedByMany(ProgressTracker::class , 'document_actionable');
+    }
+
+    public function updates(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DocumentUpdate::class);
+    }
+
+    public function carder(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Carder::class, 'carder_id');
+    }
+
+    public function workflowStages(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphedByMany(WorkflowStage::class, 'document_actionable');
     }
 }

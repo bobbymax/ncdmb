@@ -28,6 +28,14 @@ trait ApiResponse
         ], $code);
     }
 
+    protected function authWithCookie($user, $token): \Illuminate\Http\JsonResponse
+    {
+        return response()->json([
+            'user' => $user,
+            'message' => 'Logged in successfully!!'
+        ])->cookie('auth_token', $token, 60 * 24, '/', '.portal.test', true, true, false, 'None');
+    }
+
     protected function error($data, $message, $code): \Illuminate\Http\JsonResponse
     {
         return response()->json([

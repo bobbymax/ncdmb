@@ -15,9 +15,8 @@ class LocationService extends BaseService
     public function rules($action = "store"): array
     {
         return [
+            'city_id' => 'required|integer|exists:cities,id',
             'name' => 'required|string|max:255',
-            'state' => 'required|string|max:255',
-            'city' => 'required|string|max:255',
             'address' => 'nullable|string|min:3',
         ];
     }

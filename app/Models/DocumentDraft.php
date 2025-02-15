@@ -22,9 +22,19 @@ class DocumentDraft extends Model
         return $this->belongsTo(Department::class, 'department_id');
     }
 
+    public function updates(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DocumentUpdate::class);
+    }
+
     public function document(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Document::class, 'document_id');
+    }
+
+    public function documentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(DocumentType::class, 'document_type_id');
     }
 
     public function group(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -55,5 +65,10 @@ class DocumentDraft extends Model
     public function documentDraftable(): \Illuminate\Database\Eloquent\Relations\MorphTo
     {
         return $this->morphTo();
+    }
+
+    public function tracker(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ProgressTracker::class , 'progress_tracker_id');
     }
 }

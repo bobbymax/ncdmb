@@ -12,38 +12,40 @@ class WorkflowStage extends Model
     protected $guarded = [''];
 
     // Model Relationships or Scope Here...
+
     public function workflowStageCategory(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(WorkflowStageCategory::class);
     }
-    public function actions(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+
+    public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->morphToMany(DocumentAction::class, 'document_actionable');
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
-    public function group(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Group::class);
-    }
-
-    public function supportGroup(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Group::class, 'assistant_group_id');
-    }
-
-    public function requirements(): \Illuminate\Database\Eloquent\Relations\MorphToMany
-    {
-        return $this->morphToMany(DocumentRequirement::class, 'document_requirementable');
-    }
-
-    public function recipients(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    public function groups(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
         return $this->morphToMany(Group::class, 'groupable');
+    }
+
+    public function fallback(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(self::class, 'fallback_stage_id');
     }
 
     // Define the relationship with Workflow
     public function trackers(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(ProgressTracker::class, 'workflow_stage_id');
+    }
+
+    public function actions(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(DocumentAction::class, 'document_actionable');
+    }
+
+    public function recipients(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(MailingList::class, 'mailing_listable');
     }
 }

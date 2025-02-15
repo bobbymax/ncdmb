@@ -18,12 +18,14 @@ class AuthUserResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => "{$this->firstname} {$this->surname}",
+            'department_id' => $this->department_id,
             'grade_level' => $this->gradeLevel->key,
             'grade_level_id' => $this->gradeLevel->id,
             'staff_no' => $this->staff_no,
             'role_name' => $this->role->name,
             'role_label' => $this->role->slug,
             'pages' => PageResource::collection($pages),
+            'groups' => GroupResource::collection($this->groups),
             'default_page_id' => $this->default_page_id,
             'remunerations' => $this->gradeLevel->remunerations()->where('is_active', 1)->latest()->get(),
         ];

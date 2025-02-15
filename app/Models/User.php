@@ -66,9 +66,19 @@ class User extends Authenticatable
         return $this->hasMany(ProjectContract::class);
     }
 
+    public function claims(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Claim::class);
+    }
+
     public function documentComments(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(DocumentComment::class);
+    }
+
+    public function documentUpdates(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DocumentUpdate::class);
     }
 
     public function expenditures(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -185,7 +195,6 @@ class User extends Authenticatable
     {
         return $this->hasMany(Transaction::class);
     }
-
     public function paymentsReceived(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Transaction::class, 'staff_id');

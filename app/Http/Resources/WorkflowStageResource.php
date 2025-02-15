@@ -4,6 +4,7 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Storage;
 
 class WorkflowStageResource extends JsonResource
 {
@@ -16,12 +17,11 @@ class WorkflowStageResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'group_name' => $this->group->name,
-            'support_group_name' => $this->assistant_group_id > 0 ? $this->supportGroup?->name : "",
-            'actions' => $this->actions,
-            'documentsRequired' => $this->requirements,
-            'recipients' => $this->recipients,
-//            'docType' => new DocumentTypeResource($this->docType)
+            'stage_category' => new WorkflowStageCategoryResource($this->workflowStageCategory),
+            'groups' => GroupResource::collection($this->groups),
+            'actions' => DocumentActionResource::collection($this->actions),
+            'fallback' => $this->fallback,
+            ''
         ];
     }
 }

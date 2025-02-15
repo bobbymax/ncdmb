@@ -25,4 +25,9 @@ class ClaimRepository extends BaseRepository
             'department_id' => isset($data['department_id']) && (int) $data['department_id'] > 0 ? $data['department_id'] : Auth::user()->department_id,
         ];
     }
+
+    public function all()
+    {
+        return $this->instanceOfModel()->where('user_id', Auth::id())->latest()->get();
+    }
 }

@@ -13,9 +13,8 @@ class ProgressTrackerRepository extends BaseRepository
 
     public function parse(array $data): array
     {
-        return [
-            ...$data,
-            'date_completed' => isset($data['date_completed']) ? Carbon::parse($data['date_completed']) : null,
-        ];
+        unset($data['actions']);
+        unset($data['recipients']);
+        return $data;
     }
 }

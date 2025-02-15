@@ -17,6 +17,7 @@ class GradeLevelService extends BaseService
             'key' => 'required|string',
             'name' => 'required|string|max:255',
             'type' => 'required|in:system,board',
+            'carder_id' => 'required|exists:carders,id',
         ];
 
         if ($action == "store") {

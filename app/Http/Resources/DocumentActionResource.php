@@ -14,9 +14,6 @@ class DocumentActionResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
-            ...parent::toArray($request),
-            'stage_category' => $this->workflowStageCategory->name
-        ];
+        return parent::toArray($request);
     }
 }

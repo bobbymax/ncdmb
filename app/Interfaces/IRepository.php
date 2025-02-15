@@ -8,7 +8,7 @@ interface IRepository
     public function all();
     public function find($id);
     public function create(array $data);
-    public function update(int $id, array $data);
+    public function update(int $id, array $data, $parse = true);
     public function destroy($id);
     public function generate($column, $prefix);
 }

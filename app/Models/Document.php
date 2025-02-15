@@ -15,7 +15,7 @@ class Document extends Model
 
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function documentable(): \Illuminate\Database\Eloquent\Relations\MorphTo
@@ -56,6 +56,11 @@ class Document extends Model
     public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Workflow::class);
+    }
+
+    public function current_tracker(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ProgressTracker::class , 'progress_tracker_id');
     }
 
     public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo

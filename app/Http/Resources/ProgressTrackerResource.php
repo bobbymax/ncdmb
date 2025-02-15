@@ -16,8 +16,10 @@ class ProgressTrackerResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
+            'stage' => new WorkflowStageResource($this->stage),
             'workflow' => $this->workflow->name,
-            'stage' => $this->stage->name
+            'trackerActions' => $this->actions,
+            'trackerRecipients' => $this->recipients
         ];
     }
 }

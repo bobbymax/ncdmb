@@ -11,4 +11,6 @@ class DocumentController extends BaseController
     public function __construct(DocumentService $documentService) {
         parent::__construct($documentService, 'Document', DocumentResource::class);
     }
+
+    //
 }

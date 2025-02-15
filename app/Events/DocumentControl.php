@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Document;
+use App\Models\User;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PresenceChannel;
@@ -15,14 +16,26 @@ class DocumentControl
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
+    public User $user;
     public Document $document;
+    public string $action;
+    public ?int $targetStageOrder;
+    public string $status;
 
     /**
      * Create a new event instance.
      */
-    public function __construct(Document $document)
-    {
+    public function __construct(
+        Document $document,
+        string $action,
+        ?int $targetStageOrder = null,
+        string $status = ""
+    ) {
+        $this->user = $document->user;
         $this->document = $document;
+        $this->action = $action;
+        $this->targetStageOrder = $targetStageOrder;
+        $this->status = $status;
     }
 
     /**

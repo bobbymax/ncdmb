@@ -121,4 +121,9 @@ class Department extends Model
     {
         return $this->belongsTo(self::class, 'parentId');
     }
+
+    public function children(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(self::class, 'parentId');
+    }
 }

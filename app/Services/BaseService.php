@@ -68,17 +68,25 @@ abstract class BaseService implements IService
         }
     }
 
-    public function update(int $id, array $data)
+    public function update(int $id, array $data, $parsed = true)
     {
         try {
             $record = $this->repository->find($id);
             if ($record) {
-                $this->repository->update($record->id, $data);
+                $this->repository->update($record->id, $data, $parsed);
             }
             return $record;
         } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function reform(int $id, array $data)
+    {
+        return $this->update($id, $data);
     }
 
     public function destroy(int $id): bool

@@ -97,7 +97,7 @@ class ExpenditureService extends BaseService
         });
     }
 
-    public function destroy(int $id)
+    public function destroy(int $id): bool
     {
         return DB::transaction(function () use ($id) {
 

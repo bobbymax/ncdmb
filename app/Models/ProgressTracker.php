@@ -21,4 +21,14 @@ class ProgressTracker extends Model
     {
         return $this->belongsTo(WorkflowStage::class, 'workflow_stage_id');
     }
+
+    public function actions(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(DocumentAction::class, 'document_actionable');
+    }
+
+    public function recipients(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(MailingList::class, 'mailing_listable');
+    }
 }

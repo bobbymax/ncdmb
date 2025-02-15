@@ -12,8 +12,6 @@ class WorkflowStageRepository extends BaseRepository
 
     public function parse(array $data): array
     {
-        unset($data['selectedDocumentsRequired']);
-        unset($data['selectedActions']);
         return $data;
     }
 }

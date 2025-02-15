@@ -43,6 +43,11 @@ abstract class BaseRepository implements IRepository
         }
     }
 
+    public function findMany(array $ids)
+    {
+        return $this->model->whereIn('id', $ids)->get();
+    }
+
     public function insert(array $data): bool
     {
         return $this->model->newQuery()->insert($data);
@@ -71,8 +76,9 @@ abstract class BaseRepository implements IRepository
         }
     }
 
-    public function update(int $id, array $data)
+    public function update(int $id, array $data, $parse = true)
     {
+        $parsedData = $parse === true ? $this->parse($data) : $data;
         try {
             $record = $this->find($id);
 
@@ -80,7 +86,7 @@ abstract class BaseRepository implements IRepository
                 throw new DataNotFound();
             }
 
-            $record->update($this->parse($data));
+            $record->update($parsedData);
 
             return $record;
         } catch (\Exception $e) {

@@ -49,7 +49,7 @@ class ReserveService extends BaseService
         return $rules;
     }
 
-    public function update(int $id, array $data)
+    public function update(int $id, array $data, $parsed = true)
     {
         return DB::transaction(function () use ($id, $data) {
             $reserve = parent::update($id, $data);

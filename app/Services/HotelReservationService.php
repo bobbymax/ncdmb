@@ -64,7 +64,7 @@ class HotelReservationService extends BaseService
         });
     }
 
-    public function update(int $id, array $data)
+    public function update(int $id, array $data, $parsed = true)
     {
         return DB::transaction(function () use ($id, $data) {
             $hotelReservation = parent::update($id, $data);

@@ -39,7 +39,7 @@ class DocumentCategoryService extends BaseService
         });
     }
 
-    public function update(int $id, array $data)
+    public function update(int $id, array $data, $parsed = true)
     {
         return DB::transaction(function () use ($id, $data) {
             $category = parent::update($id, $data);

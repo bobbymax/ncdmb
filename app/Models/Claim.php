@@ -15,12 +15,12 @@ class Claim extends Model
 
     public function staff(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(Department::class);
+        return $this->belongsTo(Department::class, 'department_id');
     }
 
     public function sponsor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
