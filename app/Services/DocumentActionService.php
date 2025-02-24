@@ -21,6 +21,7 @@ class DocumentActionService extends BaseService
             'variant' => 'nullable|string|in:primary,info,success,warning,danger,dark',
             'component' => 'sometimes|string|max:255',
             'mode' => 'nullable|string|in:store,update,destroy',
+            'category' => 'required|string|in:signature,comment,template,request,resource',
             'state' => 'nullable|string|in:conditional,fixed',
             'has_update' => 'nullable|boolean',
             'description' => 'nullable|sometimes|string|min:3',

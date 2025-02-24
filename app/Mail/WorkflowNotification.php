@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use App\Models\Document;
 use App\Models\DocumentAction;
+use App\Models\DocumentDraft;
 use App\Models\ProgressTracker;
 use App\Models\User;
 use Illuminate\Bus\Queueable;
@@ -18,6 +19,7 @@ class WorkflowNotification extends Mailable
     use Queueable, SerializesModels;
 
     public Document $document;
+    public DocumentDraft $lastDraft;
     public DocumentAction $documentAction;
     public ProgressTracker $progressTracker;
     public User $user;
@@ -35,6 +37,7 @@ class WorkflowNotification extends Mailable
         $this->documentAction = $documentAction;
         $this->progressTracker = $progressTracker;
         $this->user = $user;
+        $this->lastDraft = $document->drafts()->latest()->first();
     }
 
     /**

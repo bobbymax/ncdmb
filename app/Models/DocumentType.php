@@ -46,4 +46,9 @@ class DocumentType extends Model
     {
         return $this->belongsTo(FileTemplate::class, 'file_template_id');
     }
+
+    public function trackers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProgressTracker::class);
+    }
 }

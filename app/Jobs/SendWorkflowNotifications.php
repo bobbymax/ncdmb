@@ -22,8 +22,7 @@ class SendWorkflowNotifications implements ShouldQueue
 
     protected Document $document;
     protected DocumentAction $documentAction;
-    protected ProgressTracker $nextTracker;
-    protected ProgressTracker $previousTracker;
+    protected ProgressTracker $tracker;
     protected int $userId;
 
     /**
@@ -32,14 +31,12 @@ class SendWorkflowNotifications implements ShouldQueue
     public function __construct(
         Document $document,
         DocumentAction $documentAction,
-        ProgressTracker $nextTracker,
-        ProgressTracker $previousTracker,
+        ProgressTracker $tracker,
         int $userId
     ) {
         $this->document = $document;
         $this->documentAction = $documentAction;
-        $this->nextTracker = $nextTracker;
-        $this->previousTracker = $previousTracker;
+        $this->tracker = $tracker;
         $this->userId = $userId;
     }
 
@@ -56,25 +53,13 @@ class SendWorkflowNotifications implements ShouldQueue
                 return;
             }
 
-            $newTrackerRecipients = $this->getEmails($this->nextTracker->recipients);
-            $previousTrackerRecipients = $this->getEmails($this->previousTracker->recipients);
+            $recipients = $this->getEmails($this->tracker->recipients);
 
-            foreach($newTrackerRecipients as $email) {
+            foreach($recipients as $email) {
                 Mail::to($email)->queue(new WorkflowNotification(
                     $this->document,
                     $this->documentAction,
-                    $this->nextTracker,
-                    $user
-                ));
-
-                Log::info("Workflow notification sent to: {$email}");
-            }
-
-            foreach($previousTrackerRecipients as $email) {
-                Mail::to($email)->queue(new WorkflowNotification(
-                    $this->document,
-                    $this->documentAction,
-                    $this->previousTracker,
+                    $this->tracker,
                     $user
                 ));
 

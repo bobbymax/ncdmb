@@ -20,7 +20,7 @@ class RemunerationResource extends JsonResource
             ...parent::toArray($request),
             'allowance' => $this->allowance->name,
             'grade_level' => $this->gradeLevel->key,
-            'amount_formatted' => Formatter::currency($this->amount),
+            'amount_formatted' => Formatter::currency($this->amount, $this->currency),
             'expiration_date_formatted' => $this->expiration_date ? Carbon::parse($this->expiration_date)->diffForHumans() : 'N/A',
         ];
     }

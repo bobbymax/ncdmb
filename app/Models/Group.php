@@ -22,13 +22,18 @@ class Group extends Model
         return $this->hasMany(DocumentDraft::class);
     }
 
-    public function recipients(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    public function recipients(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->morphedByMany(WorkflowStage::class, 'groupable');
+        return $this->hasMany(MailingList::class);
     }
 
     public function users(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
         return $this->morphedByMany(User::class, 'groupable');
+    }
+
+    public function trackers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProgressTracker::class);
     }
 }

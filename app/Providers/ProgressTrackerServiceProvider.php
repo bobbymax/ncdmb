@@ -20,10 +20,10 @@ class ProgressTrackerServiceProvider extends ServiceProvider
         // Bind the ProgressTrackerRepository to ProgressTrackerService
         $this->app->bind(ProgressTrackerService::class, function ($app) {
             $progressTrackerRepository = $app->make(ProgressTrackerRepository::class);
-            $mailingListRepository = $app->make(MailingListRepository::class);
             $documentActionRepository = $app->make(DocumentActionRepository::class);
+            $mailingListRepository = $app->make(MailingListRepository::class);
 
-            return new ProgressTrackerService($progressTrackerRepository, $mailingListRepository, $documentActionRepository);
+            return new ProgressTrackerService($progressTrackerRepository, $documentActionRepository, $mailingListRepository);
         });
     }
 }

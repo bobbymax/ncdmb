@@ -9,100 +9,141 @@ use Illuminate\Support\Facades\DB;
 
 class ProgressTrackerService extends BaseService
 {
-    protected MailingListRepository $mailingListRepository;
     protected DocumentActionRepository $documentActionRepository;
+    protected MailingListRepository $mailingListRepository;
+
     public function __construct(
         ProgressTrackerRepository $progressTrackerRepository,
-        MailingListRepository $mailingListRepository,
-        DocumentActionRepository $documentActionRepository
+        DocumentActionRepository $documentActionRepository,
+        MailingListRepository $mailingListRepository
     ) {
         parent::__construct($progressTrackerRepository);
-        $this->mailingListRepository = $mailingListRepository;
         $this->documentActionRepository = $documentActionRepository;
+        $this->mailingListRepository = $mailingListRepository;
     }
 
+    /**
+     * Define validation rules for storing/updating a progress tracker.
+     *
+     * @param string $action
+     * @return array
+     */
     public function rules($action = "store"): array
     {
         return [
-            'workflow_id' => 'required|integer|exists:workflows,id',
-            'stages' => 'required|array',
-            'stages.*.workflow_stage_id' => 'required|integer|exists:workflow_stages,id',
-            'stages.*.fallback_to_stage_id' => [
-                'sometimes',
-                'integer',
-                'min:0',
-                function ($attribute, $value, $fail) {
-                    if ($value > 0 && !DB::table('workflow_stages')->where('id', $value)->exists()) {
-                        $fail('The selected fallback stage does not exist in our database.');
-                    }
-                }
-            ],
-            'stages.*.return_to_stage_id' => [
-                'sometimes',
-                'integer',
-                'min:0',
-                function ($attribute, $value, $fail) {
-                    if ($value > 0 && !DB::table('workflow_stages')->where('id', $value)->exists()) {
-                        $fail('The selected response stage does not exist in our database.');
-                    }
-                }
-            ],
-            'stages.*.document_type_id' => 'required|integer|min:1|exists:document_types,id',
-            'stages.*.order' => 'required|integer|between:1,100',
-            'stages.*.actions' => 'required|array',
-            'stages.*.recipients' => 'required|array',
+            'workflow_id' => ['required', 'integer', 'exists:workflows,id'],
+            'stages' => ['required', 'array'],
+            'stages.*.identifier' => ['required', 'string', 'max:36'],
+            'stages.*.workflow_stage_id' => ['required', 'integer', 'exists:workflow_stages,id'],
+            'stages.*.group_id' => ['required', 'integer', 'min:1', 'exists:groups,id'],
+            'stages.*.department_id' => $this->departmentValidationRule(),
+            'stages.*.carder_id' => ['required', 'integer', 'min:1', 'exists:carders,id'],
+            'stages.*.document_type_id' => ['required', 'integer', 'min:1', 'exists:document_types,id'],
+            'stages.*.order' => ['required', 'integer', 'between:1,100'],
+            'stages.*.actions' => ['required', 'array'],
+            'stages.*.recipients' => ['required', 'array'],
         ];
     }
 
+    /**
+     * Handles custom validation for department ID.
+     *
+     * @return array
+     */
+    private function departmentValidationRule(): array
+    {
+        return [
+            'sometimes',
+            'integer',
+            'min:0',
+            function ($attribute, $value, $fail) {
+                if ($value > 0 && !DB::table('departments')->where('id', $value)->exists()) {
+                    $fail('The selected department does not exist in our database.');
+                }
+            }
+        ];
+    }
+
+    /**
+     * Store a progress tracker record along with actions and recipients.
+     *
+     * @param array $data
+     * @return mixed
+     */
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {
-            if (!isset($data['stages'])) {
+            if (empty($data['stages'])) {
                 return null;
             }
 
             $trackers = collect();
 
             foreach ($data['stages'] as $stage) {
-                $fill = [
-                    'workflow_id' => $data['workflow_id'],
-                    ...$stage
-                ];
+                $progressLine = $this->createProgressTracker($data['workflow_id'], $stage);
 
-                $progressLine = parent::store($fill);
+                $this->attachRecipients($progressLine, $stage['recipients'] ?? []);
+                $this->attachActions($progressLine, $stage['actions'] ?? []);
+
                 $trackers->push($progressLine);
             }
-
-            $this->batchAddTrackersActions($trackers, $data['stages']);
-            $this->batchAddTrackersRecipients($trackers, $data['stages']);
 
             return $trackers->first();
         });
     }
 
-    protected function batchAddTrackersActions($trackers, array $stages): void
+    /**
+     * Create a new progress tracker record.
+     *
+     * @param int $workflowId
+     * @param array $stage
+     * @return mixed
+     */
+    private function createProgressTracker(int $workflowId, array $stage): mixed
     {
-        $actionIds = collect($stages)->flatMap(fn($stage) => collect($stage['actions'])->pluck('value'))->unique();
-        $actions = $this->documentActionRepository->findMany($actionIds->toArray())->keyBy('id');
+        return parent::store([
+            'workflow_id' => $workflowId,
+            ...$stage,
+        ]);
+    }
 
-        foreach ($trackers as $index => $progressTracker) {
-            foreach ($stages[$index]['actions'] as $selection) {
-                if ($actions->has($selection['value'])) {
-                    $progressTracker->actions()->attach($actions[$selection['value']]);
+    /**
+     * Attach recipients to the progress tracker.
+     *
+     * @param mixed $progressLine
+     * @param array $recipients
+     * @return void
+     */
+    private function attachRecipients($progressLine, array $recipients): void
+    {
+        if (!empty($recipients)) {
+            $existingRecipientIds = $progressLine->recipients->pluck('id')->toArray();
+
+            foreach ($recipients as $obj) {
+                $recipient = $this->mailingListRepository->find($obj['value']);
+                if ($recipient && !in_array($recipient->id, $existingRecipientIds)) {
+                    $progressLine->recipients()->save($recipient);
                 }
             }
         }
     }
 
-    protected function batchAddTrackersRecipients($trackers, array $stages): void
+    /**
+     * Attach actions to the progress tracker.
+     *
+     * @param mixed $progressLine
+     * @param array $actions
+     * @return void
+     */
+    private function attachActions($progressLine, array $actions): void
     {
-        $recipientIds = collect($stages)->flatMap(fn($stage) => collect($stage['recipients'])->pluck('value'))->unique();
-        $recipients = $this->mailingListRepository->findMany($recipientIds->toArray())->keyBy('id');
+        if (!empty($actions)) {
+            $existingActionIds = $progressLine->actions->pluck('id')->toArray();
 
-        foreach ($trackers as $index => $progressTracker) {
-            foreach ($stages[$index]['recipients'] as $selection) {
-                if ($recipients->has($selection['value'])) {
-                    $progressTracker->recipients()->attach($recipients[$selection['value']]);
+            foreach ($actions as $obj) {
+                $action = $this->documentActionRepository->find($obj['value']);
+                if ($action && !in_array($action->id, $existingActionIds)) {
+                    $progressLine->actions()->save($action);
                 }
             }
         }

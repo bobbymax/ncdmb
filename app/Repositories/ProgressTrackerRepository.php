@@ -13,8 +13,6 @@ class ProgressTrackerRepository extends BaseRepository
 
     public function parse(array $data): array
     {
-        unset($data['actions']);
-        unset($data['recipients']);
         return $data;
     }
 }

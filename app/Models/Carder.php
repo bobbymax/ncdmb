@@ -22,4 +22,9 @@ class Carder extends Model
     {
         return $this->hasMany(DocumentAction::class);
     }
+
+    public function trackers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProgressTracker::class);
+    }
 }

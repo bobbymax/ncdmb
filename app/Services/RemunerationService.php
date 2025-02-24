@@ -18,6 +18,7 @@ class RemunerationService extends BaseService
             'allowance_id' => 'required|integer|exists:allowances,id',
             'grade_level_id' => 'required|integer|exists:grade_levels,id',
             'amount' => 'required|numeric|min:1',
+            'currency' => 'required|string|in:NGN,GBP,USD,EUR',
             'start_date' => 'nullable|date',
             'expiration_date' => 'nullable|date',
         ];

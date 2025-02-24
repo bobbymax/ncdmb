@@ -4,8 +4,9 @@ namespace App\Helpers;
 
 class Formatter
 {
-    public static function currency($amount): bool|string
+    public static function currency($amount, string $currency = "NGN"): bool|string
     {
-        return numfmt_format_currency(numfmt_create('en_NG', \NumberFormatter::CURRENCY), $amount, "NGN");
+        $formatter = numfmt_create('en_NG', \NumberFormatter::CURRENCY);
+        return numfmt_format_currency($formatter, $amount, $currency);
     }
 }

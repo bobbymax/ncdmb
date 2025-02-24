@@ -54,6 +54,7 @@ class AllowanceService extends BaseService
                                 'amount' => (float) $value['amount'],
                                 'start_date' => $value['start_date'] ?? null,
                                 'expiration_date' => $value['expiration_date'] ?? null,
+                                'currency' => $value['currency'] ?? 'NGN',
                             ]);
                         }
                     }

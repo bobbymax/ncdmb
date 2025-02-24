@@ -2,15 +2,12 @@
 
 namespace App\Http\Controllers;
 
-
-use App\Core\WorkflowProcessor;
+use App\Engine\ControlEngine;
 use App\Http\Requests\HandleServiceRequest;
-use App\Jobs\SendWorkflowNotifications;
+use App\Models\{Document, ProgressTracker, Workflow};
 use App\Services\{DocumentActionService, DocumentService, ProgressTrackerService, WorkflowService, DocumentDraftService};
 use App\Traits\ApiResponse;
 use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 class ServiceWorkerController extends Controller
@@ -47,79 +44,41 @@ class ServiceWorkerController extends Controller
         // Fetch required models
         $workflow = $this->workflowService->show($request->workflow_id);
         $document = $this->documentService->show($request->document_id);
+
         if (!$workflow || !$document) {
             return $this->error(null, 'Invalid workflow or document ID', 404);
         }
 
-        $lastDraft = $document->drafts()->latest()->first();
-        if (!$lastDraft) {
-            return $this->error(null, 'No drafts found for the document', 404);
-        }
-
-        $currentTracker = $this->progressTrackerService->show($lastDraft->progress_tracker_id);
+        $currentTracker = $this->currentTracker($workflow, $document);
         $action = $this->documentActionService->show($request->document_action_id);
-        if (!$currentTracker || !$action) {
+
+        if (!$action) {
             return $this->error(null, 'Invalid tracker or action data', 404);
         }
 
-        // Resolve service and model
-        $resolvedService = app($service);
-        $modelClass = $this->resolveServiceToModel($service);
-
-        if (!$modelClass) {
-            return $this->error(null, 'Unable to resolve model for the service', 400);
-        }
-
-        // Update resource
-        // $resourceId = $request->state['resource_id'];
-        // $resolvedService->update($resourceId, $request->state);
-
         // Process workflow
-        $workflowProcessor = new WorkflowProcessor(
-            $resolvedService,
-            $currentTracker,
+        $workflowProcessor = new ControlEngine(
+            app($service),
             $document,
             $workflow,
+            $currentTracker,
             $action,
             $request->state,
-            $request->signature
+            $request->signature,
+            $request->state['message'] ?? null
         );
 
-        $newTracker = $workflowProcessor->process();
-
-        if ($newTracker) {
-            // TODO: Implement notifications
-            // Dispatch async processing (consider using queue)
-            // HandleCorProcess::dispatch($newTracker);
-            // HandlePreviousProcessNotifications::dispatch($currentTracker)
-
-            SendWorkflowNotifications::dispatch(
-                $document,
-                $action,
-                $currentTracker,
-                $newTracker,
-                Auth::id()
-            );
-        }
-
-        return $this->success(null, class_basename($resolvedService) . " {$action->action_status} {$newTracker->id} processed successfully");
+        $workflowProcessor->process();
+        return $this->success(null, class_basename(app($service)) . " {$action->action_status}  processed successfully");
     }
 
-    private function resolveServiceToModel(string $serviceClass)
+    private function currentTracker(Workflow $workflow, Document $document): ProgressTracker
     {
-        $resolvedService = app($serviceClass);
-
-        // Get the base name (e.g., "ClaimService" -> "Claim")
-        $modelName = Str::replaceLast('Service', '', class_basename($resolvedService));
-
-        // Generate full model class path dynamically
-        $modelClass = "App\\Models\\{$modelName}";
-
-        if (!class_exists($modelClass)) {
-            throw new \Exception("Model class {$modelClass} does not exist.");
+        if (!empty($document->drafts)) {
+            $draft = $document->drafts()->latest()->first();
+            return $this->progressTrackerService->show($draft->progress_tracker_id);
         }
 
-        // Instantiate and return the model
-        return new $modelClass();
+        return $workflow->trackers()->where('order', 1)->first();
     }
 }

@@ -126,4 +126,9 @@ class Department extends Model
     {
         return $this->hasMany(self::class, 'parentId');
     }
+
+    public function trackers(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProgressTracker::class);
+    }
 }
