@@ -23,7 +23,7 @@ class ControlEngine
     protected ?string $signature;
     protected ?string $message;
 
-    public function __construct(
+    public function initialize(
         BaseService $baseService,
         Document $document,
         Workflow $workflow,
@@ -32,7 +32,7 @@ class ControlEngine
         ?array $state = [],
         ?string $signature = null,
         ?string $message = null
-    ) {
+    ): void {
         $this->baseService = $baseService;
         $this->documentAction = $documentAction ?? $this->getDocumentActionForCreation();
         $this->document = $document;

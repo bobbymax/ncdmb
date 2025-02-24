@@ -17,18 +17,21 @@ class ServiceWorkerController extends Controller
     protected ProgressTrackerService $progressTrackerService;
     protected DocumentActionService $documentActionService;
     protected WorkflowService $workflowService;
+    protected ControlEngine $controlEngine;
 
     public function __construct(
         DocumentService $documentService,
         ProgressTrackerService $progressTrackerService,
         DocumentActionService $documentActionService,
-        WorkflowService $workflowService
+        WorkflowService $workflowService,
+        ControlEngine $controlEngine
     )
     {
         $this->documentService = $documentService;
         $this->progressTrackerService = $progressTrackerService;
         $this->documentActionService = $documentActionService;
         $this->workflowService = $workflowService;
+        $this->controlEngine = $controlEngine;
     }
 
     /**
@@ -57,7 +60,7 @@ class ServiceWorkerController extends Controller
         }
 
         // Process workflow
-        $workflowProcessor = new ControlEngine(
+        $this->controlEngine->initialize(
             app($service),
             $document,
             $workflow,
@@ -68,7 +71,8 @@ class ServiceWorkerController extends Controller
             $request->state['message'] ?? null
         );
 
-        $workflowProcessor->process();
+        $this->controlEngine->process();
+
         return $this->success(null, class_basename(app($service)) . " {$action->action_status}  processed successfully");
     }
 
