@@ -28,13 +28,13 @@ class ControlEngine
         Document $document,
         Workflow $workflow,
         ProgressTracker $tracker,
-        ?DocumentAction $documentAction = null,
+        DocumentAction $documentAction,
         ?array $state = [],
         ?string $signature = null,
         ?string $message = null
     ): void {
         $this->baseService = $baseService;
-        $this->documentAction = $documentAction ?? $this->getDocumentActionForCreation();
+        $this->documentAction = $documentAction;
         $this->document = $document;
         $this->workflow = $workflow;
         $this->tracker = $tracker;
@@ -61,8 +61,8 @@ class ControlEngine
      */
     protected function proceed(): ProgressTracker
     {
-        if (!empty($this->state) && isset($this->state['resource_id'], $this->state['data'])) {
-            $this->baseService->update($this->state['resource_id'], ...$this->state['data']);
+        if (!empty($this->state) && isset($this->state['resource_id'])) {
+            $this->baseService->update($this->state['resource_id'], $this->state);
         }
 
         return $this->lastDraft ? $this->next() : $this->first();
@@ -76,7 +76,10 @@ class ControlEngine
     private function first(): ProgressTracker
     {
         Log::info("Creating first draft for Document ID: {$this->document->id}");
-        $firstStage = DB::transaction(fn() => $this->createDraft("pending"));
+        $firstStage = DB::transaction(function() {
+            $this->createDraft("pending");
+            return $this->tracker;
+        });
         $this->dispatchWorkflowEvent();
 
         return $firstStage;
@@ -135,7 +138,7 @@ class ControlEngine
                 "pending",
                 null,
                 $this->fallback(),
-                'attention'
+                $this->documentAction->button_text
             );
 
             $this->document->update([
@@ -213,7 +216,7 @@ class ControlEngine
             'group_id' => $tracker->group_id,
             'created_by_user_id' => $this->user->id,
             'progress_tracker_id' => $tracker->id,
-            'current_workflow_stage_id' => $stageId ?? $tracker->workflow_stage_id,
+            'current_workflow_stage_id' => ($stageId > 0) ? $stageId : $tracker->workflow_stage_id,
             'department_id' => $tracker->department_id ?: $this->document->department_id,
             'document_draftable_id' => $this->state['resource_id'],
             'document_draftable_type' => get_class($this->resolveServiceToModel()),

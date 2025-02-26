@@ -3,6 +3,7 @@
 namespace App\Services;
 
 
+use App\Engine\ControlEngine;
 use App\Events\DocumentControl;
 use App\Events\FirstDraft;
 use App\Models\Claim;
@@ -11,6 +12,7 @@ use App\Repositories\ClaimRepository;
 use App\Repositories\DocumentRepository;
 use App\Repositories\ExpenseRepository;
 use App\Repositories\UploadRepository;
+use App\Traits\DocumentFlow;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
@@ -23,20 +25,24 @@ use Illuminate\Validation\ValidationException;
 
 class ClaimService extends BaseService
 {
+    use DocumentFlow;
     protected ExpenseRepository $expenseRepository;
     protected UploadRepository $uploadRepository;
     protected DocumentRepository $documentRepository;
+    protected ControlEngine $engine;
 
     public function __construct(
         ClaimRepository $claimRepository,
         ExpenseRepository $expenseRepository,
         UploadRepository $uploadRepository,
         DocumentRepository $documentRepository,
+        ControlEngine $engine
     ) {
         parent::__construct($claimRepository);
         $this->expenseRepository = $expenseRepository;
         $this->uploadRepository = $uploadRepository;
         $this->documentRepository = $documentRepository;
+        $this->engine = $engine;
     }
 
     public function rules($action = "store"): array
@@ -80,7 +86,17 @@ class ClaimService extends BaseService
 
             if ($document) {
                 $this->processSupportingDocuments($data['supporting_documents'] ?? [], $document->id);
-                FirstDraft::dispatch($document, Auth::user());
+
+                $this->engine->initialize(
+                    $this,
+                    $document,
+                    $document->workflow,
+                    $document->current_tracker,
+                    $this->getCreationDocumentAction(),
+                    $this->setStateValues($claim->id)
+                );
+
+                $this->engine->process();
             }
 
             return $claim;
@@ -146,7 +162,6 @@ class ClaimService extends BaseService
             if ($data['status'] === "registered" && $document) {
                 $dataUrl = $data['claimant_signature'];
                 $filePath = $this->uploadRepository->uploadSignature($dataUrl);
-//                DocumentControl::dispatch($document, 'first', 1, $data['status'], $filePath);
                 $this->uploadRepository->removeFile($filePath);
             }
 
@@ -277,6 +292,7 @@ class ClaimService extends BaseService
             'document_reference_id' => $data['document_reference_id'] ?? 0,
             'document_type_id' => $data['document_type_id'],
             'document_action_id' => $data['document_action_id'] ?? 0,
+            'progress_tracker_id' => $this->getFirstTrackerId($data['workflow_id']),
             'vendor_id' => $data['vendor_id'] ?? 0,
             'title' => $claim->title,
             'description' => $claim->title,
@@ -286,10 +302,11 @@ class ClaimService extends BaseService
         ];
     }
 
-    protected function validateOwnership(int $departmentId, int $userDepartmentId): void
+    private function setStateValues(int $resourceId): array
     {
-        if ($departmentId !== $userDepartmentId) {
-            abort(403, 'You are not authorized to perform this action.');
-        }
+        return [
+            'resource_id' => $resourceId,
+            'is_signed' => false,
+        ];
     }
 }

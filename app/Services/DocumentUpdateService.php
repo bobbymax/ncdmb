@@ -17,7 +17,7 @@ class DocumentUpdateService extends BaseService
         return [
             'document_draft_id' => 'required|integer|exists:document_drafts,id',
             'document_action_id' => 'required|integer|exists:document_actions,id',
-            'threads' => 'required|array',
+            'threads' => 'nullable|sometimes|array',
             'comment' => 'nullable|string|min:0',
             'document_reference_id' => 'sometimes|integer|min:0',
         ];

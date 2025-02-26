@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Engine\ControlEngine;
 use App\Repositories\DocumentRepository;
 use App\Repositories\ExpenseRepository;
 use App\Repositories\TripRepository;
@@ -25,7 +26,8 @@ class ClaimServiceProvider extends ServiceProvider
             $expenseRepository = $app->make(ExpenseRepository::class);
             $uploadRepository = $app->make(UploadRepository::class);
             $documentRepository = $app->make(DocumentRepository::class);
-            return new ClaimService($claimRepository, $expenseRepository, $uploadRepository, $documentRepository);
+            $controlEngine  = $app->make(ControlEngine::class);
+            return new ClaimService($claimRepository, $expenseRepository, $uploadRepository, $documentRepository, $controlEngine);
         });
     }
 }

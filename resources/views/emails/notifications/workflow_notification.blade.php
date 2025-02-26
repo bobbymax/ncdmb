@@ -42,7 +42,7 @@
             Updated by: {{ $user->firstname . " " . $user->surname }} on {{ $document->updated_at->format('d F, Y') }}
         </div>
         <div class="message">
-            <p>The {{ $lastDraft->documentType->name }} draft has been sent to {{ $progressTracker->stage->name }} in {{ $progressTracker->department->abv }}, only staff in {{ $progressTracker->group->name }} group can handle this document.</p>
+            <p>The {{ $lastDraft->documentType->name }} draft has been sent to {{ $progressTracker->stage->name }}, only staff in {{ $progressTracker->group->name }} group can handle this document.</p>
         </div>
     </div>
 </body>
