@@ -68,5 +68,6 @@ return [
     App\Providers\WorkflowServiceProvider::class,
     App\Providers\WorkflowStageCategoryServiceProvider::class,
     App\Providers\WorkflowStageServiceProvider::class,
-    App\Providers\DocumentUpdateServiceProvider::class
+    App\Providers\DocumentUpdateServiceProvider::class,
+    App\Providers\ApiRequestLogServiceProvider::class
 ];

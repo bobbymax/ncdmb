@@ -9,7 +9,6 @@ use App\Interfaces\IController;
 use App\Services\BaseService;
 use App\Traits\ApiResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 
 abstract class BaseController extends Controller implements IController

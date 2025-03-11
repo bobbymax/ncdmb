@@ -4,6 +4,7 @@ namespace App\Traits;
 
 use App\Models\DocumentAction;
 use App\Models\Workflow;
+use Illuminate\Support\Facades\Storage;
 
 trait DocumentFlow
 {
@@ -28,5 +29,25 @@ trait DocumentFlow
     protected function getCreationDocumentAction(): DocumentAction
     {
         return DocumentAction::where('label', 'create-resource')->first();
+    }
+
+    protected function signatureUpload(string $dataUrl): string
+    {
+        if ($dataUrl === "") {
+            return "";
+        }
+
+        $fileData = explode(',', $dataUrl);
+        $decodedData = base64_decode($fileData[1]);
+        $fileName = uniqid() . '.png';
+
+        Storage::disk('public')->put("signatures/$fileName", $decodedData);
+
+        return "signatures/$fileName";
+    }
+
+    protected function deleteFile(string $filePath): bool
+    {
+        return Storage::disk('public')->delete($filePath);
     }
 }

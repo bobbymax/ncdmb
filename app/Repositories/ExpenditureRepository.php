@@ -20,7 +20,6 @@ class ExpenditureRepository extends BaseRepository
         return [
             ...$data,
             'user_id' => Auth::user()->id,
-            'department_id' => Auth::user()->department_id,
             'code' => $data['code'] ?? $this->generate('code', 'EXP')
         ];
     }

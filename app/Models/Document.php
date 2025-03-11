@@ -18,6 +18,11 @@ class Document extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function updates(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(DocumentUpdate::class, DocumentDraft::class);
+    }
+
     public function documentable(): \Illuminate\Database\Eloquent\Relations\MorphTo
     {
         return $this->morphTo();

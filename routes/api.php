@@ -28,8 +28,11 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
     Route::post('auth/refresh', [\App\Http\Controllers\AuthApiController::class, 'refreshToken']);
 
 
-    Route::middleware('auth:sanctum')->group(function () {
+    Route::middleware(['auth:sanctum', 'verify.identity', 'log.request'])->group(function () {
         Route::post('/logout', [\App\Http\Controllers\AuthApiController::class, 'logout']);
+
+        Route::post('configuration/imports/{resource}', [\App\Http\Controllers\ImportController::class, 'getResource']);
+        Route::get('apiServices', [\App\Http\Controllers\ApiServiceController::class, 'index']);
 
         Route::put('claim/updates/{claimId}', [App\Http\Controllers\ClaimController::class, 'alter']);
         Route::put('service-workers/{service}', [App\Http\Controllers\ServiceWorkerController::class, 'handleService']);
@@ -58,6 +61,13 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('documentUpdates', \App\Http\Controllers\DocumentUpdateController::class);
         Route::apiResource('mailingLists', \App\Http\Controllers\MailingListController::class);
         Route::apiResource('fileTemplates', \App\Http\Controllers\FileTemplateController::class);
+
+        Route::apiResource('budgetHeads', \App\Http\Controllers\BudgetHeadController::class);
+        Route::apiResource('budgetCodes', \App\Http\Controllers\BudgetCodeController::class);
+        Route::apiResource('subBudgetHeads', \App\Http\Controllers\SubBudgetHeadController::class);
+        Route::apiResource('funds', \App\Http\Controllers\FundController::class);
+        Route::apiResource('expenditures', \App\Http\Controllers\ExpenditureController::class);
+        Route::apiResource('paymentBatches', \App\Http\Controllers\PaymentBatchController::class);
 
         Route::apiResource('allowances', \App\Http\Controllers\AllowanceController::class);
         Route::apiResource('remunerations', \App\Http\Controllers\RemunerationController::class);

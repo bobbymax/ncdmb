@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Engine\ControlEngine;
 use App\Http\Requests\HandleServiceRequest;
+use App\Http\Resources\DocumentResource;
 use App\Models\{Document, ProgressTracker, Workflow};
 use App\Services\{DocumentActionService, DocumentService, ProgressTrackerService, WorkflowService, DocumentDraftService};
 use App\Traits\ApiResponse;
@@ -25,8 +26,7 @@ class ServiceWorkerController extends Controller
         DocumentActionService $documentActionService,
         WorkflowService $workflowService,
         ControlEngine $controlEngine
-    )
-    {
+    ) {
         $this->documentService = $documentService;
         $this->progressTrackerService = $progressTrackerService;
         $this->documentActionService = $documentActionService;
@@ -66,14 +66,14 @@ class ServiceWorkerController extends Controller
             $workflow,
             $currentTracker,
             $action,
-            $request->state,
+            $request->serverState,
             $request->signature,
-            $request->state['message'] ?? null
+            $request->serverState['message'] ?? null,
+            $request->amount ?? null
         );
 
         $this->controlEngine->process();
-
-        return $this->success(null, class_basename(app($service)) . " {$action->action_status}  processed successfully");
+        return $this->success(new DocumentResource($document), class_basename(app($service)) . " {$action->action_status}  processed successfully");
     }
 
     private function currentTracker(Workflow $workflow, Document $document): ProgressTracker

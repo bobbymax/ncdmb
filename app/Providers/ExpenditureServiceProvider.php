@@ -22,12 +22,8 @@ class ExpenditureServiceProvider extends ServiceProvider
         // Bind the ExpenditureRepository to ExpenditureService
         $this->app->bind(ExpenditureService::class, function ($app) {
             $expenditureRepository = $app->make(ExpenditureRepository::class);
-            $fundRepository = $app->make(FundRepository::class);
-            $claimRepository = $app->make(ClaimRepository::class);
-            $projectMilestoneRepository = $app->make(ProjectMilestoneRepository::class);
-            $mandateRepository = $app->make(MandateRepository::class);
 
-            return new ExpenditureService($expenditureRepository, $fundRepository, $claimRepository, $projectMilestoneRepository, $mandateRepository);
+            return new ExpenditureService($expenditureRepository);
         });
     }
 }

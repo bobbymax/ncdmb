@@ -47,6 +47,11 @@ class User extends Authenticatable
         return $this->hasMany(TouringAdvance::class);
     }
 
+    public function claimsApproved(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Claim::class, 'authorising_staff_id');
+    }
+
     public function batches(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(PaymentBatch::class, 'batch_id');

@@ -11,6 +11,10 @@ class DocumentDraft extends Model
 
     protected $guarded = [''];
 
+    protected $casts = [
+        'signature' => 'string',
+    ];
+
     // Model Relationships or Scope Here...
     public function comments(): \Illuminate\Database\Eloquent\Relations\HasMany
     {

@@ -18,6 +18,11 @@ class Claim extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function authorisingOfficer(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'authorising_staff_id');
+    }
+
     public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Department::class, 'department_id');

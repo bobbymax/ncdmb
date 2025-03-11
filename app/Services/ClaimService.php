@@ -4,22 +4,12 @@ namespace App\Services;
 
 
 use App\Engine\ControlEngine;
-use App\Events\DocumentControl;
-use App\Events\FirstDraft;
-use App\Models\Claim;
-use App\Models\Document;
-use App\Repositories\ClaimRepository;
-use App\Repositories\DocumentRepository;
-use App\Repositories\ExpenseRepository;
-use App\Repositories\UploadRepository;
+use App\Models\{Claim, Document};
+use App\Repositories\{ClaimRepository, DocumentRepository, ExpenseRepository, UploadRepository};
 use App\Traits\DocumentFlow;
 use Carbon\Carbon;
 use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\{Auth, DB, Log, Storage};
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
@@ -73,7 +63,8 @@ class ClaimService extends BaseService
                 ...$data,
                 'code' => $this->repository->generate('code', 'SC'),
                 'start_date' => Carbon::parse($data['start_date']),
-                'end_date' => Carbon::parse($data['end_date'])
+                'end_date' => Carbon::parse($data['end_date']),
+                'user_id' => Auth::id()
             ]);
 
             if (!$claim) {
@@ -93,7 +84,10 @@ class ClaimService extends BaseService
                     $document->workflow,
                     $document->current_tracker,
                     $this->getCreationDocumentAction(),
-                    $this->setStateValues($claim->id)
+                    $this->setStateValues($claim->id),
+                    null,
+                    null,
+                    $claim->total_amount_spent
                 );
 
                 $this->engine->process();
@@ -123,13 +117,13 @@ class ClaimService extends BaseService
 
             if (!empty($data['claimant_signature'])) {
                 $dataUrl = $data['claimant_signature'];
-                $path = $this->uploadRepository->uploadSignature($dataUrl);
+                $path = $this->signatureUpload($dataUrl);
                 $claim->update(['claimant_signature' => $path]);
             }
 
             if (!empty($data['approval_signature'])) {
                 $dataUrl = $data['approval_signature'];
-                $path = $this->uploadRepository->uploadSignature($dataUrl);
+                $path = $this->signatureUpload($dataUrl);
                 $claim->update(['approval_signature' => $path]);
             }
 
@@ -148,26 +142,26 @@ class ClaimService extends BaseService
         });
     }
 
-    public function manipulate(int $id, array $data)
-    {
-        return DB::transaction(function () use ($id, $data) {
-            $claim = parent::update($id, $data);
-
-            if (!$claim) {
-                return null;
-            }
-
-            $document = $claim->document;
-
-            if ($data['status'] === "registered" && $document) {
-                $dataUrl = $data['claimant_signature'];
-                $filePath = $this->uploadRepository->uploadSignature($dataUrl);
-                $this->uploadRepository->removeFile($filePath);
-            }
-
-            return $claim;
-        });
-    }
+//    public function manipulate(int $id, array $data)
+//    {
+//        return DB::transaction(function () use ($id, $data) {
+//            $claim = parent::update($id, $data);
+//
+//            if (!$claim) {
+//                return null;
+//            }
+//
+//            $document = $claim->document;
+//
+//            if ($data['status'] === "registered" && $document) {
+//                $dataUrl = $data['claimant_signature'];
+//                $filePath = $this->signatureUpload($dataUrl);
+//                $this->deleteFile($filePath);
+//            }
+//
+//            return $claim;
+//        });
+//    }
 
     /**
      * @throws ValidationException

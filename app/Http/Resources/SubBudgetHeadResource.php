@@ -14,6 +14,12 @@ class SubBudgetHeadResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            ...parent::toArray($request),
+            'budget_head_name' => $this->budgetHead->name,
+            'fund' => new FundResource($this->fund),
+            'has_fund' => $this->fund !== null,
+//            'trying' => $this->fund
+        ];
     }
 }

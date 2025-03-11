@@ -31,7 +31,9 @@ class DocumentResource extends JsonResource
                 'department' => $this->user->department->abv,
                 'groups' => $this->loadGroups($this->user->groups),
                 'gradel_level' => $this->user->gradeLevel->key
-            ]
+            ],
+            'updates' => DocumentUpdateResource::collection($this->updates),
+            'uploads' => UploadResource::collection($this->uploads)
         ];
     }
 

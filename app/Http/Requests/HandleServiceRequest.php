@@ -26,9 +26,11 @@ class HandleServiceRequest extends FormRequest
             'document_id' => 'required|integer|exists:documents,id',
             'document_action_id' => 'required|integer|exists:document_actions,id',
             'progress_tracker_id' => 'required|integer|exists:progress_trackers,id',
-            'state' => 'required',
+            'serverState' => 'required',
             'message' => 'sometimes|nullable|string',
             'signature' => 'sometimes|nullable|string',
+            'amount' => 'sometimes|nullable|numeric',
+            'taxable_amount' => 'sometimes|nullable|numeric',
         ];
     }
 }

@@ -12,13 +12,13 @@ class ClaimController extends BaseController
         parent::__construct($claimService, 'Claim', ClaimResource::class);
     }
 
-    public function alter(Request $request, int $claimId): ?\Illuminate\Http\JsonResponse
-    {
-        try {
-            $claim = $this->service->manipulate($claimId, $request->except('id'));
-            return $this->success(new $this->jsonResource($claim), $this->updated($this->name));
-        } catch (\Exception $e) {
-            return $this->error(null, $e->getMessage(), 422);
-        }
-    }
+//    public function alter(Request $request, int $claimId): ?\Illuminate\Http\JsonResponse
+//    {
+//        try {
+//            $claim = $this->service->manipulate($claimId, $request->except('id'));
+//            return $this->success(new $this->jsonResource($claim), $this->updated($this->name));
+//        } catch (\Exception $e) {
+//            return $this->error(null, $e->getMessage(), 422);
+//        }
+//    }
 }

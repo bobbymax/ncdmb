@@ -20,7 +20,12 @@ class ProgressTrackerResource extends JsonResource
             'stage' => new WorkflowStageResource($this->stage),
             'workflow' => $this->workflow,
             'actions' => $this->actions,
-            'recipients' => $this->recipients
+            'recipients' => $this->recipients,
+            'department' => [
+                'name' => $this->department_id > 0 ? $this->department->name : "",
+                'abv' => $this->department_id > 0 ? $this->department->abv : ""
+            ],
+            'document_type' => new DocumentTypeResource($this->documentType)
         ];
     }
 }

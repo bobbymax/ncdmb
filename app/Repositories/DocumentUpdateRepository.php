@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\DocumentUpdate;
+use Illuminate\Support\Facades\Auth;
 
 class DocumentUpdateRepository extends BaseRepository
 {
@@ -14,7 +15,8 @@ class DocumentUpdateRepository extends BaseRepository
     {
         return [
             ...$data,
-            'threads' => json_encode($data['threads'])
+            'threads' => isset($data['threads']) ? json_encode($data['threads']) : null,
+            'user_id' => Auth::id()
         ];
     }
 }

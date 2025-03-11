@@ -23,6 +23,18 @@ abstract class BaseService implements IService
         }
     }
 
+    /**
+     * @throws \Exception
+     */
+    public function indexFilter($id, $flag = "owner")
+    {
+        if (!$id || $id < 1) return [];
+        return match ($flag) {
+            "department" => $this->repository->department($id),
+            default => $this->repository->owner($id),
+        };
+    }
+
     public function getRecordByColumn(string $column, mixed $value, string $operator = '=')
     {
         try {

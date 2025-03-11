@@ -29,7 +29,14 @@ class ClaimResource extends JsonResource
                 'name' => "{$this->staff?->surname}, {$this->staff?->firstname} {$this->staff?->middlename}"
             ],
             'claimant_signature' => $this->getClaimSignature($this->claimant_signature),
-            'approval_signature' => $this->getClaimSignature($this->approval_signature)
+            'approval_signature' => $this->getClaimSignature($this->approval_signature),
+            'authorising_officer' => $this->authorising_staff_id > 0 ? [
+                'id' => $this->authorisingOfficer->id,
+                'name' => "{$this->authorisingOfficer->surname}, {$this->authorisingOfficer->firstname} {$this->authorisingOfficer->middlename}",
+                'staff_no' => $this->authorisingOfficer->staff_no,
+                'grade_level' => $this->authorisingOfficer->gradeLevel->key,
+                'email' => $this->authorisingOfficer->email,
+            ] : null,
         ];
     }
 

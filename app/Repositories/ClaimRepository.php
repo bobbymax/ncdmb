@@ -21,7 +21,6 @@ class ClaimRepository extends BaseRepository
         unset($data['expenses']);
         return [
             ...$data,
-            'user_id' => isset($data['user_id']) && (int) $data['user_id'] > 0 ? $data['user_id'] : Auth::user()->id,
             'department_id' => isset($data['department_id']) && (int) $data['department_id'] > 0 ? $data['department_id'] : Auth::user()->department_id,
         ];
     }

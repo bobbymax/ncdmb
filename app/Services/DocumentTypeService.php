@@ -15,6 +15,7 @@ class DocumentTypeService extends BaseService
     {
         return [
             'name' => 'required|string|max:255',
+            'service' => 'required|string|max:255',
             'description' => 'nullable|sometimes|string|min:3',
             'file_template_id' => 'sometimes|integer|min:0',
         ];

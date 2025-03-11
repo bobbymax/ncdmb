@@ -26,11 +26,14 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\Cors::class,
             \App\Http\Middleware\ForceJsonResponse::class,
             \App\Http\Middleware\HandleFormDataPutRequests::class,
+//            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
         ]);
 
         // Alias middleware for easy reference
         $middleware->alias([
             'cors' => \App\Http\Middleware\Cors::class,
+            'verify.identity' => \App\Http\Middleware\VerifyIdentityMarker::class,
+            'log.request' => \App\Http\Middleware\LogApiRequest::class,
             'json.response' => \App\Http\Middleware\ForceJsonResponse::class,
             'handle.formdata' => \App\Http\Middleware\HandleFormDataPutRequests::class,
             'verified' => \App\Http\Middleware\EnsureEmailIsVerified::class,

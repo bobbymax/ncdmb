@@ -20,10 +20,10 @@ class ServiceBindingProvider extends ServiceProvider
                 $serviceName = pathinfo($file, PATHINFO_FILENAME);
                 $className = "App\\Services\\{$serviceName}";
 
-                if (file_exists("{$servicePath}/{$file}") && class_exists($className) && str_ends_with($serviceName, 'Service')) {
+                if (class_exists($className) && str_ends_with($serviceName, 'Service')) {
                     $key = strtolower(str_replace('Service', '', $serviceName));
 
-                    App::bind($key, fn () => app($className));
+                    $this->app->bind($key, fn () => app($className)); // ✅ Use `$this->app->bind()` in Service Provider
                 }
             }
         }

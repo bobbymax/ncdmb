@@ -30,6 +30,24 @@ abstract class BaseRepository implements IRepository
         }
     }
 
+    public function owner($id)
+    {
+        try {
+            return $this->model->where('user_id', $id)->latest()->get();
+        } catch (\Exception $e) {
+            throw new \Exception('Error fetching collection: ' . $e->getMessage());
+        }
+    }
+
+    public function department($id)
+    {
+        try {
+            return $this->model->where('department_id', $id)->latest()->get();
+        } catch (\Exception $e) {
+            throw new \Exception('Error fetching collection: ' . $e->getMessage());
+        }
+    }
+
     public function find($id)
     {
         try {
