@@ -142,27 +142,6 @@ class ClaimService extends BaseService
         });
     }
 
-//    public function manipulate(int $id, array $data)
-//    {
-//        return DB::transaction(function () use ($id, $data) {
-//            $claim = parent::update($id, $data);
-//
-//            if (!$claim) {
-//                return null;
-//            }
-//
-//            $document = $claim->document;
-//
-//            if ($data['status'] === "registered" && $document) {
-//                $dataUrl = $data['claimant_signature'];
-//                $filePath = $this->signatureUpload($dataUrl);
-//                $this->deleteFile($filePath);
-//            }
-//
-//            return $claim;
-//        });
-//    }
-
     /**
      * @throws ValidationException
      * @throws \Exception
@@ -302,5 +281,21 @@ class ClaimService extends BaseService
             'resource_id' => $resourceId,
             'is_signed' => false,
         ];
+    }
+
+    public function destroy(int $id): bool
+    {
+        return DB::transaction(function () use ($id) {
+            $claim = $this->repository->find($id);
+
+            if (!$claim) {
+                return false;
+            }
+
+            $claim->expenses()->delete();
+            parent::destroy($id);
+
+            return true;
+        });
     }
 }

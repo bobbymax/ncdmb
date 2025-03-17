@@ -33,6 +33,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
 
         Route::post('configuration/imports/{resource}', [\App\Http\Controllers\ImportController::class, 'getResource']);
         Route::get('apiServices', [\App\Http\Controllers\ApiServiceController::class, 'index']);
+        Route::get('committment/funds/{fund}', [\App\Http\Controllers\FundController::class, 'totalCurrentCommittment']);
 
         Route::put('claim/updates/{claimId}', [App\Http\Controllers\ClaimController::class, 'alter']);
         Route::put('service-workers/{service}', [App\Http\Controllers\ServiceWorkerController::class, 'handleService']);

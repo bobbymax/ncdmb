@@ -12,7 +12,7 @@ use Illuminate\Database\QueryException;
 
 abstract class BaseRepository implements IRepository
 {
-    protected $model;
+    protected Model $model;
 
     public function __construct(Model $model)
     {
@@ -23,42 +23,22 @@ abstract class BaseRepository implements IRepository
 
     public function all()
     {
-        try {
-            return $this->model->latest()->get();
-        } catch (\Exception $e) {
-            throw new \Exception('Error fetching collection: ' . $e->getMessage());
-        }
+        return $this->model->latest()->get();
     }
 
     public function owner($id)
     {
-        try {
-            return $this->model->where('user_id', $id)->latest()->get();
-        } catch (\Exception $e) {
-            throw new \Exception('Error fetching collection: ' . $e->getMessage());
-        }
+        return $this->model->where('user_id', $id)->latest()->get();
     }
 
     public function department($id)
     {
-        try {
-            return $this->model->where('department_id', $id)->latest()->get();
-        } catch (\Exception $e) {
-            throw new \Exception('Error fetching collection: ' . $e->getMessage());
-        }
+        return $this->model->where('department_id', $id)->latest()->get();
     }
 
     public function find($id)
     {
-        try {
-            $record = $this->model->find($id);
-            if (!$record) {
-                throw new DataNotFound();
-            }
-            return $record;
-        } catch (\Exception $e) {
-            throw new \Exception('Error fetching record: ' . $e->getMessage());
-        }
+        return $this->model->findOrFail($id);
     }
 
     public function findMany(array $ids)
@@ -81,101 +61,70 @@ abstract class BaseRepository implements IRepository
      */
     public function create(array $data)
     {
-        try {
-            $record = $this->model->create($this->parse($data));
+        $record = $this->model->create($this->parse($data));
 
-            if (!$record) {
-                throw new RecordCreationUnsuccessful();
-            }
-
-            return $record;
-        } catch (\Exception $e) {
-            throw new \Exception('Error creating record: ' . $e->getMessage());
+        if (!$record) {
+            throw new RecordCreationUnsuccessful();
         }
-    }
 
-    public function update(int $id, array $data, $parse = true)
-    {
-        $parsedData = $parse === true ? $this->parse($data) : $data;
-        try {
-            $record = $this->find($id);
-
-            if (!$record) {
-                throw new DataNotFound();
-            }
-
-            $record->update($parsedData);
-
-            return $record;
-        } catch (\Exception $e) {
-            throw new \Exception('Error updating record: ' . $e->getMessage());
-        }
-    }
-
-    public function destroy($id): bool
-    {
-        try {
-            $record = $this->find($id);
-
-            if (!$record) {
-                throw new DataNotFound();
-            }
-
-            return $record->delete();
-        } catch (\Exception $e) {
-            throw new \Exception('Error deleting record: ' . $e->getMessage());
-        }
+        return $record;
     }
 
     /**
-     * @throws CodeGenerationErrorException
-     * @throws \Exception
+     * @throws DataNotFound
      */
-    public function generate($column, $prefix): string
+    public function update(int $id, array $data, bool $parse = true)
+    {
+        $record = $this->find($id);
+
+        if (!$record) {
+            throw new DataNotFound();
+        }
+
+        $record->update($parse ? $this->parse($data) : $data);
+
+        return $record;
+    }
+
+    /**
+     * @throws DataNotFound
+     */
+    public function destroy(int $id): bool
+    {
+        $record = $this->find($id);
+
+        if (!$record) {
+            throw new DataNotFound();
+        }
+
+        return $record->delete();
+    }
+
+    /**
+     * Generate a unique code with the given prefix and column.
+     * @throws CodeGenerationErrorException
+     */
+    public function generate(string $column, string $prefix): string
     {
         try {
-            // Generate a random code with prefix
-            $code = $prefix . random_int(10000, 99999);
+            do {
+                $code = $prefix . random_int(10000, 99999);
+            } while ($this->model->withTrashed()->where($column, $code)->exists());
 
-            // Check if the code already exists in the specified column
-            $record = $this->model->where($column, $code)->first();
-
-            // If the code exists, recursively call the generate method to generate a new code
-            if ($record) {
-                return $this->generate($column, $prefix);
-            }
-
-            // If the code does not exist, return it
             return $code;
         } catch (QueryException $e) {
-            throw new CodeGenerationErrorException('Error trying to generate code from this model!', 0, $e);
-        } catch (\Exception $e) {
-            throw new \Exception('Error generating code for this record: ' . $e->getMessage());
+            throw new CodeGenerationErrorException('Error generating unique code.', 0, $e);
         }
     }
 
     public function getRecordByColumn(string $column, mixed $value, string $operator = '=')
     {
-        try {
-            $record = $this->model->where($column, $operator, $value)->first();
-
-            if (!$record) {
-                return null;
-            }
-
-            return $record;
-        } catch (\Exception $e) {
-            throw new \Exception('Error fetching record: ' . $e->getMessage());
-        }
+        return $this->model->where($column, $operator, $value)->first();
     }
 
     public function getCollectionByColumn(string $column, mixed $value, string $operator = '=')
     {
-        try {
-            return $this->model->where($column, $operator, $value)->latest()->get();
-        } catch (\Exception $e) {
-            throw new \Exception('Error fetching collection: ' . $e->getMessage());
-        }
+        return $this->model->where($column, $operator, $value)->latest()->get();
     }
 
     public function instanceOfModel(): \Illuminate\Database\Eloquent\Builder

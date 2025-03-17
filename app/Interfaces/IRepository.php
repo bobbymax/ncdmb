@@ -6,9 +6,9 @@ interface IRepository
 {
     public function parse(array $data): array;
     public function all();
-    public function find($id);
+    public function find(int $id);
     public function create(array $data);
-    public function update(int $id, array $data, $parse = true);
-    public function destroy($id);
-    public function generate($column, $prefix);
+    public function update(int $id, array $data, bool $parse = true);
+    public function destroy(int $id);
+    public function generate(string $column, string $prefix);
 }

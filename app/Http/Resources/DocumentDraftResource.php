@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Helpers\WorkflowHelper;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
@@ -30,6 +31,21 @@ class DocumentDraftResource extends JsonResource
                 'grade_level' => $this->authorisingStaff->gradeLevel->key,
                 'email' => $this->authorisingStaff->email,
             ] : null,
+            'staff' => $this->created_by_user_id > 0 ? [
+                'id' => $this->user->id,
+                'name' => "{$this->user->surname}, {$this->user->firstname} {$this->user->middlename}",
+                'staff_no' => $this->user->staff_no,
+                'grade_level' => $this->user->gradeLevel->key,
+                'email' => $this->user->email,
+            ] : null,
+            'action' => $this->document_action_id > 0 ? [
+                'name' => $this->documentAction->name,
+                'draft_status' => $this->documentAction->draft_status,
+                'action_status' => $this->documentAction->action_status,
+                'variant' => $this->documentAction->variant,
+                'carder_id' => $this->documentAction->carder_id,
+            ] : null,
+            'message' => WorkflowHelper::generateDraftMessage($this)
         ];
     }
 

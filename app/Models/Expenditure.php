@@ -5,12 +5,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Expenditure extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $guarded = [''];
+    protected array $dates = ['deleted_at'];
 
     // Model Relationships or Scope Here...
     public function batch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -33,5 +35,13 @@ class Expenditure extends Model
         return $this->belongsTo(Fund::class, 'fund_id');
     }
 
+    public function expenditureable(): \Illuminate\Database\Eloquent\Relations\MorphTo
+    {
+        return $this->morphTo();
+    }
 
+    public function draft(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(DocumentDraft::class, 'document_draftable');
+    }
 }

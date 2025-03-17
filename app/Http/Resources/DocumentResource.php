@@ -32,6 +32,13 @@ class DocumentResource extends JsonResource
                 'groups' => $this->loadGroups($this->user->groups),
                 'gradel_level' => $this->user->gradeLevel->key
             ],
+            'action' => $this->document_action_id > 0 ? [
+                'name' => $this->documentAction->name,
+                'draft_status' => $this->documentAction->draft_status,
+                'action_status' => $this->documentAction->action_status,
+                'variant' => $this->documentAction->variant,
+                'carder_id' => $this->documentAction->carder_id,
+            ] : null,
             'updates' => DocumentUpdateResource::collection($this->updates),
             'uploads' => UploadResource::collection($this->uploads)
         ];

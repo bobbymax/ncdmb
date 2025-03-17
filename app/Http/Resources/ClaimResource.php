@@ -17,12 +17,14 @@ class ClaimResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
+            'document_id' => $this->document->id,
             'department_name' => $this->sponsoring_department_id > 0 ? $this->sponsor?->abv : $this->department->abv,
             'expenses' => $this->expenses,
             'uploads' => UploadResource::collection($this->document->uploads),
             'total_amount_spent' => (float) $this->total_amount_spent,
             'total_amount_approved' => (float) $this->total_amount_approved,
             'total_amount_retired' => (float) $this->total_amount_retired,
+            'category_label' => $this->category ? $this->category->label : "",
             'owner' => [
                 'staff_no' => $this->staff?->staff_no ?? "none",
                 'grade_level' => $this->staff?->gradeLevel?->key ?? "none",

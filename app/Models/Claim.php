@@ -4,14 +4,20 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Claim extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $guarded = [''];
+    protected $dates = ['deleted_at'];
 
     // Model Relationships or Scope Here...
+    public function category(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(DocumentCategory::class, 'document_category_id');
+    }
 
     public function staff(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

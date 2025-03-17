@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Handlers\CodeGenerationErrorException;
+use App\Handlers\DataNotFound;
 use App\Interfaces\IService;
 use App\Repositories\BaseRepository;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 
 abstract class BaseService implements IService
 {
@@ -14,21 +17,16 @@ abstract class BaseService implements IService
         $this->repository = $repository;
     }
 
+    /**
+     * @throws CodeGenerationErrorException
+     */
     public function generate(string $column, string $prefix): string
     {
-        try {
-            return $this->repository->generate($column, $prefix);
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
-        }
+        return $this->repository->generate($column, $prefix);
     }
 
-    /**
-     * @throws \Exception
-     */
     public function indexFilter($id, $flag = "owner")
     {
-        if (!$id || $id < 1) return [];
         return match ($flag) {
             "department" => $this->repository->department($id),
             default => $this->repository->owner($id),
@@ -37,60 +35,44 @@ abstract class BaseService implements IService
 
     public function getRecordByColumn(string $column, mixed $value, string $operator = '=')
     {
-        try {
-            return $this->repository->getRecordByColumn($column, $value, $operator);
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
-        }
+        return $this->repository->getRecordByColumn($column, $value, $operator);
     }
 
     public function getCollectionByColumn(string $column, mixed $value, string $operator = '=')
     {
-        try {
-            return $this->repository->getCollectionByColumn($column, $value, $operator);
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
-        }
+        return $this->repository->getCollectionByColumn($column, $value, $operator);
     }
 
     public function index()
     {
-        try {
-            return $this->repository->all();
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
-        }
+        return $this->repository->all();
     }
 
+    /**
+     * @throws \Exception
+     */
     public function store(array $data)
     {
-        try {
-            return $this->repository->create($data);
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
-        }
+        return $this->repository->create($data);
     }
 
     public function show(int $id)
     {
-        try {
-            return $this->repository->find($id);
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
-        }
+        return $this->repository->find($id);
     }
 
+    /**
+     * @throws DataNotFound
+     */
     public function update(int $id, array $data, $parsed = true)
     {
-        try {
-            $record = $this->repository->find($id);
-            if ($record) {
-                $this->repository->update($record->id, $data, $parsed);
-            }
-            return $record;
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
+        $record = $this->repository->find($id);
+
+        if (!$record) {
+            throw new ModelNotFoundException("Record not found");
         }
+
+        return $this->repository->update($record->id, $data, $parsed);
     }
 
     /**
@@ -101,13 +83,12 @@ abstract class BaseService implements IService
         return $this->update($id, $data);
     }
 
+    /**
+     * @throws DataNotFound
+     */
     public function destroy(int $id): bool
     {
-        try {
-            return $this->repository->destroy($id);
-        } catch (\Exception $e) {
-            throw new \Exception($e->getMessage());
-        }
+        return $this->repository->destroy($id);
     }
 
     public function instanceQuery(): \Illuminate\Database\Eloquent\Builder

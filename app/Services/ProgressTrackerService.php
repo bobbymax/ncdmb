@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Repositories\DocumentActionRepository;
 use App\Repositories\MailingListRepository;
 use App\Repositories\ProgressTrackerRepository;
+use App\Repositories\WorkflowRepository;
 use Illuminate\Support\Facades\DB;
 
 class ProgressTrackerService extends BaseService
@@ -12,14 +13,18 @@ class ProgressTrackerService extends BaseService
     protected DocumentActionRepository $documentActionRepository;
     protected MailingListRepository $mailingListRepository;
 
+    protected WorkflowRepository $workflowRepository;
+
     public function __construct(
         ProgressTrackerRepository $progressTrackerRepository,
         DocumentActionRepository $documentActionRepository,
-        MailingListRepository $mailingListRepository
+        MailingListRepository $mailingListRepository,
+        WorkflowRepository $workflowRepository
     ) {
         parent::__construct($progressTrackerRepository);
         $this->documentActionRepository = $documentActionRepository;
         $this->mailingListRepository = $mailingListRepository;
+        $this->workflowRepository = $workflowRepository;
     }
 
     /**
@@ -64,6 +69,10 @@ class ProgressTrackerService extends BaseService
         ];
     }
 
+    private function handleTrackers($tracker) {
+
+    }
+
     /**
      * Store a progress tracker record along with actions and recipients.
      *
@@ -77,19 +86,75 @@ class ProgressTrackerService extends BaseService
                 return null;
             }
 
-            $trackers = collect();
+            return collect($data['stages'])->map(function ($stage) use ($data) {
+                return $this->handleTrackerAttachments($data['workflow_id'], $stage);
+            })->first();
+        });
+    }
 
-            foreach ($data['stages'] as $stage) {
-                $progressLine = $this->createProgressTracker($data['workflow_id'], $stage);
+    private function handleTrackerAttachments(int $workflowId, $stage)
+    {
+        $tracker = $this->createProgressTracker($workflowId, $stage);
 
-                $this->attachRecipients($progressLine, $stage['recipients'] ?? []);
-                $this->attachActions($progressLine, $stage['actions'] ?? []);
+        if (!$tracker) {
+            return null;
+        }
 
-                $trackers->push($progressLine);
+        $this->attachRecipients($tracker, $stage['recipients'] ?? []);
+        $this->attachActions($tracker, $stage['actions'] ?? []);
+
+        return $tracker;
+    }
+
+    public function update(int $id, array $data, $parsed = true)
+    {
+        return DB::transaction(function () use ($id, $parsed, $data) {
+            $workflow = $this->workflowRepository->find($id);
+
+            if (!$workflow) {
+                return null;
             }
 
-            return $trackers->first();
+            $fromFrontendTrackerIds = array_column(json_decode(json_encode($data['stages']), true), 'identifier');
+            $backendTrackerIds = array_map('strval', $this->getTrackerIds($workflow));
+
+            // Find IDs that exist in the backend but NOT in the frontend (to delete)
+            $toDelete = array_diff($backendTrackerIds, $fromFrontendTrackerIds);
+
+            foreach ($data['stages'] as $stage) {
+                $this->handleTrackerUpdate($stage, $toDelete, $workflow);
+            }
+
+            return $workflow->trackers()->first();
         });
+    }
+
+    private function getTrackerIds($workflow)
+    {
+        return $workflow->trackers->pluck('identifier')->toArray();
+    }
+
+    /**
+     * @throws \Exception
+     */
+    private function handleTrackerUpdate(array $stage, array $toDelete, $workflow): void
+    {
+        $tracker = $this->repository->getRecordByColumn('identifier', $stage['identifier']);
+
+
+        if ($tracker) {
+            $tracker->update($stage);
+
+            if (!in_array($tracker->identifier, $toDelete)) {
+                $this->attachRecipients($tracker, $stage['recipients'] ?? [], true);
+                $this->attachActions($tracker, $stage['actions'] ?? [], true);
+            } else {
+                $this->detachRecipients($tracker, $stage['recipients'] ?? []);
+                $this->detachActions($tracker, $stage['actions'] ?? []);
+            }
+        } else {
+            $this->handleTrackerAttachments($workflow->id, $stage);
+        }
     }
 
     /**
@@ -114,7 +179,7 @@ class ProgressTrackerService extends BaseService
      * @param array $recipients
      * @return void
      */
-    private function attachRecipients($progressLine, array $recipients): void
+    private function attachRecipients($progressLine, array $recipients, bool $isUpdate = false): void
     {
         if (!empty($recipients)) {
             $existingRecipientIds = $progressLine->recipients->pluck('id')->toArray();
@@ -123,6 +188,29 @@ class ProgressTrackerService extends BaseService
                 $recipient = $this->mailingListRepository->find($obj['value']);
                 if ($recipient && !in_array($recipient->id, $existingRecipientIds)) {
                     $progressLine->recipients()->save($recipient);
+                }
+            }
+
+            if ($isUpdate) {
+                $this->detachRecipients($progressLine, $recipients);
+            }
+        }
+    }
+
+    private function detachRecipients($progressLine, array $recipients): void
+    {
+        if (!empty($recipients)) {
+            $existingRecipientIds = $progressLine->recipients->pluck('id')->toArray();
+            $frontEndIds = array_column($recipients, 'value');
+            $toDelete = array_diff($existingRecipientIds, $frontEndIds);
+
+            if (!empty($toDelete)) {
+                foreach ($toDelete as $id) {
+                    $recipient = $this->mailingListRepository->find($id);
+
+                    if ($recipient) {
+                        $progressLine->recipients()->detach($recipient);
+                    }
                 }
             }
         }
@@ -135,7 +223,7 @@ class ProgressTrackerService extends BaseService
      * @param array $actions
      * @return void
      */
-    private function attachActions($progressLine, array $actions): void
+    private function attachActions($progressLine, array $actions, bool $isUpdate = false): void
     {
         if (!empty($actions)) {
             $existingActionIds = $progressLine->actions->pluck('id')->toArray();
@@ -144,6 +232,26 @@ class ProgressTrackerService extends BaseService
                 $action = $this->documentActionRepository->find($obj['value']);
                 if ($action && !in_array($action->id, $existingActionIds)) {
                     $progressLine->actions()->save($action);
+                }
+            }
+
+            if ($isUpdate) {
+                $this->detachActions($progressLine, $actions);
+            }
+        }
+    }
+
+    private function detachActions($progressLine, array $actions): void
+    {
+        if (!empty($actions)) {
+            $existingActionIds = $progressLine->actions->pluck('id')->toArray();
+            $toDelete = array_diff($existingActionIds, array_column($actions, 'value'));
+            if (!empty($toDelete)) {
+                foreach ($toDelete as $id) {
+                    $action = $this->documentActionRepository->find($id);
+                    if ($action) {
+                        $progressLine->actions()->detach($action);
+                    }
                 }
             }
         }
