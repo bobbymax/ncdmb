@@ -27,4 +27,9 @@ class Carder extends Model
     {
         return $this->hasMany(ProgressTracker::class);
     }
+
+    public function groups(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(Group::class, 'groupable');
+    }
 }

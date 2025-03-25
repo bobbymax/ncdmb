@@ -73,8 +73,18 @@ class DocumentDraft extends Model
         return $this->morphTo();
     }
 
+    public function approval(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Signature::class, 'document_draft_id');
+    }
+
     public function tracker(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(ProgressTracker::class , 'progress_tracker_id');
+    }
+
+    public function uploadedFile(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(Upload::class, 'uploadable');
     }
 }

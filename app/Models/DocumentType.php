@@ -34,7 +34,7 @@ class DocumentType extends Model
 
     public function pages(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(Page::class, 'workflow_id');
+        return $this->hasMany(Page::class, 'document_type_id');
     }
 
     public function stages(): \Illuminate\Database\Eloquent\Relations\HasMany
@@ -50,5 +50,10 @@ class DocumentType extends Model
     public function trackers(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(ProgressTracker::class);
+    }
+
+    public function widgets(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Widget::class);
     }
 }

@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-
 use App\Repositories\UploadRepository;
 
 class UploadService extends BaseService

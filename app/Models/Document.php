@@ -75,6 +75,11 @@ class Document extends Model
         return $this->belongsTo(Vendor::class);
     }
 
+    public function signatures(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
+    {
+        return $this->hasManyThrough(Signature::class, DocumentDraft::class);
+    }
+
     public function uploads(): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
         return $this->morphMany(Upload::class, 'uploadable');

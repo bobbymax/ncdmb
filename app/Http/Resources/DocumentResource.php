@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Models\Group;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 
 class DocumentResource extends JsonResource
@@ -19,7 +20,8 @@ class DocumentResource extends JsonResource
         return [
             ...parent::toArray($request),
             'documentable' => $this->resolveDocumentableResource(),
-            'drafts' => DocumentDraftResource::collection($this->drafts()->orderBy('created_at', 'desc')->get()),
+//            'drafts' => DocumentDraftResource::collection($this->drafts()->orderBy('created_at', 'desc')->get()),
+            'drafts' => DocumentDraftResource::collection($this->getLatestDraftsPerResource()),
             'document_template' => $this->getDocumentType($this->documentable_type),
             'document_type' => new DocumentTypeResource($this->documentType),
             'workflow' => new WorkflowResource($this->workflow),
@@ -85,5 +87,39 @@ class DocumentResource extends JsonResource
         }
 
         return null;
+    }
+
+    public function getLatestDraftsPerResource(): Collection
+    {
+        // Load all drafts and eager-load their relationships
+        $allDrafts = $this->drafts()->get();
+
+        // Group drafts by document_type_id
+        $grouped = $allDrafts->groupBy('document_type_id');
+
+        // Return only the latest draft per type, with history attached
+        return $grouped->map(function (Collection $draftsOfType) {
+            $latest = $draftsOfType->sortByDesc('version_number')->first();
+
+            $history = $draftsOfType->filter(fn($d) => $d->id !== $latest->id);
+
+            // Attach history
+            $latest->history = $history->values();
+
+            // Merge uploads from history and self
+            $uploads = $history
+                ->pluck('upload')   // Upload|null
+                ->filter()          // Remove nulls
+                ->values();
+
+            // Add current draft's own upload if it exists
+            if ($latest->upload) {
+                $uploads->prepend($latest->upload);
+            }
+
+            // Attach the merged uploads to the latest draft (as a dynamic property)
+            $latest->merged_uploads = $uploads;
+            return $latest;
+        })->values();
     }
 }

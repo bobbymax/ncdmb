@@ -2,8 +2,10 @@
 
 namespace App\Traits;
 
+use App\Engine\Puzzle;
 use App\Models\DocumentAction;
 use App\Models\Workflow;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 
 trait DocumentFlow
@@ -49,5 +51,15 @@ trait DocumentFlow
     protected function deleteFile(string $filePath): bool
     {
         return Storage::disk('public')->delete($filePath);
+    }
+
+    public function scramble($content, $user): string
+    {
+        return Puzzle::scramble($content, $user->staff_no);
+    }
+
+    public function resolveFileContent($content): string
+    {
+        return Puzzle::resolve($content);
     }
 }

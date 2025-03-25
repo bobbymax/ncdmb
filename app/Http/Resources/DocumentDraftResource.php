@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Helpers\WorkflowHelper;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
@@ -45,7 +46,19 @@ class DocumentDraftResource extends JsonResource
                 'variant' => $this->documentAction->variant,
                 'carder_id' => $this->documentAction->carder_id,
             ] : null,
-            'message' => WorkflowHelper::generateDraftMessage($this)
+            'approval' => $this->approval ? new SignatureResource($this->approval) : null,
+            'message' => WorkflowHelper::generateDraftMessage($this),
+            'history' => $this->when(isset($this->history), function () {
+                return collect($this->history)->map(fn ($draft) => [
+                    'id' => $draft->id,
+                    'version_number' => $draft->version_number,
+                    'approval' => $draft->approval ? new SignatureResource($draft->approval) : null,
+                    'amount' => $draft->amount,
+                    'authorising_officer' => $draft->authorisingStaff,
+                    'staff' => $draft->user,
+                    'created_at' => Carbon::parse($draft->created_at)->diffForHumans(),
+                ]);
+            }),
         ];
     }
 

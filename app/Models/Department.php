@@ -17,6 +17,11 @@ class Department extends Model
         return $this->hasMany(User::class);
     }
 
+    public function signatories(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Signatory::class);
+    }
+
     public function sponsoredClaims(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Claim::class, 'sponsoring_department_id');
@@ -130,5 +135,10 @@ class Department extends Model
     public function trackers(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(ProgressTracker::class);
+    }
+
+    public function widgets(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Widget::class);
     }
 }

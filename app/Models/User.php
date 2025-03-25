@@ -121,6 +121,11 @@ class User extends Authenticatable
         return $this->hasMany(DocumentDraft::class, 'created_by_user_id');
     }
 
+    public function signed(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Signature::class);
+    }
+
     public function authorisedDocumentDrafts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(DocumentDraft::class, 'authorising_staff_id');

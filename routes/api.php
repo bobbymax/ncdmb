@@ -37,6 +37,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
 
         Route::put('claim/updates/{claimId}', [App\Http\Controllers\ClaimController::class, 'alter']);
         Route::put('service-workers/{service}', [App\Http\Controllers\ServiceWorkerController::class, 'handleService']);
+        Route::get('authorised/users/{group}/{department}', [\App\Http\Controllers\SignatureRequestController::class, 'authorisedUsers']);
 
         Route::apiResource('departments', \App\Http\Controllers\DepartmentController::class);
         Route::apiResource('roles', \App\Http\Controllers\RoleController::class);
@@ -51,6 +52,8 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('progressTrackers', \App\Http\Controllers\ProgressTrackerController::class);
         Route::apiResource('carders', \App\Http\Controllers\CarderController::class);
         Route::apiResource('locations', \App\Http\Controllers\LocationController::class);
+        Route::apiResource('signatureRequests', \App\Http\Controllers\SignatureRequestController::class);
+        Route::apiResource('signatories', \App\Http\Controllers\SignatoryController::class);
 
         Route::apiResource('documentTypes', \App\Http\Controllers\DocumentTypeController::class);
         Route::apiResource('documentRequirements', \App\Http\Controllers\DocumentRequirementController::class);
@@ -62,6 +65,8 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('documentUpdates', \App\Http\Controllers\DocumentUpdateController::class);
         Route::apiResource('mailingLists', \App\Http\Controllers\MailingListController::class);
         Route::apiResource('fileTemplates', \App\Http\Controllers\FileTemplateController::class);
+        Route::apiResource('uploads', \App\Http\Controllers\UploadController::class);
+        Route::apiResource('widgets', \App\Http\Controllers\WidgetController::class);
 
         Route::apiResource('budgetHeads', \App\Http\Controllers\BudgetHeadController::class);
         Route::apiResource('budgetCodes', \App\Http\Controllers\BudgetCodeController::class);

@@ -69,5 +69,10 @@ return [
     App\Providers\WorkflowStageCategoryServiceProvider::class,
     App\Providers\WorkflowStageServiceProvider::class,
     App\Providers\DocumentUpdateServiceProvider::class,
-    App\Providers\ApiRequestLogServiceProvider::class
+    App\Providers\ApiRequestLogServiceProvider::class,
+    App\Providers\DocumentTrailServiceProvider::class,
+    App\Providers\SignatureRequestServiceProvider::class,
+    App\Providers\SignatoryServiceProvider::class,
+    App\Providers\SignatureServiceProvider::class,
+    App\Providers\WidgetServiceProvider::class
 ];

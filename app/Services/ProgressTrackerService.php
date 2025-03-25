@@ -47,6 +47,7 @@ class ProgressTrackerService extends BaseService
             'stages.*.order' => ['required', 'integer', 'between:1,100'],
             'stages.*.actions' => ['required', 'array'],
             'stages.*.recipients' => ['required', 'array'],
+            'stages.*.signatory_id' => ['required', 'integer', 'min:0'],
         ];
     }
 

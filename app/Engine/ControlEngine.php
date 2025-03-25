@@ -62,8 +62,8 @@ class ControlEngine
             return match ($this->documentAction->action_status) {
                 'passed' => $this->proceed($record),
                 'failed', 'cancelled' => $this->terminate($record),
-                'recall' => $this->recall($record),
-                default => $this->stall(),
+                'reversed' => $this->reverse($record),
+                default => $this->stall($record),
             };
         }, 3);
     }
@@ -90,27 +90,32 @@ class ControlEngine
         return $this->lastDraft ? $this->next($record) : $this->first($record);
     }
 
+    protected function reverse($record): ProgressTracker
+    {
+        return $this->_rollbackWorkflow($record, "reversed");
+    }
+
     /**
      * @throws Exception
      */
-    private function handleResourceServiceDeletion(string $document_type, string $draft_type, int $draftable_id): bool
+    private function handleResourceServiceDeletion(): void
     {
-        if ($document_type === "" || $draft_type === "") return false;
-        if ($document_type === $draft_type) return false;
-
-        try {
-            $service = $this->resolveModelToService($draft_type);
-            $service->destroy($draftable_id);
-        } catch (\Exception $e) {
-            Log::error('Error Resolving Model Class to Service ' . $e->getMessage());
+        if ($this->document->documentable_type !== $this->lastDraft->document_draftable_type || $this->documentAction->mode === "destroy") {
+            $service = $this->resolveModelToService($this->lastDraft->document_draftable_type);
+            $service->destroy($this->lastDraft->document_draftable_id);
         }
-
-        return true;
     }
 
-    private function recall($record = null)
+    /**
+     * Handles rolling back a workflow state (used by both recall and reverse).
+     *
+     * @param mixed $record
+     * @param string $status
+     * @return ProgressTracker
+     */
+    private function _rollbackWorkflow(mixed $record, string $status): ProgressTracker
     {
-        return DB::transaction(function () use ($record) {
+        return DB::transaction(function () use ($record, $status) {
             if (!$this->lastDraft) {
                 return $this->tracker;
             }
@@ -118,34 +123,45 @@ class ControlEngine
             $previousTracker = $this->getPreviousTracker();
             $firstDraft = $this->document->drafts()->oldest()->first();
 
-            // Compare the lastDraft document_draftable_type to documentable_type
-            // If not the same, Delete the type from last draft
-            $this->handleResourceServiceDeletion(
-                $this->document->documentable_type,
-                $this->lastDraft->document_draftable_type,
-                $this->lastDraft->document_draftable_id
-            );
+            $this->handleResourceServiceDeletion();
 
-            if ($firstDraft && $this->lastDraft->id !== $firstDraft?->id) {
-                // Update the Document History here
-                $this->lastDraft->delete();
-                $this->lastDraft = $this->document->drafts()->latest()->first();
+            if ($firstDraft && $this->lastDraft->id !== $firstDraft->id) {
+                $this->deleteLastDraft();
             }
 
-            $this->lastDraft?->update([
-                'status' => 'pending',
-                'document_action_id' => $this->documentAction->id,
-                'authorising_staff_id' => 0,
-            ]);
-
-            $this->document->update([
-                'progress_tracker_id' => $previousTracker?->id ?? $this->tracker->id,
-                'status' => 'recalled'
-            ]);
+            // Only delete the document if the status is "recalled" and not "reversed"
+            if ($this->documentAction->mode === "destroy" && $status !== "reversed") {
+                $this->deleteDocument();
+            } else {
+                $this->resetDraftStatus();
+                $this->document->update([
+                    'progress_tracker_id' => $previousTracker?->id ?? $this->tracker->id,
+                    'document_action_id' => $this->documentAction->id,
+                    'status' => $status
+                ]);
+            }
 
             $this->dispatchWorkflowEvent($previousTracker ?? $this->tracker);
             return $previousTracker ?? $this->tracker;
         });
+    }
+
+    /**
+     * Resets the last draft status.
+     */
+    private function resetDraftStatus(): void
+    {
+        $this->lastDraft?->update([
+            'status' => 'pending',
+            'document_action_id' => $this->documentAction->id,
+            'authorising_staff_id' => 0,
+            'signature' => null
+        ]);
+    }
+
+    protected function recall($record = null): ProgressTracker
+    {
+        return $this->_rollbackWorkflow($record, "recalled");
     }
 
     /**
@@ -190,6 +206,26 @@ class ControlEngine
         return $nextStage;
     }
 
+
+    /**
+     * Deletes the last draft and updates reference.
+     */
+    private function deleteLastDraft(): void
+    {
+        $this->lastDraft->delete();
+        $this->lastDraft = $this->document->drafts()->latest()->first();
+    }
+
+    /**
+     * Deletes the document and its associated data.
+     */
+    private function deleteDocument(): void
+    {
+        $this->document->drafts()->delete();
+        $this->document->uploads()->delete();
+        $this->document->delete();
+    }
+
     private function getPreviousTracker(): ?ProgressTracker
     {
         return $this->workflow->trackers()->where('order', '<', $this->tracker->order)->latest('order')->first();
@@ -210,11 +246,16 @@ class ControlEngine
         return optional($this->tracker->stage->fallback)->id ?? 0;
     }
 
-    protected function stall(): ProgressTracker
+    protected function stall($record = null): ProgressTracker
     {
         Log::info("Stalling workflow for Document ID: {$this->document->id}");
-        $this->updateLastDraft("attention");
         $this->document->update(['document_action_id' => $this->documentAction->id]);
+
+        if ($this->documentAction->category === "signature" && $record) {
+            $this->updateLastDraftForSignature($record);
+        } else {
+            $this->updateLastDraft("attention");
+        }
 
         $this->dispatchWorkflowEvent();
         return $this->tracker;
@@ -225,6 +266,10 @@ class ControlEngine
      */
     protected function terminate($record = null): ProgressTracker
     {
+        if ($this->documentAction->mode === "destroy") {
+            return $this->recall($record);
+        }
+
         Log::info("Terminating workflow", ['document_id' => $this->document->id]);
         $this->updateLastDraft();
         $this->document->update([
@@ -257,13 +302,26 @@ class ControlEngine
         }
     }
 
+    private function updateLastDraftForSignature($record): void
+    {
+        if (!$record) return;
+
+        $this->lastDraft?->update([
+            'status' => $this->documentAction->draft_status,
+            'authorising_staff_id' => $record->user_id,
+            'group_id' => $record->group_id,
+            'document_action_id' => $this->documentAction->id,
+            'department_id' => $record->department_id,
+        ]);
+    }
+
     /**
      * @param string $status
+     * @param null $record
      * @param ProgressTracker|null $tracker
      * @param int $stageId
      * @param string $type
      * @return void
-     * @throws Exception
      */
     private function createDraft(
         string $status,

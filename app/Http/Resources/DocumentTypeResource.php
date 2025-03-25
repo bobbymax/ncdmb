@@ -17,7 +17,8 @@ class DocumentTypeResource extends JsonResource
         return [
             ...parent::toArray($request),
             'categories' => $this->categories,
-            'template' => $this->template
+            'template' => $this->template,
+            'widgets' => $this->widgets
         ];
     }
 }

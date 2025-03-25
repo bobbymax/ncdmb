@@ -56,28 +56,34 @@ class DocumentRepository extends BaseRepository
     {
         $user = Auth::user();
         $accessLevel = $user->role->access_level;
-        $userDepartment = $user->department;
+        $userDepartmentId = $user->department_id;
         $groupIds = $user->groups->pluck('id')->toArray();
 
-        // Determine the department scope based on access level
-        $departmentScope = Cache::remember("user_{$user->id}_department_scope", 3600, function () use ($accessLevel, $userDepartment) {
-            return self::getDepartmentScope($accessLevel, $userDepartment);
-        });
+        // Check if user has "sovereign" access level (view all documents)
+        if ($accessLevel === 'sovereign') {
+            return Document::with('drafts')->latest()->paginate(50);
+        }
 
         // Initialize query with eager loading for performance
         $query = Document::with('drafts');
 
-        // Filter based on user role access level
-        if ($accessLevel === 'basic') {
-            $query->where('user_id', $user->id);
-        } elseif ($accessLevel !== 'sovereign') {
-            $query->where('user_id', $user->id)
-                ->orWhereIn('department_id', $departmentScope);
-        }
+        // Apply filtering based on access level
+        $query->where(function ($q) use ($user, $accessLevel, $userDepartmentId, $groupIds) {
 
-        // Filter documents based on user's groups (drafts belonging to user's groups)
-        $query->orWhereHas('drafts', function ($draftQuery) use ($groupIds) {
-            $draftQuery->whereIn('group_id', $groupIds);
+            // If user is "basic", they can only see their own documents
+            if ($accessLevel === 'basic') {
+                $q->where('user_id', $user->id);
+            } else {
+                // User can see documents they own
+                $q->where('user_id', $user->id)
+                    // Or documents that belong to their department
+                    ->orWhere('department_id', $userDepartmentId)
+                    // Or documents that have a draft in both their group and department
+                    ->orWhereHas('drafts', function ($draftQuery) use ($groupIds, $userDepartmentId) {
+                        $draftQuery->whereIn('group_id', $groupIds)
+                            ->where('department_id', $userDepartmentId);
+                    });
+            }
         });
 
         return $query->latest()->paginate(50);

@@ -51,4 +51,9 @@ class ProgressTracker extends Model
     {
         return $this->morphToMany(MailingList::class, 'mailing_listable');
     }
+
+    public function signatory(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Signatory::class, 'signatory_id');
+    }
 }

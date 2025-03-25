@@ -17,6 +17,11 @@ class Page extends Model
         return $this->hasMany(Permission::class);
     }
 
+    public function signatories(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Signatory::class);
+    }
+
     public function roles(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
         return $this->morphToMany(Role::class, 'roleable');

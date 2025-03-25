@@ -16,7 +16,8 @@ class UserResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'groups' => $this->groups
+            'groups' => $this->groups,
+            'name' => "{$this->surname}, {$this->firstname} {$this->middlename}"
         ];
     }
 }

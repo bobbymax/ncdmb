@@ -17,6 +17,11 @@ class Group extends Model
         return $this->morphedByMany(WorkflowStage::class, 'groupable');
     }
 
+    public function carders(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphedByMany(Carder::class, 'groupable');
+    }
+
     public function documentDrafts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(DocumentDraft::class);
@@ -27,6 +32,11 @@ class Group extends Model
         return $this->hasMany(MailingList::class);
     }
 
+    public function signatories(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Signatory::class);
+    }
+
     public function users(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
         return $this->morphedByMany(User::class, 'groupable');
@@ -35,5 +45,10 @@ class Group extends Model
     public function trackers(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(ProgressTracker::class);
+    }
+
+    public function widgets(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphedByMany(Widget::class, 'groupable');
     }
 }

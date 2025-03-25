@@ -129,6 +129,6 @@ abstract class BaseRepository implements IRepository
 
     public function instanceOfModel(): \Illuminate\Database\Eloquent\Builder
     {
-        return $this->model->newModelQuery();
+        return $this->model->newQuery();
     }
 }

@@ -16,7 +16,8 @@ class WorkflowResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'trackers' => ProgressTrackerResource::collection($this->trackers)
+            'trackers' => ProgressTrackerResource::collection($this->trackers),
+            'signatories' => SignatoryResource::collection($this->signatories)
         ];
     }
 }

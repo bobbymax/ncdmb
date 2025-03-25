@@ -4,6 +4,7 @@ namespace App\Services;
 
 
 use App\Engine\ControlEngine;
+use App\Engine\Puzzle;
 use App\Models\{Claim, Document};
 use App\Repositories\{ClaimRepository, DocumentRepository, ExpenseRepository, UploadRepository};
 use App\Traits\DocumentFlow;
@@ -185,33 +186,11 @@ class ClaimService extends BaseService
 
     protected function processSupportingDocuments(array $files, int $documentId): void
     {
-        $uploads = [];
-        $currentTime = now();
-
-        foreach ($files as $file) {
-            if ($file instanceof UploadedFile) {
-                $uniqueFileName = Str::uuid() . '.' . $file->getClientOriginalExtension();
-                $storedPath = $file->storeAs('documents/claims', $uniqueFileName, 'public');
-
-                $uploads[] = [
-                    'user_id' => Auth::id(),
-                    'department_id' => Auth::user()->department_id,
-                    'name' => $file->getClientOriginalName(),
-                    'path' => $storedPath,
-                    'size' => $file->getSize(),
-                    'mime_type' => $file->getMimeType(),
-                    'extension' => $file->getClientOriginalExtension(),
-                    'uploadable_id' => $documentId,
-                    'uploadable_type' => Document::class,
-                    'created_at' => $currentTime,
-                    'updated_at' => $currentTime,
-                ];
-            }
-        }
-
-        if (!empty($uploads)) {
-            $this->uploadRepository->insert($uploads);
-        }
+        $this->uploadRepository->uploadMany(
+            $files,
+            $documentId,
+            Document::class
+        );
     }
 
     /**
@@ -238,10 +217,10 @@ class ClaimService extends BaseService
 
         foreach ($deletedUploads as $deletedUpload) {
             $upload = $this->uploadRepository->find($deletedUpload['id']);
-            if ($upload && Storage::disk('public')->exists($upload->path)) {
-                Storage::disk('public')->delete($upload->path);
-                $upload->delete();
-            }
+            $upload->delete();
+//            if ($upload && Storage::disk('public')->exists($upload->path)) {
+//                Storage::disk('public')->delete($upload->path);
+//            }
         }
     }
 
