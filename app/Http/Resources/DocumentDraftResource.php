@@ -57,8 +57,10 @@ class DocumentDraftResource extends JsonResource
                     'authorising_officer' => $draft->authorisingStaff,
                     'staff' => $draft->user,
                     'created_at' => Carbon::parse($draft->created_at)->diffForHumans(),
+                    'upload' => $draft->upload ? new UploadResource($draft->upload) : null,
                 ]);
             }),
+            'upload' => $this->upload ? new UploadResource($this->upload) : null,
         ];
     }
 

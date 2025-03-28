@@ -101,7 +101,7 @@ class DocumentResource extends JsonResource
         return $grouped->map(function (Collection $draftsOfType) {
             $latest = $draftsOfType->sortByDesc('version_number')->first();
 
-            $history = $draftsOfType->filter(fn($d) => $d->id !== $latest->id);
+            $history = $draftsOfType->filter(fn($d) => $d?->id !== $latest?->id);
 
             // Attach history
             $latest->history = $history->values();

@@ -83,7 +83,7 @@ class DocumentDraft extends Model
         return $this->belongsTo(ProgressTracker::class , 'progress_tracker_id');
     }
 
-    public function uploadedFile(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    public function upload(): \Illuminate\Database\Eloquent\Relations\MorphOne
     {
         return $this->morphOne(Upload::class, 'uploadable');
     }

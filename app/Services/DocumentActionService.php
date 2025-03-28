@@ -22,7 +22,7 @@ class DocumentActionService extends BaseService
             'component' => 'sometimes|string|max:255',
             'mode' => 'nullable|string|in:store,update,destroy',
             'draft_status' => 'required|string|max:255',
-            'category' => 'required|string|in:signature,comment,template,request,resource',
+            'category' => 'required|string|in:signature,comment,template,request,resource,upload',
             'resource_type' => 'required|string|in:searchable,classified,private,archived,computed,generated,report,other',
             'state' => 'nullable|string|in:conditional,fixed',
             'has_update' => 'nullable|boolean',
