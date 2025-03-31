@@ -21,13 +21,10 @@ class PaymentBatchService extends BaseService
     {
         return [
             'fund_id' => 'required|integer|exists:funds,id',
-            'no_of_payments' => 'required|integer|min:1',
-            'beneficiary' => 'nullable|string|max:255',
-            'description' => 'nullable|string|min:3',
-            'total_payable_amount' => 'required|numeric|min:1',
             'budget_year' => 'required|integer|digits:4',
-            'type' => 'required|string|in:staff-payment,third-party-payment',
-            'expenditures' => 'required|array',
+            'type' => 'required|string|in:staff,third-party',
+            'document_drafts' => 'required|array',
+            'document_drafts.*.id' => 'required|integer|exists:document_drafts,id',
         ];
     }
 

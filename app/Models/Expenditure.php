@@ -15,10 +15,6 @@ class Expenditure extends Model
     protected array $dates = ['deleted_at'];
 
     // Model Relationships or Scope Here...
-    public function batch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(PaymentBatch::class, 'batch_id');
-    }
 
     public function controller(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

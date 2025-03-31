@@ -86,6 +86,14 @@ abstract class BaseRepository implements IRepository
         return $record;
     }
 
+    public function basedOnStatus($departmentId, $status)
+    {
+        return $this->model->where('department_id', $departmentId)
+            ->where('status', $status)
+            ->latest()
+            ->get();
+    }
+
     /**
      * @throws DataNotFound
      */

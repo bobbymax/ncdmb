@@ -4,12 +4,14 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class PaymentBatch extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $guarded = [''];
+    protected array $dates = ['deleted_at'];
 
     // Model Relationships or Scope Here...
     public function controller(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -27,9 +29,9 @@ class PaymentBatch extends Model
         return $this->belongsTo(Fund::class, 'fund_id');
     }
 
-    public function expenditures(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function drafts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(Expenditure::class, 'batch_id');
+        return $this->hasMany(DocumentDraft::class, 'sub_document_reference_id');
     }
 
     public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany

@@ -142,6 +142,7 @@ class ProgressTrackerService extends BaseService
     {
         $tracker = $this->repository->getRecordByColumn('identifier', $stage['identifier']);
 
+        unset($stage['id']);
 
         if ($tracker) {
             $tracker->update($stage);

@@ -29,7 +29,8 @@ class TruncateTables extends Command
         'expenses',
         'claims',
         'uploads',
-        'signatures'
+        'signatures',
+        'expenditures'
     ];
 
     /**

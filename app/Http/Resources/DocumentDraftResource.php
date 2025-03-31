@@ -3,6 +3,8 @@
 namespace App\Http\Resources;
 
 use App\Helpers\WorkflowHelper;
+use App\Models\Document;
+use App\Models\DocumentDraft;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -98,6 +100,10 @@ class DocumentDraftResource extends JsonResource
     private function resolveDraftableResource(): ?JsonResource
     {
         if (!$this->documentDraftable) {
+            return null;
+        }
+
+        if ($this->document_draftable_type === DocumentDraft::class || $this->document_draftable_type === Document::class) {
             return null;
         }
 

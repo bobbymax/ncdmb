@@ -39,6 +39,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::put('service-workers/{service}', [App\Http\Controllers\ServiceWorkerController::class, 'handleService']);
         Route::get('authorised/users/{group}/{department}', [\App\Http\Controllers\SignatureRequestController::class, 'authorisedUsers']);
         Route::get('staff/claims/{userId}/{claimId}', [\App\Http\Controllers\UserController::class, 'claims']);
+        Route::get('document/documentDrafts/{status}', [\App\Http\Controllers\DocumentDraftController::class, 'drafts']);
 
         Route::apiResource('departments', \App\Http\Controllers\DepartmentController::class);
         Route::apiResource('roles', \App\Http\Controllers\RoleController::class);

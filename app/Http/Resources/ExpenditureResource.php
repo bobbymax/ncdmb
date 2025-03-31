@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Document;
+use App\Models\DocumentDraft;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -33,7 +35,29 @@ class ExpenditureResource extends JsonResource
                 'sub_budget_head' => $this->fund->subBudgetHead->name,
                 'type' => $this->fund->type,
                 'total_approved_amount' => (float) $this->fund->total_approved_amount,
-            ]
+            ],
+            'expenditureable' => $this->resolveExpenditureResource()
         ];
+    }
+
+    private function resolveExpenditureResource(): ?JsonResource
+    {
+        if (!$this->expenditureable) {
+            return null;
+        }
+
+        if ($this->expenditureable_type === DocumentDraft::class || $this->expenditureable_type === Document::class) {
+            return null;
+        }
+
+        $modelClassName = class_basename($this->expenditureable);
+
+        $resourceClass = "App\\Http\\Resources\\{$modelClassName}Resource";
+
+        if (class_exists($resourceClass)) {
+            return new $resourceClass($this->expenditureable);
+        }
+
+        return null;
     }
 }

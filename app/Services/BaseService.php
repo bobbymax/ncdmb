@@ -96,5 +96,10 @@ abstract class BaseService implements IService
         return $this->repository->instanceOfModel();
     }
 
+    public function reliesOnStatus($departmentId, $status)
+    {
+        return $this->repository->basedOnStatus($departmentId, $status);
+    }
+
     abstract public function rules($action = "store");
 }
