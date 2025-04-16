@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 
 use App\Http\Resources\DocumentDraftResource;
+use App\Http\Resources\ExpenditureResource;
+use App\Http\Resources\ExpenseResource;
 use App\Services\DocumentDraftService;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,7 +17,7 @@ class DocumentDraftController extends BaseController
 
     public function drafts(string $status): \Illuminate\Http\JsonResponse
     {
-        $drafts = $this->service->reliesOnStatus(Auth::user()->department_id, $status);
-        return $this->success($this->jsonResource::collection($drafts));
+        $expenditures = $this->service->fetchDraftsInBatchQueue(Auth::user()->department_id, $status);
+        return $this->success(ExpenditureResource::collection($expenditures));
     }
 }

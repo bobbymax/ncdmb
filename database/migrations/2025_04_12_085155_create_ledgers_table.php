@@ -11,8 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('document_actions', function (Blueprint $table) {
-            $table->boolean('is_resource')->default(false)->after('state');
+        Schema::create('ledgers', function (Blueprint $table) {
+            $table->id();
+            $table->string('code')->unique();
+            $table->string('name');
+            $table->string('description')->nullable();
+            $table->timestamps();
         });
     }
 
@@ -21,8 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('document_actions', function (Blueprint $table) {
-            $table->dropColumn('is_resource');
-        });
+        Schema::dropIfExists('ledgers');
     }
 };

@@ -62,4 +62,12 @@ trait DocumentFlow
     {
         return Puzzle::resolve($content);
     }
+
+    protected function setStateValues(int $resourceId): array
+    {
+        return [
+            'resource_id' => $resourceId,
+            'is_signed' => false,
+        ];
+    }
 }

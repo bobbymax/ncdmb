@@ -15,8 +15,13 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('claim_id');
             $table->foreign('claim_id')->references('id')->on('claims')->onDelete('cascade');
-            $table->unsignedBigInteger('remuneration_id');
-            $table->foreign('remuneration_id')->references('id')->on('remunerations')->onDelete('cascade');
+            $table->unsignedBigInteger('remuneration_id')->default(0);
+            $table->string('identifier')->unique()->nullable();
+            $table->string('description')->nullable();
+            $table->bigInteger('parent_id')->default(0);
+            $table->bigInteger('allowance_id')->default(0);
+            $table->decimal('total_distance_covered', 8, 2)->default(0);
+            $table->decimal('unit_price', 30, 2)->default(0);
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();
             $table->bigInteger('no_of_days')->default(0);

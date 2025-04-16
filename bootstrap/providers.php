@@ -59,7 +59,6 @@ return [
     App\Providers\StoreSupplyServiceProvider::class,
     App\Providers\SubBudgetHeadServiceProvider::class,
     App\Providers\TouringAdvanceServiceProvider::class,
-    App\Providers\TransactionServiceProvider::class,
     App\Providers\TripCategoryServiceProvider::class,
     App\Providers\TripServiceProvider::class,
     App\Providers\UploadServiceProvider::class,
@@ -74,5 +73,12 @@ return [
     App\Providers\SignatureRequestServiceProvider::class,
     App\Providers\SignatoryServiceProvider::class,
     App\Providers\SignatureServiceProvider::class,
-    App\Providers\WidgetServiceProvider::class
+    App\Providers\WidgetServiceProvider::class,
+    App\Providers\ChartOfAccountServiceProvider::class,
+    App\Providers\PaymentServiceProvider::class,
+    App\Providers\JournalServiceProvider::class,
+    App\Providers\JournalEntryServiceProvider::class,
+    App\Providers\EntityServiceProvider::class,
+    App\Providers\LedgerServiceProvider::class,
+    App\Providers\TransactionServiceProvider::class
 ];

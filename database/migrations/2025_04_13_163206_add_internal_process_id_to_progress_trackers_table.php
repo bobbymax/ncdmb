@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('document_actions', function (Blueprint $table) {
-            $table->enum('category', ['signature', 'comment', 'template', 'request', 'resource'])->default('comment')->after('mode');
+        Schema::table('progress_trackers', function (Blueprint $table) {
+            $table->unsignedBigInteger('internal_process_id')->nullable()->after('workflow_id');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('document_actions', function (Blueprint $table) {
-            $table->dropColumn('category');
+        Schema::table('progress_trackers', function (Blueprint $table) {
+            $table->dropColumn('internal_process_id');
         });
     }
 };

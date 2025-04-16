@@ -55,11 +55,25 @@ class HandleDocumentWorkflow implements ShouldQueue
     }
 
     /**
+     * Ensure the database connection is alive before executing.
+     */
+    protected function ensureDbConnection(): void
+    {
+        try {
+            DB::connection()->getPdo(); // Test current PDO connection
+        } catch (\Exception $e) {
+            DB::reconnect(); // Force reconnection if it's dead
+        }
+    }
+
+    /**
      * Execute the job.
      * @throws \Exception
      */
     public function handle(): void
     {
+        $this->ensureDbConnection();
+
         try {
             DB::transaction(function () {
                 $this->processWorkflow();

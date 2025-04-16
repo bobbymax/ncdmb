@@ -25,6 +25,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('document_drafts', function (Blueprint $table) {
+            $table->dropForeign(['document_id']);
             $table->dropUnique('unique_version_per_document_resource');
         });
     }

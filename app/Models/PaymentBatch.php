@@ -19,6 +19,11 @@ class PaymentBatch extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function document(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(Document::class, 'documentable');
+    }
+
     public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Department::class, 'department_id');
@@ -32,10 +37,5 @@ class PaymentBatch extends Model
     public function drafts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(DocumentDraft::class, 'sub_document_reference_id');
-    }
-
-    public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(Transaction::class);
     }
 }

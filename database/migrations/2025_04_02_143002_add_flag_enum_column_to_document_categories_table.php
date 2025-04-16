@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('document_actions', function (Blueprint $table) {
-            $table->bigInteger('workflow_stage_category_id')->default(0)->after('id');
+        Schema::table('document_categories', function (Blueprint $table) {
+            $table->enum('type', ['staff', 'third-party'])->default('staff')->after('name');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('document_actions', function (Blueprint $table) {
-            $table->dropColumn('workflow_stage_category_id');
+        Schema::table('document_categories', function (Blueprint $table) {
+            $table->dropColumn('type');
         });
     }
 };

@@ -14,6 +14,10 @@ class Document extends Model
     protected $dates = ['deleted_at'];
 
     // Model Relationships or Scope Here...
+    public function expenditures(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Expenditure::class, 'document_reference_id');
+    }
 
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
@@ -53,6 +57,11 @@ class Document extends Model
     public function drafts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(DocumentDraft::class);
+    }
+
+    public function linkedDrafts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(DocumentDraft::class, 'sub_document_reference_id');
     }
 
     public function documentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo

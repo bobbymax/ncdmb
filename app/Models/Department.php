@@ -112,11 +112,6 @@ class Department extends Model
         return $this->hasMany(StoreSupply::class);
     }
 
-    public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(Transaction::class);
-    }
-
     public function uploads(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(Upload::class);

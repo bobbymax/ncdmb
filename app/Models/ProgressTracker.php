@@ -11,7 +11,14 @@ class ProgressTracker extends Model
 
     protected $guarded = [''];
 
-    // Model Relationships or Scope Here...
+    protected static function booted(): void
+    {
+        static::deleting(function ($model) {
+            $model->actions()->detach();
+            $model->recipients()->detach();
+        });
+    }
+
     public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Workflow::class, 'workflow_id');
@@ -25,6 +32,11 @@ class ProgressTracker extends Model
     public function group(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Group::class, 'group_id');
+    }
+
+    public function internalProcess(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Workflow::class, 'internal_process_id');
     }
 
     public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo

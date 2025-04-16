@@ -38,6 +38,11 @@ class DocumentDraft extends Model
         return $this->belongsTo(Document::class, 'document_id');
     }
 
+    public function linkedDocument(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Document::class, 'sub_document_reference_id');
+    }
+
     public function documentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(DocumentType::class, 'document_type_id');

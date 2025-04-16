@@ -40,4 +40,9 @@ class Expenditure extends Model
     {
         return $this->morphOne(DocumentDraft::class, 'document_draftable');
     }
+
+    public function document(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Document::class, 'document_reference_id');
+    }
 }

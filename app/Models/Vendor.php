@@ -41,9 +41,4 @@ class Vendor extends Model
     {
         return $this->belongsTo(Department::class, 'department_id');
     }
-
-    public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(Transaction::class);
-    }
 }

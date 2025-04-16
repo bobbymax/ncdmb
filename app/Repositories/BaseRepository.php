@@ -7,6 +7,7 @@ use App\Handlers\CodeGenerationErrorException;
 use App\Handlers\DataNotFound;
 use App\Handlers\RecordCreationUnsuccessful;
 use App\Interfaces\IRepository;
+use App\Models\Expenditure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 
@@ -51,9 +52,19 @@ abstract class BaseRepository implements IRepository
         return $this->model->newQuery()->insert($data);
     }
 
+    public function whereInQuery(string $field, array $values)
+    {
+        return $this->model->whereIn($field, $values);
+    }
+
     public function whereIn(string $field, array $values)
     {
-        return $this->model->whereIn($field, $values)->get();
+        return $this->whereInQuery($field, $values)->get();
+    }
+
+    public function deleteWhereIn(string $field, array $values)
+    {
+        return $this->model->whereIn($field, $values)->delete();
     }
 
     /**
@@ -86,12 +97,29 @@ abstract class BaseRepository implements IRepository
         return $record;
     }
 
-    public function basedOnStatus($departmentId, $status)
+    public function inBatchQueue($departmentId, $status)
     {
-        return $this->model->where('department_id', $departmentId)
+        $drafts =  $this->model->where('department_id', $departmentId)
             ->where('status', $status)
+            ->where('document_draftable_type', Expenditure::class)
             ->latest()
+            ->with([
+                'documentDraftable.expenditureable', // Eager load
+            ])
             ->get();
+
+        // Extract only the expenditures from drafts
+        // Optional: in case some are null
+
+        return $drafts->map(function ($draft) {
+            $expenditure = $draft->documentDraftable;
+
+            if ($expenditure) {
+                $expenditure->trackable_draft_id = $draft->id;
+            }
+
+            return $expenditure;
+        })->filter();
     }
 
     /**

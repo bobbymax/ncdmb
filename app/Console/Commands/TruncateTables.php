@@ -25,12 +25,18 @@ class TruncateTables extends Command
     // Add your table names here
     protected array $tables = [
         'document_drafts',
+        'document_updates',
         'documents',
         'expenses',
         'claims',
         'uploads',
         'signatures',
-        'expenditures'
+        'expenditures',
+        'payment_batches',
+        'payments',
+        'signature_requests',
+        'transactions',
+        'progress_trackers',
     ];
 
     /**

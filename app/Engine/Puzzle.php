@@ -35,7 +35,7 @@ class Puzzle
             ->values()
             ->toArray();
 
-        Log::info('🎭 Puzzle created with hidden prefix.', ['prefix' => $prefix, 'count' => count($mixed)]);
+//        Log::info('🎭 Puzzle created with hidden prefix.', ['prefix' => $prefix, 'count' => count($mixed)]);
 
         return json_encode($mixed);
     }

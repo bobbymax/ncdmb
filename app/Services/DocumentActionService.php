@@ -16,7 +16,7 @@ class DocumentActionService extends BaseService
         return [
             'name' => 'required|string|max:255',
             'button_text' => 'nullable|string|max:255',
-            'action_status' => 'required|string|in:passed,failed,attend,appeal,stalled,cancelled,reversed,complete',
+            'action_status' => 'required|string|in:passed,failed,attend,appeal,stalled,cancelled,reversed,complete,processing,escalate',
             'icon' => 'nullable|string|max:255',
             'variant' => 'nullable|string|in:primary,info,success,warning,danger,dark',
             'component' => 'sometimes|string|max:255',

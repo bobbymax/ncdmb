@@ -12,7 +12,6 @@ class ProgressTrackerService extends BaseService
 {
     protected DocumentActionRepository $documentActionRepository;
     protected MailingListRepository $mailingListRepository;
-
     protected WorkflowRepository $workflowRepository;
 
     public function __construct(
@@ -40,6 +39,7 @@ class ProgressTrackerService extends BaseService
             'stages' => ['required', 'array'],
             'stages.*.identifier' => ['required', 'string', 'max:36'],
             'stages.*.workflow_stage_id' => ['required', 'integer', 'exists:workflow_stages,id'],
+            'stages.*.internal_process_id' => ['sometimes', 'nullable', 'integer', 'min:0'],
             'stages.*.group_id' => ['required', 'integer', 'min:1', 'exists:groups,id'],
             'stages.*.department_id' => $this->departmentValidationRule(),
             'stages.*.carder_id' => ['required', 'integer', 'min:1', 'exists:carders,id'],
@@ -70,10 +70,6 @@ class ProgressTrackerService extends BaseService
         ];
     }
 
-    private function handleTrackers($tracker) {
-
-    }
-
     /**
      * Store a progress tracker record along with actions and recipients.
      *
@@ -93,6 +89,9 @@ class ProgressTrackerService extends BaseService
         });
     }
 
+    /**
+     * @throws \Exception
+     */
     private function handleTrackerAttachments(int $workflowId, $stage)
     {
         $tracker = $this->createProgressTracker($workflowId, $stage);
@@ -165,6 +164,7 @@ class ProgressTrackerService extends BaseService
      * @param int $workflowId
      * @param array $stage
      * @return mixed
+     * @throws \Exception
      */
     private function createProgressTracker(int $workflowId, array $stage): mixed
     {
@@ -179,6 +179,7 @@ class ProgressTrackerService extends BaseService
      *
      * @param mixed $progressLine
      * @param array $recipients
+     * @param bool $isUpdate
      * @return void
      */
     private function attachRecipients($progressLine, array $recipients, bool $isUpdate = false): void

@@ -5,6 +5,7 @@ namespace App\Services;
 
 use App\Engine\ControlEngine;
 use App\Engine\Puzzle;
+use App\Support\Builders\DocumentDataBuilder;
 use App\Models\{Claim, Document};
 use App\Repositories\{ClaimRepository, DocumentRepository, ExpenseRepository, UploadRepository};
 use App\Traits\DocumentFlow;
@@ -73,7 +74,13 @@ class ClaimService extends BaseService
             }
 
             $this->processExpenses($data['expenses'], $claim->id);
-            $documentData = $this->prepareDocumentData($data, $claim);
+            $documentData = $this->documentRepository->build(
+                $data,
+                $claim,
+                $data['sponsoring_department_id'],
+                $claim->title,
+                $claim->title
+            );
             $document = $this->documentRepository->create($documentData);
 
             if ($document) {
@@ -232,34 +239,6 @@ class ClaimService extends BaseService
         }
 
         return $data;
-    }
-
-    protected function prepareDocumentData(array $data, Claim $claim): array
-    {
-        return [
-            'user_id' => Auth::id(),
-            'workflow_id' => $data['workflow_id'],
-            'department_id' => $data['sponsoring_department_id'],
-            'document_category_id' => $data['document_category_id'],
-            'document_reference_id' => $data['document_reference_id'] ?? 0,
-            'document_type_id' => $data['document_type_id'],
-            'document_action_id' => $data['document_action_id'] ?? 0,
-            'progress_tracker_id' => $this->getFirstTrackerId($data['workflow_id']),
-            'vendor_id' => $data['vendor_id'] ?? 0,
-            'title' => $claim->title,
-            'description' => $claim->title,
-            'documentable_id' => $claim->id,
-            'documentable_type' => Claim::class,
-            'ref' => $this->documentRepository->generateRef($data['sponsoring_department_id'], $claim->code),
-        ];
-    }
-
-    private function setStateValues(int $resourceId): array
-    {
-        return [
-            'resource_id' => $resourceId,
-            'is_signed' => false,
-        ];
     }
 
     public function destroy(int $id): bool

@@ -66,9 +66,4 @@ class Fund extends Model
     {
         return $this->hasMany(Reserve::class);
     }
-
-    public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(Transaction::class);
-    }
 }

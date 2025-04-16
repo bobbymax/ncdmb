@@ -201,15 +201,6 @@ class User extends Authenticatable
         return $this->hasMany(Upload::class);
     }
 
-    public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(Transaction::class);
-    }
-    public function paymentsReceived(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(Transaction::class, 'staff_id');
-    }
-
     public function groups(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
         return $this->morphToMany(Group::class, 'groupable');

@@ -8,12 +8,14 @@ use App\Handlers\ValidationErrors;
 use App\Interfaces\IController;
 use App\Services\BaseService;
 use App\Traits\ApiResponse;
+use App\Traits\ResourceContainer;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 abstract class BaseController extends Controller implements IController
 {
-    use ApiResponse;
+    use ApiResponse, ResourceContainer;
+
     protected BaseService $service;
     protected string $name;
     protected string $jsonResource;

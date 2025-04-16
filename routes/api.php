@@ -33,6 +33,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
 
         Route::post('configuration/imports/{resource}', [\App\Http\Controllers\ImportController::class, 'getResource']);
         Route::get('apiServices', [\App\Http\Controllers\ApiServiceController::class, 'index']);
+        Route::get('imports', [\App\Http\Controllers\ApiServiceController::class, 'imports']);
         Route::get('committment/funds/{fund}', [\App\Http\Controllers\FundController::class, 'totalCurrentCommittment']);
 
         Route::put('claim/updates/{claimId}', [App\Http\Controllers\ClaimController::class, 'alter']);
@@ -40,6 +41,8 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::get('authorised/users/{group}/{department}', [\App\Http\Controllers\SignatureRequestController::class, 'authorisedUsers']);
         Route::get('staff/claims/{userId}/{claimId}', [\App\Http\Controllers\UserController::class, 'claims']);
         Route::get('document/documentDrafts/{status}', [\App\Http\Controllers\DocumentDraftController::class, 'drafts']);
+        Route::get('resolvers/{status}/{access_level}/{user_column}/{draftScope}', [\App\Http\Controllers\ApiServiceController::class, 'records']);
+        Route::get('group/ledgers', [\App\Http\Controllers\LedgerController::class, 'getLedgers']);
 
         Route::apiResource('departments', \App\Http\Controllers\DepartmentController::class);
         Route::apiResource('roles', \App\Http\Controllers\RoleController::class);
@@ -69,6 +72,9 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('fileTemplates', \App\Http\Controllers\FileTemplateController::class);
         Route::apiResource('uploads', \App\Http\Controllers\UploadController::class);
         Route::apiResource('widgets', \App\Http\Controllers\WidgetController::class);
+        Route::apiResource('chartOfAccounts', \App\Http\Controllers\ChartOfAccountController::class);
+        Route::apiResource('ledgers', \App\Http\Controllers\LedgerController::class);
+        Route::apiResource('payments', \App\Http\Controllers\PaymentController::class);
 
         Route::apiResource('budgetHeads', \App\Http\Controllers\BudgetHeadController::class);
         Route::apiResource('budgetCodes', \App\Http\Controllers\BudgetCodeController::class);
@@ -84,5 +90,6 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('expenses', \App\Http\Controllers\ExpenseController::class);
         Route::apiResource('cities', \App\Http\Controllers\CityController::class);
         Route::apiResource('tripCategories', \App\Http\Controllers\TripCategoryController::class);
+        Route::apiResource('entities', \App\Http\Controllers\EntityController::class);
     });
 });

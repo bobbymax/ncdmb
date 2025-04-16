@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Engine\ControlEngine;
+use App\Repositories\DocumentDraftRepository;
+use App\Repositories\DocumentRepository;
 use App\Repositories\ExpenditureRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\PaymentBatchRepository;
@@ -20,8 +23,11 @@ class PaymentBatchServiceProvider extends ServiceProvider
         $this->app->bind(PaymentBatchService::class, function ($app) {
             $paymentBatchRepository = $app->make(PaymentBatchRepository::class);
             $expenditureRepository = $app->make(ExpenditureRepository::class);
+            $documentDraftRepository = $app->make(DocumentDraftRepository::class);
+            $documentRepository = $app->make(DocumentRepository::class);
+            $controlEngine  = $app->make(ControlEngine::class);
 
-            return new PaymentBatchService($paymentBatchRepository, $expenditureRepository);
+            return new PaymentBatchService($paymentBatchRepository, $expenditureRepository, $documentDraftRepository, $documentRepository, $controlEngine);
         });
     }
 }

@@ -81,12 +81,10 @@ class AuthApiController extends BaseController
         if (!Auth::attempt($credentials)) {
             return $this->error(["username" => $credentials[$username], "password" => $credentials['password']], 'Invalid Credentials', 401);
         }
-//        $user = Auth::user();
-//        $token = $user->createToken('auth_token')->plainTextToken;
+
         $request->session()->regenerate();
         Session::setId($oldSession);
 
-//        return $this->authWithCookie($user, $token);
         return $this->success(null, 'Logged in successfully');
     }
 

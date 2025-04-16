@@ -2,8 +2,6 @@
 
 namespace App\Providers;
 
-use App\Repositories\ExpenditureRepository;
-use App\Repositories\FundRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\TransactionRepository;
 use App\Services\TransactionService;
@@ -20,10 +18,8 @@ class TransactionServiceProvider extends ServiceProvider
         // Bind the TransactionRepository to TransactionService
         $this->app->bind(TransactionService::class, function ($app) {
             $transactionRepository = $app->make(TransactionRepository::class);
-            $expenditureRepository = $app->make(ExpenditureRepository::class);
-            $fundRepository = $app->make(FundRepository::class);
 
-            return new TransactionService($transactionRepository, $expenditureRepository, $fundRepository);
+            return new TransactionService($transactionRepository);
         });
     }
 }

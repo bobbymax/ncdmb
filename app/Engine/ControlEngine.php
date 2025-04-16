@@ -170,9 +170,16 @@ class ControlEngine
     private function first($record = null): ProgressTracker
     {
         Log::info("Creating first draft for Document ID: {$this->document->id}");
-        $this->createDraft("pending", $record);
-        $this->dispatchWorkflowEvent();
 
+        DB::transaction(function () use ($record) {
+            $this->createDraft("pending", $record);
+            $this->document->update([
+                'document_action_id' => $this->documentAction->id,
+                'status' => $this->documentAction->draft_status
+            ]);
+        });
+
+        $this->dispatchWorkflowEvent();
         return $this->tracker;
     }
 
@@ -182,7 +189,10 @@ class ControlEngine
         $nextStage = DB::transaction(function () use ($record) {
             if ($this->lastDraft?->type === "attention") {
                 $this->updateLastDraft();
-                $this->document->update(['document_action_id' => $this->documentAction->id]);
+                $this->document->update([
+                    'document_action_id' => $this->documentAction->id,
+                    'status' => $this->documentAction->draft_status
+                ]);
                 return $this->tracker;
             }
 
@@ -195,7 +205,8 @@ class ControlEngine
 
             $this->document->update([
                 'progress_tracker_id' => $nextTracker->id,
-                'document_action_id' => $this->documentAction->id
+                'document_action_id' => $this->documentAction->id,
+                'status' => $this->documentAction->draft_status
             ]);
 
             $this->createDraft('pending', $record, $nextTracker);
@@ -249,7 +260,10 @@ class ControlEngine
     protected function stall($record = null): ProgressTracker
     {
         Log::info("Stalling workflow for Document ID: {$this->document->id}");
-        $this->document->update(['document_action_id' => $this->documentAction->id]);
+        $this->document->update([
+            'document_action_id' => $this->documentAction->id,
+            'status' => $this->documentAction->draft_status
+        ]);
 
         if ($this->documentAction->category === "signature" && $record) {
             $this->updateLastDraftForSignature($record);

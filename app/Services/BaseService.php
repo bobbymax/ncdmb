@@ -75,6 +75,11 @@ abstract class BaseService implements IService
         return $this->repository->update($record->id, $data, $parsed);
     }
 
+    public function whereIn(string $column, array $values)
+    {
+        return $this->repository->whereIn($column, $values);
+    }
+
     /**
      * @throws \Exception
      */
@@ -96,9 +101,9 @@ abstract class BaseService implements IService
         return $this->repository->instanceOfModel();
     }
 
-    public function reliesOnStatus($departmentId, $status)
+    public function fetchDraftsInBatchQueue($departmentId, $status)
     {
-        return $this->repository->basedOnStatus($departmentId, $status);
+        return $this->repository->inBatchQueue($departmentId, $status);
     }
 
     abstract public function rules($action = "store");

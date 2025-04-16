@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Imports;
+
+use App\Interfaces\Importable;
+use App\Repositories\{{ repository }};
+
+class {{ model }}Import implements Importable
+{
+    public function __construct(
+        protected {{ repository }} ${{ camel }}Repository
+    ) {}
+
+    private $columns = [];
+
+    public function import(array $rows): void
+    {
+        //
+    }
+}

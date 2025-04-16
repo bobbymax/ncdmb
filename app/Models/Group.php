@@ -51,4 +51,9 @@ class Group extends Model
     {
         return $this->morphedByMany(Widget::class, 'groupable');
     }
+
+    public function ledgers(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphedByMany(Ledger::class, 'groupable');
+    }
 }
