@@ -8,6 +8,7 @@ use App\Http\Resources\DocumentResource;
 use App\Models\{Document, ProgressTracker, Workflow};
 use App\Services\{DocumentActionService, DocumentService, ProgressTrackerService, WorkflowService, DocumentDraftService};
 use App\Traits\ApiResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Validation\ValidationException;
 
@@ -74,6 +75,12 @@ class ServiceWorkerController extends Controller
 
         $this->controlEngine->process();
         return $this->success(new DocumentResource($document), class_basename(app($service)) . " {$action->action_status}  processed successfully");
+    }
+
+    public function handleProcessServiceData(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $resource = processor()->handleFrontendRequest($request);
+        return $this->success($resource);
     }
 
     private function currentTracker(Workflow $workflow, Document $document): ProgressTracker

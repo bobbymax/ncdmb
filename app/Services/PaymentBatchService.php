@@ -9,11 +9,13 @@ use App\Repositories\DocumentRepository;
 use App\Repositories\ExpenditureRepository;
 use App\Repositories\PaymentBatchRepository;
 use App\Traits\DocumentFlow;
+use App\Traits\ServiceAction;
+use Exception;
 use Illuminate\Support\Facades\DB;
 
 class PaymentBatchService extends BaseService
 {
-    use DocumentFlow;
+    use DocumentFlow, ServiceAction;
     protected ExpenditureRepository $expenditureRepository;
     protected DocumentDraftRepository $documentDraftRepository;
     protected DocumentRepository $documentRepository;
@@ -57,6 +59,7 @@ class PaymentBatchService extends BaseService
 
     /**
      * @throws CodeGenerationErrorException
+     * @throws Exception
      */
     protected function createPaymentBatch(array $data)
     {
@@ -69,17 +72,45 @@ class PaymentBatchService extends BaseService
         ]);
     }
 
-    protected function createDocumentForBatch($batch, array $data)
+    /**
+     * @throws \Exception
+     */
+    protected function createDocumentForBatch($batch, array $data, $total_amount)
     {
         $documentData = $this->documentRepository->build(
             $data,
             $batch,
             $data['department_id'],
             "Batch Payment: {$batch->code}",
-            "Batch Payment Document Generated!!"
+            "Batch Payment Document Generated!!",
+            true,
+            null,
+            $this->workflowArgs(
+                PaymentBatchService::class,
+                $data['document_action_id'],
+                $batch,
+                $total_amount,
+            )
         );
 
         return $this->documentRepository->create($documentData);
+    }
+
+    protected function linkResourceDocumentsToBatch(array $expenditures, $document): void
+    {
+        $expenditureIds = $this->isolateKeys($expenditures, 'id');
+        $expenditureCollection = $this->expenditureRepository->whereIn('id', $expenditureIds);
+
+        foreach ($expenditureCollection as $expenditure) {
+            $expenditureDocument = $expenditure->draft->document;
+            if (!$expenditureDocument) continue;
+            $this->documentRepository
+                ->linkRelatedDocument(
+                    $document,
+                    $expenditureDocument,
+                    "payment_batch"
+                );
+        }
     }
 
     protected function attachExpendituresToDocument(array $expenditures, $document): void
@@ -87,8 +118,9 @@ class PaymentBatchService extends BaseService
         foreach ($expenditures as $value) {
             $expenditure = $this->expenditureRepository->find($value['id']);
             $draft = $this->documentDraftRepository->find($value['trackable_draft_id']);
+            $draftDocument = $draft->document;
 
-            if ($expenditure && $draft) {
+            if ($expenditure && $draft && $draftDocument) {
                 $expenditure->update([
                     'document_reference_id' => $document->id,
                     'status' => 'batched'
@@ -98,25 +130,12 @@ class PaymentBatchService extends BaseService
                     'sub_document_reference_id' => $document->id,
                     'status' => 'batched'
                 ]);
+
+                $draftDocument->update([
+                    'document_reference_id' => $document->id,
+                ]);
             }
         }
-    }
-
-    protected function startWorkflowEngine($document, $batch): void
-    {
-        $this->engine->initialize(
-            $this,
-            $document,
-            $document->workflow,
-            $document->current_tracker,
-            $this->getCreationDocumentAction(),
-            $this->setStateValues($batch->id),
-            null,
-            null,
-            $document->expenditures->sum('amount')
-        );
-
-        $this->engine->process();
     }
 
     public function store(array $data)
@@ -128,9 +147,13 @@ class PaymentBatchService extends BaseService
                 return null;
             }
 
-            $document = $this->createDocumentForBatch($batch, $data);
+            $total_amount = array_reduce($data['expenditures'], function ($carry, $expenditure) {
+                return $carry + ($expenditure->amount ?? 0);
+            }, 0);
+
+            $document = $this->createDocumentForBatch($batch, $data, $total_amount);
             $this->attachExpendituresToDocument($data['expenditures'], $document);
-            $this->startWorkflowEngine($document, $batch);
+            $this->linkResourceDocumentsToBatch($data['expenditures'], $document);
 
             return $batch;
         });

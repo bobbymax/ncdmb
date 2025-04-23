@@ -59,6 +59,8 @@ class ControlEngine
         return DB::transaction(function () {
             $record =  $this->handleServiceStateUpdate();
 
+            // Handle Previous Tracker Document
+
             return match ($this->documentAction->action_status) {
                 'passed' => $this->proceed($record),
                 'failed', 'cancelled' => $this->terminate($record),

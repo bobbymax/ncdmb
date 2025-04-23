@@ -7,16 +7,18 @@ use App\Models\Document;
 use App\Models\Workflow;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class DocumentRepository extends BaseRepository
 {
     protected Department $department;
     protected Workflow $workflow;
-    public function __construct(Document $document, Department $department, Workflow $workflow) {
+    protected UploadRepository $uploadRepository;
+    public function __construct(Document $document, Department $department, Workflow $workflow, UploadRepository $uploadRepository) {
         parent::__construct($document);
         $this->department = $department;
         $this->workflow = $workflow;
+        $this->uploadRepository = $uploadRepository;
     }
 
     public function parse(array $data): array
@@ -90,6 +92,49 @@ class DocumentRepository extends BaseRepository
         });
 
         return $query->latest()->paginate(50);
+    }
+
+    public function create(array $data)
+    {
+        return DB::transaction(function () use ($data) {
+            $args = $data['args'];
+            $document = parent::create($data);
+
+            if (!$document) return null;
+
+            if (!empty($data['linked_document']) && !empty($data['relationship_type'])) {
+                $this->linkRelatedDocument($document, $data['linked_document'], $data['relationship_type']);
+            }
+
+            if (!empty($data['supporting_documents'])) {
+                $this->processSupportingDocuments($data['supporting_documents'], $document->id);
+            }
+
+            if ($data['trigger_workflow']) {
+                processor()->trigger($args['service'], $document, $args);
+            }
+
+            return $document;
+        });
+    }
+
+    public function processSupportingDocuments(array $files, int $documentId): void
+    {
+        $this->uploadRepository->uploadMany(
+            $files,
+            $documentId,
+            Document::class
+        );
+    }
+
+    public function linkRelatedDocument(
+        Document $document,
+        Document $linked,
+        string $type
+    ): void {
+        $document->linkedDocuments()->attach($linked->id, [
+            'relationship_type' => $type,
+        ]);
     }
 
     /**
@@ -170,24 +215,35 @@ class DocumentRepository extends BaseRepository
         object $resource,
         int $departmentId,
         string $title,
-        string $description
-    ): array
-    {
+        string $description,
+        bool $triggerWorkflow = false,
+        ?int $triggeredWorkflowId = null,
+        ?array $args = [],
+        ?array $supportingDocuments = []
+    ): array {
+
+        $workflowId  = $triggeredWorkflowId && $triggeredWorkflowId > 1 ? $triggeredWorkflowId : $data['workflow_id'];
+
         return [
             'user_id' => Auth::id(),
-            'workflow_id' => $data['workflow_id'],
+            'workflow_id' => $workflowId,
             'department_id' => $departmentId,
             'document_category_id' => $data['document_category_id'],
             'document_reference_id' => $data['document_reference_id'] ?? 0,
             'document_type_id' => $data['document_type_id'],
             'document_action_id' => $data['document_action_id'] ?? 0,
-            'progress_tracker_id' => $this->getFirstTrackerId($data['workflow_id']),
+            'progress_tracker_id' => $this->getFirstTrackerId($workflowId),
             'vendor_id' => $data['vendor_id'] ?? 0,
             'title' => $title,
             'description' => $description,
             'documentable_id' => $resource->id,
             'documentable_type' => get_class($resource),
+            'relationship_type' => $data['relationship_type'] ?? null,
+            'linked_document' => $data['linked_document'] ?? null,
             'ref' => $this->generateRef($departmentId, $resource->code),
+            'args' => $args,
+            'trigger_workflow' => $triggerWorkflow,
+            'supporting_documents' => $supportingDocuments,
         ];
     }
 

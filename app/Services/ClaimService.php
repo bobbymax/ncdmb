@@ -3,16 +3,11 @@
 namespace App\Services;
 
 
-use App\Engine\ControlEngine;
-use App\Engine\Puzzle;
-use App\Support\Builders\DocumentDataBuilder;
-use App\Models\{Claim, Document};
+use App\Models\Document;
 use App\Repositories\{ClaimRepository, DocumentRepository, ExpenseRepository, UploadRepository};
 use App\Traits\DocumentFlow;
 use Carbon\Carbon;
-use Illuminate\Http\UploadedFile;
-use Illuminate\Support\Facades\{Auth, DB, Log, Storage};
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\{Auth, DB, Log};
 use Illuminate\Validation\ValidationException;
 
 class ClaimService extends BaseService
@@ -21,20 +16,17 @@ class ClaimService extends BaseService
     protected ExpenseRepository $expenseRepository;
     protected UploadRepository $uploadRepository;
     protected DocumentRepository $documentRepository;
-    protected ControlEngine $engine;
 
     public function __construct(
         ClaimRepository $claimRepository,
         ExpenseRepository $expenseRepository,
         UploadRepository $uploadRepository,
         DocumentRepository $documentRepository,
-        ControlEngine $engine
     ) {
         parent::__construct($claimRepository);
         $this->expenseRepository = $expenseRepository;
         $this->uploadRepository = $uploadRepository;
         $this->documentRepository = $documentRepository;
-        $this->engine = $engine;
     }
 
     public function rules($action = "store"): array
@@ -55,6 +47,7 @@ class ClaimService extends BaseService
             'document_type_id' => 'required|integer|exists:document_types,id',
             'claimant_signature' => 'sometimes|nullable|string',
             'approval_signature' => 'sometimes|nullable|string',
+            'approval_document_id' => 'sometimes|nullable|integer',
         ];
     }
 
@@ -74,35 +67,39 @@ class ClaimService extends BaseService
             }
 
             $this->processExpenses($data['expenses'], $claim->id);
-            $documentData = $this->documentRepository->build(
-                $data,
-                $claim,
-                $data['sponsoring_department_id'],
-                $claim->title,
-                $claim->title
-            );
-            $document = $this->documentRepository->create($documentData);
-
-            if ($document) {
-                $this->processSupportingDocuments($data['supporting_documents'] ?? [], $document->id);
-
-                $this->engine->initialize(
-                    $this,
-                    $document,
-                    $document->workflow,
-                    $document->current_tracker,
-                    $this->getCreationDocumentAction(),
-                    $this->setStateValues($claim->id),
-                    null,
-                    null,
-                    $claim->total_amount_spent
-                );
-
-                $this->engine->process();
-            }
+            $this->createDocumentForClaim($claim, $data);
 
             return $claim;
         });
+    }
+
+    /**
+     * @throws \Exception
+     */
+    protected function createDocumentForClaim($claim, array $data)
+    {
+        $documentData = $this->documentRepository->build(
+            [
+                ...$data,
+                'linked_document' => isset($data['approval_document_id']) ? $this->getDocument($data['approval_document_id']) : null,
+                'relationship_type' => 'approval_memo'
+            ],
+            $claim,
+            $data['sponsoring_department_id'],
+            $claim->title,
+            $claim->title,
+            true,
+            null,
+            $this->workflowArgs(
+                ClaimService::class,
+                $data['document_action_id'] ?? 0,
+                $claim,
+                $claim->total_amount_spent
+            ),
+            $data['supporting_documents'] ?? []
+        );
+
+        return $this->documentRepository->create($documentData);
     }
 
     /**
@@ -118,7 +115,7 @@ class ClaimService extends BaseService
             }
 
             if ($claim->document && isset($data['supporting_documents'])) {
-                $this->processSupportingDocuments($data['supporting_documents'], $claim->document->id);
+                $this->documentRepository->processSupportingDocuments($data['supporting_documents'], $claim->document->id);
             }
 
             $this->processExpenses($data['expenses'] ?? '[]', $claim->id, true);
@@ -189,15 +186,6 @@ class ClaimService extends BaseService
                 'trace' => $e->getTraceAsString(),
             ]);
         }
-    }
-
-    protected function processSupportingDocuments(array $files, int $documentId): void
-    {
-        $this->uploadRepository->uploadMany(
-            $files,
-            $documentId,
-            Document::class
-        );
     }
 
     /**

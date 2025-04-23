@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Core\Processor;
 use App\Models\DocumentDraft;
 use App\Models\Setting;
 use App\Observers\DocumentDraftObserver;
@@ -17,7 +18,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton('processor', function() {
+            return new Processor();
+        });
+
+        $this->app->alias('processor', Processor::class);
     }
 
     /**

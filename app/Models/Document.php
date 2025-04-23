@@ -64,6 +64,20 @@ class Document extends Model
         return $this->hasMany(DocumentDraft::class, 'sub_document_reference_id');
     }
 
+    public function linkedDocuments() // children
+    {
+        return $this->belongsToMany(Document::class, 'document_hierarchy', 'document_id', 'linked_document_id')
+            ->withPivot('relationship_type')
+            ->withTimestamps();
+    }
+
+    public function parentDocuments() // parents
+    {
+        return $this->belongsToMany(Document::class, 'document_hierarchy', 'linked_document_id', 'document_id')
+            ->withPivot('relationship_type')
+            ->withTimestamps();
+    }
+
     public function documentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(DocumentType::class);

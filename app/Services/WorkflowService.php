@@ -144,9 +144,9 @@ class WorkflowService extends BaseService
         return $tracker;
     }
 
-    private function processStageTrackers(array $stages, $workflow, array $toDelete)
+    private function processStageTrackers(array $stages, $workflow, array $toDelete): void
     {
-        return collect($stages)->map(function ($stage) use ($workflow, $toDelete) {
+        collect($stages)->map(function ($stage) use ($workflow, $toDelete) {
             return $this->populateTrackers($stage, $toDelete, $workflow);
         })->first();
     }
@@ -163,6 +163,8 @@ class WorkflowService extends BaseService
     {
         $this->progressTrackerRepository->whereInQuery('identifier', $toDelete)->chunkById(100, function ($chunk) {
             foreach ($chunk as $model) {
+                $model->actions()->detach();
+                $model->recipients()->detach();
                 $model->delete(); // triggers the `deleting` event above
             }
         });

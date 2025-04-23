@@ -16,6 +16,7 @@ class DocumentActionRepository extends BaseRepository
         return [
             ...$data,
             'label' => Str::slug($data['name']),
+            'trigger_workflow_id' => $data['trigger_workflow_id'] > 0 ? $data['trigger_workflow_id'] : null,
         ];
     }
 }
