@@ -45,4 +45,9 @@ class Expenditure extends Model
     {
         return $this->belongsTo(Document::class, 'document_reference_id');
     }
+
+    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
 }

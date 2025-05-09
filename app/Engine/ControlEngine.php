@@ -143,7 +143,7 @@ class ControlEngine
                 ]);
             }
 
-            $this->dispatchWorkflowEvent($previousTracker ?? $this->tracker);
+//            $this->dispatchWorkflowEvent($previousTracker ?? $this->tracker);
             return $previousTracker ?? $this->tracker;
         });
     }
@@ -181,7 +181,6 @@ class ControlEngine
             ]);
         });
 
-        $this->dispatchWorkflowEvent();
         return $this->tracker;
     }
 
@@ -215,7 +214,6 @@ class ControlEngine
             return $nextTracker;
         });
 
-        $this->dispatchWorkflowEvent($nextStage);
         return $nextStage;
     }
 
@@ -273,7 +271,6 @@ class ControlEngine
             $this->updateLastDraft("attention");
         }
 
-        $this->dispatchWorkflowEvent();
         return $this->tracker;
     }
 
@@ -293,7 +290,6 @@ class ControlEngine
             'status' => 'terminated',
         ]);
 
-        $this->dispatchWorkflowEvent();
         return $this->tracker;
     }
 
@@ -308,12 +304,15 @@ class ControlEngine
                 'current_workflow_stage_id' => $this->tracker->stage->id
             ]);
         } else {
+            // Update Amount Here
+//            $newSum = $this->baseService->sumTotalAmount($this->state['resource_id'] ?? 0);
             $this->lastDraft?->update([
                 'document_action_id' => $this->documentAction->id,
                 'current_workflow_stage_id' => $this->fallback() > 0 ? $this->fallback() : $this->tracker->workflow_stage_id,
                 'signature' => $this->signatureUpload($this->signature ?? ""),
                 'status' => $this->documentAction->draft_status,
                 'authorising_staff_id' => $this->user->id,
+//                'amount' => $newSum > 0 ? $newSum : $this->lastDraft?->amount,
             ]);
         }
     }
@@ -391,19 +390,5 @@ class ControlEngine
 
         // Resolve the service class via Laravel container
         return app($serviceClass);
-    }
-
-    /**
-     * Handles workflow state change event dispatching.
-     */
-    private function dispatchWorkflowEvent(?ProgressTracker $nextTracker = null): void
-    {
-        event(new WorkflowStateChange(
-            $this->document,
-            $this->documentAction,
-            $this->user->id,
-            $this->tracker,
-            $nextTracker
-        ));
     }
 }

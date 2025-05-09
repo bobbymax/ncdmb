@@ -24,4 +24,14 @@ class Expense extends Model
     {
         return $this->belongsTo(Remuneration::class);
     }
+
+    public function allowance(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Allowance::class, 'parent_id');
+    }
+
+    public function item(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Allowance::class, 'allowance_id');
+    }
 }

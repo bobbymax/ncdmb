@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 
+use App\DTO\ProcessedIncomingData;
 use App\Handlers\CodeGenerationErrorException;
 use App\Handlers\DataNotFound;
 use App\Handlers\RecordCreationUnsuccessful;
@@ -10,6 +11,7 @@ use App\Interfaces\IRepository;
 use App\Models\Expenditure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Log;
 
 abstract class BaseRepository implements IRepository
 {
@@ -97,6 +99,15 @@ abstract class BaseRepository implements IRepository
         return $record;
     }
 
+    /**
+     * @throws DataNotFound
+     * @throws \Exception
+     */
+    public function consolidate(ProcessedIncomingData $data)
+    {
+        return $data;
+    }
+
     public function inBatchQueue($departmentId, $status)
     {
         $drafts =  $this->model->where('department_id', $departmentId)
@@ -122,6 +133,14 @@ abstract class BaseRepository implements IRepository
         })->filter();
     }
 
+    public function computeTotalAmount(int $id): mixed
+    {
+        if ($id < 1) return null;
+
+        $record = $this->find($id);
+        return $record ?? null;
+    }
+
     /**
      * @throws DataNotFound
      */
@@ -140,11 +159,12 @@ abstract class BaseRepository implements IRepository
      * Generate a unique code with the given prefix and column.
      * @throws CodeGenerationErrorException
      */
-    public function generate(string $column, string $prefix): string
+    public function generate(string $column, string $prefix, $transaction = false): string
     {
         try {
             do {
                 $code = $prefix . random_int(10000, 99999);
+                Log::info($code);
             } while ($this->model->withTrashed()->where($column, $code)->exists());
 
             return $code;

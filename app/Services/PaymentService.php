@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\DTO\PaymentConsolidatedIncomingData;
+use App\DTO\ProcessedIncomingData;
 use App\Handlers\CodeGenerationErrorException;
 use App\Models\Document;
 use App\Models\Expenditure;
@@ -69,11 +71,12 @@ class PaymentService extends BaseService
         ];
     }
 
-    public function store(array $data)
+    public function consolidate(ProcessedIncomingData $data): mixed
     {
         return DB::transaction(function () use ($data) {
-            $expenditures = $this->expenditureRepository->whereIn('id', $data['paymentIds']);
-            $batchDocument = $this->documentRepository->find($data['document_id']);
+            $state = PaymentConsolidatedIncomingData::from($data->state);
+            $expenditures = processor()->resourceResolver($state->paymentIds, 'expenditure');
+            $batchDocument = processor()->resourceResolver($data->document_id, 'document');
 
             if (!$batchDocument) {
                 return null;
@@ -81,18 +84,12 @@ class PaymentService extends BaseService
 
             foreach ($expenditures as $expenditure) {
                 // Prepare Payment Values
-                $voucherData = $this->preparePaymentLedger($data, $expenditure, $batchDocument);
+                $voucherData = $this->preparePaymentLedger($data, $state, $expenditure, $batchDocument);
                 $voucher = parent::store($voucherData);
+                $resourceDocument = $expenditure->draft->document;
+                // $transaction = $this->createFirstTransaction($voucher, $data, $state);
 
-                if (!$voucher) continue;
-
-                // Get Expenditure Document
-                $resourceDocument = optional(optional($expenditure->draft)->document);
-
-                // Build & Store First DEBIT/CREDIT Transaction
-                $transaction = $this->createFirstTransaction($voucher, $data);
-
-                if (!$transaction) continue;
+                if (!$voucher || !$resourceDocument) continue;
 
                 // Prepare Payment Voucher Document Values
                 $documentCreated = $this->createDocumentForPaymentLedger(
@@ -106,7 +103,7 @@ class PaymentService extends BaseService
                 if (!$documentCreated) continue;
             }
 
-            return true;
+            return $batchDocument;
         });
     }
 
@@ -116,20 +113,21 @@ class PaymentService extends BaseService
      */
     protected function createFirstTransaction(
         mixed $voucher,
-        array $data
+        ProcessedIncomingData $data,
+        PaymentConsolidatedIncomingData $state,
     ) {
-        $beneficiary = $this->beneficiary($data['entity_id'], $data['entity_type']);
+        $beneficiary = $this->beneficiary($state->entity_id, $data->entity_type);
 
         if (!$beneficiary) return null;
 
         $transactionData = [
             'user_id' => Auth::id(),
             'department_id' => Auth::user()->department_id,
-            'ledger_id' => $voucher['ledger_id'],
-            'chart_of_account_id' => $data['account_code_id'],
+            'ledger_id' => $state->ledger_id,
+            'chart_of_account_id' => $state->account_code_id,
             'payment_id' => $voucher->id,
-            'reference' => $this->generate('reference', 'trx'),
-            'type' => $data['transaction_type_id'],
+            'reference' => $this->transactionRepository->generate('reference', 'trx'),
+            'type' => $state->transaction_type_id ?: "debit",
             'amount' => $voucher->total_approved_amount,
             'narration' => '',
             'beneficiary_id' => $beneficiary->id,
@@ -146,33 +144,37 @@ class PaymentService extends BaseService
         mixed $payment,
         mixed $expenditure,
         mixed $resourceDocument,
-        array $data,
+        ProcessedIncomingData $data,
         string|float $total_amount
     ): bool {
-        $document_type = $this->getDocumentType($data['document_type']);
-        $document_category = $this->getDocumentCategory($data['document_type'], $data['document_category']);
+        $document_type = $this->getDocumentType($data->document_type);
+        $document_category = $this->getDocumentCategory($data->document_type, $data->document_category);
 
         if (!$document_type || !$document_category) {
             return false;
         }
 
+        $params = [
+            'workflow_id' => $data->workflow_id,
+            'department_id' => $data->department_id,
+            'document_action_id' => $data->document_action_id,
+            'document_category_id' => $document_category->id,
+            'document_type_id' => $document_type->id,
+            'linked_document' => $resourceDocument ?? null,
+            'relationship_type' => 'payment_voucher'
+        ];
+
         $documentPayload = $this->documentRepository->build(
-            [
-                ...$data,
-                'document_category_id' => $document_category->id,
-                'document_type_id' => $document_type->id,
-                'linked_document' => $resourceDocument ?? null,
-                'relationship_type' => 'payment_voucher'
-            ],
+            $params,
             $payment,
             Auth::user()->department_id,
             "Payment Mandate for {$expenditure->purpose}",
             $payment->narration,
             true,
-            $data['trigger_workflow_id'],
+            $data->trigger_workflow_id,
             $this->workflowArgs(
                 PaymentService::class,
-                $data['document_action_id'] ?? 0,
+                $data->document_action_id ?? 0,
                 $payment,
                 $total_amount
             )
@@ -198,24 +200,25 @@ class PaymentService extends BaseService
      * @throws CodeGenerationErrorException
      */
     private function preparePaymentLedger(
-        array $data,
+        ProcessedIncomingData $data,
+        PaymentConsolidatedIncomingData $state,
         Expenditure $expenditure,
         Document $document
     ): array {
         return [
             'code' => $this->generate('code', 'PV'),
             'expenditure_id' => $expenditure->id,
-            'payment_batch_id' => $data['payment_batch_id'],
-            'document_draft_id' => $data['document_draft_id'],
-            'department_id' => $data['department_id'],
+            'payment_batch_id' => $data->document_resource_id,
+            'document_draft_id' => $data->document_draft_id,
+            'department_id' => $data->department_id,
             'user_id' => Auth::id(),
-            'period' => Carbon::parse($data['period']),
-            'budget_year' => $data['budget_year'],
+            'period' => Carbon::parse($state->period),
+            'budget_year' => $state->budget_year,
             'resource_id' => $document->documentable_id,
             'resource_type' => $document->documentable_type,
             'narration' => "Payment Voucher for {$expenditure->purpose}",
             'total_approved_amount' => $expenditure->amount,
-            'type' => $data['type'],
+            'type' => $data->type,
         ];
     }
 }

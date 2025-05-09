@@ -36,6 +36,7 @@ class TruncateTables extends Command
         'payments',
         'signature_requests',
         'transactions',
+        'document_hierarchy'
     ];
 
     /**

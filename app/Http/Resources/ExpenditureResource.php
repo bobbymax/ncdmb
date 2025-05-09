@@ -36,7 +36,8 @@ class ExpenditureResource extends JsonResource
                 'type' => $this->fund->type,
                 'total_approved_amount' => (float) $this->fund->total_approved_amount,
             ],
-            'expenditureable' => $this->resolveExpenditureResource()
+            'expenditureable' => $this->resolveExpenditureResource(),
+            'payment' => $this->payments ? PaymentResource::collection($this->payments) : []
         ];
     }
 

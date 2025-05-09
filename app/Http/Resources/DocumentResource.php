@@ -42,7 +42,21 @@ class DocumentResource extends JsonResource
                 'carder_id' => $this->documentAction->carder_id,
             ] : null,
             'updates' => DocumentUpdateResource::collection($this->updates),
-            'uploads' => UploadResource::collection($this->uploads)
+            'uploads' => UploadResource::collection(
+                ($this->uploads ?? collect())
+                    ->merge(
+                        $this->linkedDocuments
+                            ->flatMap(fn ($doc) => $doc->uploads ?? [])
+                            ->values()
+                    )
+            ),
+            'pivot' => $this->whenPivotLoaded('document_hierarchy', function () {
+                return [
+                    'relationship_type' => $this->pivot->relationship_type,
+                    'created_at' => $this->pivot->created_at,
+                ];
+            }),
+//            'parents' => DocumentResource::collection($this->parentDocuments)
         ];
     }
 

@@ -39,9 +39,9 @@ class Claim extends Model
         return $this->belongsTo(Department::class, 'sponsoring_department_id');
     }
 
-    public function expenditures(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function expenditure(): \Illuminate\Database\Eloquent\Relations\MorphOne
     {
-        return $this->hasMany(Expenditure::class);
+        return $this->morphOne(Expenditure::class, 'expenditureable');
     }
 
     public function expenses(): \Illuminate\Database\Eloquent\Relations\HasMany

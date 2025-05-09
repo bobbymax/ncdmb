@@ -25,7 +25,8 @@ class ProgressTrackerResource extends JsonResource
                 'name' => $this->department_id > 0 ? $this->department->name : "",
                 'abv' => $this->department_id > 0 ? $this->department->abv : ""
             ],
-            'document_type' => new DocumentTypeResource($this->documentType)
+            'document_type' => new DocumentTypeResource($this->documentType),
+            'widgets' => WidgetResource::collection($this->widgets)
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Services;
 
 
+use App\DTO\ProcessedIncomingData;
 use App\Models\Document;
 use App\Repositories\{ClaimRepository, DocumentRepository, ExpenseRepository, UploadRepository};
 use App\Traits\DocumentFlow;
@@ -71,6 +72,46 @@ class ClaimService extends BaseService
 
             return $claim;
         });
+    }
+
+    public function consolidate(ProcessedIncomingData $data): mixed
+    {
+        return DB::transaction(function () use ($data) {
+            $expClaimId = 0;
+
+            foreach ($data->resources as $exp) {
+                $expRaw = $exp['raw'];
+                $expense = $this->expenseRepository->find($expRaw['id']);
+
+                if (!$expense) continue;
+                if ($expClaimId === 0) {
+                    $expClaimId = $expense->claim_id;
+                }
+
+                $expense->update([
+                    ...$expRaw,
+                    'status' => $exp['status'],
+                    'variation_type' => $exp['actionPerformed'],
+                ]);
+            }
+
+            $claim = $this->show($expClaimId);
+
+            if (!$claim) return null;
+
+            if ($claim->expenditure) {
+                $claim->expenditure->update([
+                    'amount' => $claim->expenses->sum('total_amount_paid'),
+                ]);
+            }
+
+            return $claim->document;
+        });
+    }
+
+    public function compute($record)
+    {
+        return $record ? $record->expenses->sum('total_amount_paid') : 0;
     }
 
     /**

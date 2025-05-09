@@ -14,6 +14,11 @@ trait ServiceAction
         return array_column(json_decode(json_encode($collection), true), $column);
     }
 
+    protected function isolateCollectionKeys(iterable $collection, string $column): array
+    {
+        return collect($collection)->pluck($column)->all();
+    }
+
     protected function handleIdDeletions(array $collection, string $column, array $backendIds): array
     {
         $frontendIds = $this->isolateKeys($collection, $column);

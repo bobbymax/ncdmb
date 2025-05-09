@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DTO\ProcessedIncomingData;
 use App\Handlers\CodeGenerationErrorException;
 use App\Handlers\DataNotFound;
 use App\Interfaces\IService;
@@ -86,6 +87,25 @@ abstract class BaseService implements IService
     public function reform(int $id, array $data)
     {
         return $this->update($id, $data);
+    }
+
+    /**
+     * @throws DataNotFound
+     */
+    public function consolidate(ProcessedIncomingData $data): mixed
+    {
+        return $this->repository->consolidate($data);
+    }
+
+    public function compute($record)
+    {
+        return 0;
+    }
+
+    public function sumTotalAmount(int $id): int|float
+    {
+        $record = $this->repository->computeTotalAmount($id);
+        return $this->compute($record);
     }
 
     /**

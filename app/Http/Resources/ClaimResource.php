@@ -19,7 +19,7 @@ class ClaimResource extends JsonResource
             ...parent::toArray($request),
             'document_id' => $this->document->id,
             'department_name' => $this->sponsoring_department_id > 0 ? $this->sponsor?->abv : $this->department->abv,
-            'expenses' => $this->expenses,
+            'expenses' => ExpenseResource::collection($this->expenses),
             'uploads' => UploadResource::collection($this->document->uploads),
             'total_amount_spent' => (float) $this->total_amount_spent,
             'total_amount_approved' => (float) $this->total_amount_approved,

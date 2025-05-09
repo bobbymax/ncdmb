@@ -26,4 +26,9 @@ class Widget extends Model
     {
         return $this->morphToMany(Group::class, 'groupable');
     }
+
+    public function progressTracker(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ProgressTracker::class, 'progress_tracker_id');
+    }
 }

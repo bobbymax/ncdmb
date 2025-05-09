@@ -78,7 +78,10 @@ class PaymentBatchService extends BaseService
     protected function createDocumentForBatch($batch, array $data, $total_amount)
     {
         $documentData = $this->documentRepository->build(
-            $data,
+            [
+                ...$data,
+                'document_action_id' => $this->getCreationDocumentAction()?->id
+            ],
             $batch,
             $data['department_id'],
             "Batch Payment: {$batch->code}",
@@ -87,7 +90,7 @@ class PaymentBatchService extends BaseService
             null,
             $this->workflowArgs(
                 PaymentBatchService::class,
-                $data['document_action_id'],
+                $this->getCreationDocumentAction()?->id,
                 $batch,
                 $total_amount,
             )

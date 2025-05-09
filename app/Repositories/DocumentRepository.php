@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Core\NotificationProcessor;
 use App\Models\Department;
 use App\Models\Document;
 use App\Models\Workflow;
@@ -66,11 +67,21 @@ class DocumentRepository extends BaseRepository
 
         // Check if user has "sovereign" access level (view all documents)
         if ($accessLevel === 'sovereign') {
-            return Document::with('drafts')->latest()->paginate(50);
+            return Document::with([
+                'drafts',
+                'uploads',
+                'linkedDocuments.drafts',
+                'linkedDocuments.uploads'
+            ])->latest()->paginate(50);
         }
 
         // Initialize query with eager loading for performance
-        $query = Document::with('drafts');
+        $query = Document::with([
+            'drafts',
+            'uploads',
+            'linkedDocuments.drafts',
+            'linkedDocuments.uploads'
+        ]);
 
         // Apply filtering based on access level
         $query->where(function ($q) use ($user, $accessLevel, $userDepartmentId, $groupIds) {
@@ -96,7 +107,7 @@ class DocumentRepository extends BaseRepository
 
     public function create(array $data)
     {
-        return DB::transaction(function () use ($data) {
+        $transaction = DB::transaction(function () use ($data) {
             $args = $data['args'];
             $document = parent::create($data);
 
@@ -116,6 +127,14 @@ class DocumentRepository extends BaseRepository
 
             return $document;
         });
+
+        NotificationProcessor::for(
+            $transaction->id,
+            Auth::id(),
+            $transaction->document_action_id
+        )->sendAll();
+
+        return $transaction;
     }
 
     public function processSupportingDocuments(array $files, int $documentId): void
