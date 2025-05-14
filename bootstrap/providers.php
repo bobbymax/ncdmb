@@ -80,5 +80,6 @@ return [
     App\Providers\JournalEntryServiceProvider::class,
     App\Providers\EntityServiceProvider::class,
     App\Providers\LedgerServiceProvider::class,
-    App\Providers\TransactionServiceProvider::class
+    App\Providers\TransactionServiceProvider::class,
+    App\Providers\JournalTypeServiceProvider::class
 ];

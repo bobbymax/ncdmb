@@ -77,6 +77,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('chartOfAccounts', \App\Http\Controllers\ChartOfAccountController::class);
         Route::apiResource('ledgers', \App\Http\Controllers\LedgerController::class);
         Route::apiResource('payments', \App\Http\Controllers\PaymentController::class);
+        Route::apiResource('journalTypes', \App\Http\Controllers\JournalTypeController::class);
 
         Route::apiResource('budgetHeads', \App\Http\Controllers\BudgetHeadController::class);
         Route::apiResource('budgetCodes', \App\Http\Controllers\BudgetCodeController::class);
@@ -93,5 +94,6 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('cities', \App\Http\Controllers\CityController::class);
         Route::apiResource('tripCategories', \App\Http\Controllers\TripCategoryController::class);
         Route::apiResource('entities', \App\Http\Controllers\EntityController::class);
+        Route::apiResource('vendors', \App\Http\Controllers\VendorController::class);
     });
 });
