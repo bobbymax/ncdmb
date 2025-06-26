@@ -41,13 +41,13 @@ class Expenditure extends Model
         return $this->morphOne(DocumentDraft::class, 'document_draftable');
     }
 
-    public function document(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    public function batch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Document::class, 'document_reference_id');
     }
 
-    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function payment(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasMany(Payment::class);
+        return $this->hasOne(Payment::class);
     }
 }

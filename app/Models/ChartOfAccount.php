@@ -16,4 +16,9 @@ class ChartOfAccount extends Model
     {
         return $this->belongsTo(self::class, 'parent_id');
     }
+
+    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
 }

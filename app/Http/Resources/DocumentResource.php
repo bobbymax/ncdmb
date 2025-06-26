@@ -25,6 +25,7 @@ class DocumentResource extends JsonResource
             'document_template' => $this->getDocumentType($this->documentable_type),
             'document_type' => new DocumentTypeResource($this->documentType),
             'workflow' => new WorkflowResource($this->workflow),
+            'dept' => $this->department->abv,
             'owner' => [
                 'id' => $this->user_id,
                 'name' => "{$this->user->firstname} {$this->user->surname}",
@@ -35,6 +36,7 @@ class DocumentResource extends JsonResource
                 'gradel_level' => $this->user->gradeLevel->key
             ],
             'action' => $this->document_action_id > 0 ? [
+                'id' => $this->document_action_id,
                 'name' => $this->documentAction->name,
                 'draft_status' => $this->documentAction->draft_status,
                 'action_status' => $this->documentAction->action_status,
@@ -56,7 +58,7 @@ class DocumentResource extends JsonResource
                     'created_at' => $this->pivot->created_at,
                 ];
             }),
-//            'parents' => DocumentResource::collection($this->parentDocuments)
+            'amount' => $this->lastDraft() ? (float) $this->lastDraft()->amount : 0,
         ];
     }
 

@@ -77,6 +77,9 @@ class ClaimService extends BaseService
     public function consolidate(ProcessedIncomingData $data): mixed
     {
         return DB::transaction(function () use ($data) {
+            $document = processor()->resourceResolver($data->document_id, 'document');
+            if (!$document) return null;
+
             $expClaimId = 0;
 
             foreach ($data->resources as $exp) {
@@ -102,6 +105,22 @@ class ClaimService extends BaseService
             if ($claim->expenditure) {
                 $claim->expenditure->update([
                     'amount' => $claim->expenses->sum('total_amount_paid'),
+                ]);
+            }
+
+            $claim->document->update([
+                'status' => "expenses-reconciled"
+            ]);
+
+            $claim->expenditure->payment->document->update([
+                'status' => "expenses-reconciled"
+            ]);
+
+            $lastDraft = $claim->expenditure->payment->document->drafts()->latest()->first();
+
+            if ($lastDraft) {
+                $lastDraft->update([
+                    'status' => "expenses-reconciled"
                 ]);
             }
 

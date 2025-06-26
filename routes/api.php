@@ -34,6 +34,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::post('configuration/imports/{resource}', [\App\Http\Controllers\ImportController::class, 'getResource']);
         Route::get('apiServices', [\App\Http\Controllers\ApiServiceController::class, 'index']);
         Route::get('imports', [\App\Http\Controllers\ApiServiceController::class, 'imports']);
+        Route::get('fetch/{resource}/editor/{trackerId}', [\App\Http\Controllers\ApiServiceController::class, 'fetchEditor']);
         Route::get('committment/funds/{fund}', [\App\Http\Controllers\FundController::class, 'totalCurrentCommittment']);
         Route::get('linked/documents/{parentDocumentId}', [\App\Http\Controllers\DocumentController::class, 'getLinkedDocuments']);
 
@@ -61,6 +62,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('locations', \App\Http\Controllers\LocationController::class);
         Route::apiResource('signatureRequests', \App\Http\Controllers\SignatureRequestController::class);
         Route::apiResource('signatories', \App\Http\Controllers\SignatoryController::class);
+        Route::apiResource('resourceEditors', \App\Http\Controllers\ResourceEditorController::class);
 
         Route::apiResource('documentTypes', \App\Http\Controllers\DocumentTypeController::class);
         Route::apiResource('documentRequirements', \App\Http\Controllers\DocumentRequirementController::class);

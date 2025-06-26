@@ -48,4 +48,9 @@ class WorkflowStage extends Model
     {
         return $this->morphToMany(MailingList::class, 'mailing_listable');
     }
+
+    public function editors(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ResourceEditor::class);
+    }
 }

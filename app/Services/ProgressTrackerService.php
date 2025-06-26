@@ -5,25 +5,30 @@ namespace App\Services;
 use App\Repositories\DocumentActionRepository;
 use App\Repositories\MailingListRepository;
 use App\Repositories\ProgressTrackerRepository;
+use App\Repositories\WidgetRepository;
 use App\Repositories\WorkflowRepository;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProgressTrackerService extends BaseService
 {
     protected DocumentActionRepository $documentActionRepository;
     protected MailingListRepository $mailingListRepository;
     protected WorkflowRepository $workflowRepository;
+    protected WidgetRepository $widgetRepository;
 
     public function __construct(
         ProgressTrackerRepository $progressTrackerRepository,
         DocumentActionRepository $documentActionRepository,
         MailingListRepository $mailingListRepository,
-        WorkflowRepository $workflowRepository
+        WorkflowRepository $workflowRepository,
+        WidgetRepository $widgetRepository
     ) {
         parent::__construct($progressTrackerRepository);
         $this->documentActionRepository = $documentActionRepository;
         $this->mailingListRepository = $mailingListRepository;
         $this->workflowRepository = $workflowRepository;
+        $this->widgetRepository = $widgetRepository;
     }
 
     /**
@@ -48,6 +53,7 @@ class ProgressTrackerService extends BaseService
             'stages.*.actions' => ['required', 'array'],
             'stages.*.recipients' => ['required', 'array'],
             'stages.*.signatory_id' => ['required', 'integer', 'min:0'],
+            'stages.*.widgets' => ['required', 'array'],
         ];
     }
 
@@ -76,7 +82,7 @@ class ProgressTrackerService extends BaseService
      * @param array $data
      * @return mixed
      */
-    public function store(array $data)
+    public function store(array $data): mixed
     {
         return DB::transaction(function () use ($data) {
             if (empty($data['stages'])) {
@@ -100,6 +106,7 @@ class ProgressTrackerService extends BaseService
             return null;
         }
 
+        $this->attachWidgets($tracker, $stage['widgets'] ?? []);
         $this->attachRecipients($tracker, $stage['recipients'] ?? []);
         $this->attachActions($tracker, $stage['actions'] ?? []);
 
@@ -147,9 +154,11 @@ class ProgressTrackerService extends BaseService
             $tracker->update($stage);
 
             if (!in_array($tracker->identifier, $toDelete)) {
+                $this->attachWidgets($tracker, $stage['widgets'] ?? [], true);
                 $this->attachRecipients($tracker, $stage['recipients'] ?? [], true);
                 $this->attachActions($tracker, $stage['actions'] ?? [], true);
             } else {
+                $this->detachWidgets($tracker, $stage['widgets'] ?? []);
                 $this->detachRecipients($tracker, $stage['recipients'] ?? []);
                 $this->detachActions($tracker, $stage['actions'] ?? []);
             }
@@ -172,6 +181,37 @@ class ProgressTrackerService extends BaseService
             'workflow_id' => $workflowId,
             ...$stage,
         ]);
+    }
+
+    public function attachWidgets($progressTracker, array $widgets, bool $isUpdate = false): void
+    {
+        if (!empty($widgets)) {
+            $existingWidgetIds = $progressTracker->widgets->pluck('id')->toArray();
+
+            foreach ($widgets as $obj) {
+                $widget = $this->widgetRepository->find($obj['value']);
+                if ($widget && !in_array($widget->id, $existingWidgetIds)) {
+                    $progressTracker->widgets()->attach($widget->id);
+                }
+            }
+
+            if ($isUpdate) {
+                $this->detachWidgets($progressTracker, $widgets);
+            }
+        }
+    }
+
+    private function detachWidgets($progressTracker, array $widgets): void
+    {
+        if (!empty($widgets)) {
+            $existingWidgetIds = $progressTracker->widgets->pluck('id')->toArray();
+            $frontEndIds = array_column($widgets, 'value');
+            $toDelete = array_diff($existingWidgetIds, $frontEndIds);
+
+            if (!empty($toDelete)) {
+                $progressTracker->widgets()->detach($toDelete);
+            }
+        }
     }
 
     /**
@@ -208,13 +248,7 @@ class ProgressTrackerService extends BaseService
             $toDelete = array_diff($existingRecipientIds, $frontEndIds);
 
             if (!empty($toDelete)) {
-                foreach ($toDelete as $id) {
-                    $recipient = $this->mailingListRepository->find($id);
-
-                    if ($recipient) {
-                        $progressLine->recipients()->detach($recipient);
-                    }
-                }
+                $progressLine->recipients()->detach($toDelete);
             }
         }
     }
@@ -250,12 +284,7 @@ class ProgressTrackerService extends BaseService
             $existingActionIds = $progressLine->actions->pluck('id')->toArray();
             $toDelete = array_diff($existingActionIds, array_column($actions, 'value'));
             if (!empty($toDelete)) {
-                foreach ($toDelete as $id) {
-                    $action = $this->documentActionRepository->find($id);
-                    if ($action) {
-                        $progressLine->actions()->detach($action);
-                    }
-                }
+                $progressLine->actions()->detach($toDelete);
             }
         }
     }

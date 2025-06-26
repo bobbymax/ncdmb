@@ -154,6 +154,10 @@ class DocumentRepository extends BaseRepository
         $document->linkedDocuments()->attach($linked->id, [
             'relationship_type' => $type,
         ]);
+
+        $linked->update([
+            'status' => 'processed'
+        ]);
     }
 
     /**
@@ -238,7 +242,8 @@ class DocumentRepository extends BaseRepository
         bool $triggerWorkflow = false,
         ?int $triggeredWorkflowId = null,
         ?array $args = [],
-        ?array $supportingDocuments = []
+        ?array $supportingDocuments = [],
+        ?string $column = "code",
     ): array {
 
         $workflowId  = $triggeredWorkflowId && $triggeredWorkflowId > 1 ? $triggeredWorkflowId : $data['workflow_id'];
@@ -259,7 +264,7 @@ class DocumentRepository extends BaseRepository
             'documentable_type' => get_class($resource),
             'relationship_type' => $data['relationship_type'] ?? null,
             'linked_document' => $data['linked_document'] ?? null,
-            'ref' => $this->generateRef($departmentId, $resource->code),
+            'ref' => $this->generateRef($departmentId, $resource[$column]),
             'args' => $args,
             'trigger_workflow' => $triggerWorkflow,
             'supporting_documents' => $supportingDocuments,

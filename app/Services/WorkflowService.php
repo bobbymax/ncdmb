@@ -171,33 +171,37 @@ class WorkflowService extends BaseService
     {
         $widgetIds = array_values(array_filter(array_column($widgetObjs, 'value'), fn($id) => $id !== 0));
 
-        if (empty($widgetIds)) {
-            $existingWidgetIds = $this->isolateCollectionKeys($tracker->widgets, 'id');
-            if (!empty($existingWidgetIds)) {
-                $this->nullifyWidget($existingWidgetIds);
-            }
+//        if (empty($widgetIds)) {
+//            $existingWidgetIds = $this->isolateCollectionKeys($tracker->widgets, 'id');
+//            if (!empty($existingWidgetIds)) {
+//                $this->nullifyWidget($tracker, $existingWidgetIds);
+//            }
+//
+//            return; // No widgets to update, exit early
+//        }
 
-            return; // No widgets to update, exit early
-        }
+//        $widgets = $this->widgetRepository->whereIn('id', $widgetIds);
 
-        $widgets = $this->widgetRepository->whereIn('id', $widgetIds);
+        $tracker->widgets()->sync($widgetIds);
 
-        foreach ($widgets as $widget) {
-            $widget->update(['progress_tracker_id' => $tracker->id]);
-        }
+//        foreach ($widgets as $widget) {
+//            $widget->update(['progress_tracker_id' => $tracker->id]);
+//        }
     }
 
-    public function nullifyWidget(array $toNullify): void
+    public function nullifyWidget($tracker, array $toNullify): void
     {
         if (empty($toNullify)) {
             return;
         }
 
-        $widgets = $this->widgetRepository->whereIn('id', $toNullify);
+        $tracker->widgets()->detach($toNullify);
 
-        foreach ($widgets as $widget) {
-            $widget->update(['progress_tracker_id' => 0]);
-        }
+//        $widgets = $this->widgetRepository->whereIn('id', $toNullify);
+//
+//        foreach ($widgets as $widget) {
+//            $widget->update(['progress_tracker_id' => 0]);
+//        }
     }
 
     public function removeTrackers($toDelete): void
@@ -212,7 +216,7 @@ class WorkflowService extends BaseService
                         $model->recipients()->detach();
 
                         // Update related widgets safely
-                        $model->widgets()->update(['progress_tracker_id' => 0]);
+                        $model->widgets()->detach();
 
                         // Delete the model (triggers model events like `deleting`)
                         $model->delete();

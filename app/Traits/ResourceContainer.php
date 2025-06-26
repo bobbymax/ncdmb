@@ -2,6 +2,8 @@
 
 namespace App\Traits;
 
+use App\Models\Document;
+use App\Models\DocumentDraft;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -64,5 +66,26 @@ trait ResourceContainer
         });
 
         return $resourceClass::collection($documents);
+    }
+
+    public function resolvePolymorphicResource(mixed $property, string $property_type)
+    {
+        if (!$property) {
+            return null;
+        }
+
+        if ($property_type === DocumentDraft::class || $property_type === Document::class) {
+            return null;
+        }
+
+        $modelClassName = class_basename($property);
+
+        $resourceClass = "App\\Http\\Resources\\{$modelClassName}Resource";
+
+        if (class_exists($resourceClass)) {
+            return new $resourceClass($property);
+        }
+
+        return null;
     }
 }

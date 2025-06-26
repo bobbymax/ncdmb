@@ -16,4 +16,9 @@ class Ledger extends Model
     {
         return $this->morphToMany(Group::class, 'groupable');
     }
+
+    public function journalTypes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(JournalType::class);
+    }
 }

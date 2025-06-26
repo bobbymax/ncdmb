@@ -33,6 +33,7 @@ class DocumentDraftResource extends JsonResource
                 'staff_no' => $this->authorisingStaff->staff_no,
                 'grade_level' => $this->authorisingStaff->gradeLevel->key,
                 'email' => $this->authorisingStaff->email,
+                'avatar' => $this->authorisingStaff->avatar,
             ] : null,
             'staff' => $this->created_by_user_id > 0 ? [
                 'id' => $this->user->id,
@@ -56,7 +57,14 @@ class DocumentDraftResource extends JsonResource
                     'version_number' => $draft->version_number,
                     'approval' => $draft->approval ? new SignatureResource($draft->approval) : null,
                     'amount' => $draft->amount,
-                    'authorising_officer' => $draft->authorisingStaff,
+                    'authorising_officer' => $draft->authorising_staff_id > 0 ? [
+                        'id' => $draft->authorisingStaff->id,
+                        'name' => "{$draft->authorisingStaff->surname}, {$draft->authorisingStaff->firstname} {$draft->authorisingStaff->middlename}",
+                        'staff_no' => $draft->authorisingStaff->staff_no,
+                        'grade_level' => $draft->authorisingStaff->gradeLevel->key,
+                        'email' => $draft->authorisingStaff->email,
+                        'avatar' => $draft->authorisingStaff->avatar,
+                    ] : null,
                     'staff' => $draft->user,
                     'created_at' => Carbon::parse($draft->created_at)->diffForHumans(),
                     'upload' => $draft->upload ? new UploadResource($draft->upload) : null,

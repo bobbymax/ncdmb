@@ -16,6 +16,7 @@ class ExpenditureResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $resource = $this->resolveExpenditureResource();
         return [
             ...parent::toArray($request),
             'owner' => [
@@ -36,9 +37,15 @@ class ExpenditureResource extends JsonResource
                 'type' => $this->fund->type,
                 'total_approved_amount' => (float) $this->fund->total_approved_amount,
             ],
-            'expenditureable' => $this->resolveExpenditureResource(),
-            'payment' => $this->payments ? PaymentResource::collection($this->payments) : []
+            'expenditureable' => $resource,
+            'beneficiary' => $resource?->beneficiary ?? null,
         ];
+    }
+
+    private function getBeneficiary($resource)
+    {
+        if (!$resource) return null;
+        return $resource->beneficiary;
     }
 
     private function resolveExpenditureResource(): ?JsonResource

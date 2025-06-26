@@ -81,5 +81,8 @@ return [
     App\Providers\EntityServiceProvider::class,
     App\Providers\LedgerServiceProvider::class,
     App\Providers\TransactionServiceProvider::class,
-    App\Providers\JournalTypeServiceProvider::class
+    App\Providers\JournalTypeServiceProvider::class,
+    App\Providers\ResourceEditorServiceProvider::class,
+    App\Providers\ActivityLogServiceProvider::class,
+    App\Providers\BlockServiceProvider::class
 ];

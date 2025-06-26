@@ -56,4 +56,9 @@ class Group extends Model
     {
         return $this->morphedByMany(Ledger::class, 'groupable');
     }
+
+    public function editors(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ResourceEditor::class);
+    }
 }

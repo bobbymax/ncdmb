@@ -59,6 +59,11 @@ class Document extends Model
         return $this->hasMany(DocumentDraft::class);
     }
 
+    public function lastDraft()
+    {
+        return $this->drafts()->latest()->first();
+    }
+
     public function linkedDrafts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(DocumentDraft::class, 'sub_document_reference_id');

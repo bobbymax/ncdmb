@@ -27,6 +27,7 @@ class ControlEngine
     protected ?string $signature;
     protected ?string $message;
     protected ?float $amount;
+    protected ?string $branch;
 
     public function initialize(
         BaseService $baseService,
@@ -37,7 +38,8 @@ class ControlEngine
         ?array $state = [],
         ?string $signature = null,
         ?string $message = null,
-        ?float $amount = null
+        ?float $amount = null,
+        ?string $branch = "workflow"
     ): void {
         $this->baseService = $baseService;
         $this->documentAction = $documentAction;
@@ -50,6 +52,7 @@ class ControlEngine
         $this->user = Auth::user();
         $this->lastDraft = $document->drafts()->latest()->first();
         $this->amount = $amount;
+        $this->branch = $branch;
     }
 
     public function process()
@@ -143,7 +146,6 @@ class ControlEngine
                 ]);
             }
 
-//            $this->dispatchWorkflowEvent($previousTracker ?? $this->tracker);
             return $previousTracker ?? $this->tracker;
         });
     }
@@ -177,7 +179,7 @@ class ControlEngine
             $this->createDraft("pending", $record);
             $this->document->update([
                 'document_action_id' => $this->documentAction->id,
-                'status' => $this->documentAction->draft_status
+                'status' => "registered"
             ]);
         });
 
@@ -186,8 +188,7 @@ class ControlEngine
 
     private function next($record = null): ProgressTracker
     {
-        Log::info("Proceeding to next stage for Document ID: {$this->document->id}");
-        $nextStage = DB::transaction(function () use ($record) {
+        return DB::transaction(function () use ($record) {
             if ($this->lastDraft?->type === "attention") {
                 $this->updateLastDraft();
                 $this->document->update([
@@ -213,8 +214,6 @@ class ControlEngine
             $this->createDraft('pending', $record, $nextTracker);
             return $nextTracker;
         });
-
-        return $nextStage;
     }
 
 

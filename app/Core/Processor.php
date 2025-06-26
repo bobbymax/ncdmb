@@ -257,7 +257,8 @@ class Processor
             $args['serverState'] ?? [],
             $args['signature'] ?? null,
             $args['message'] ?? null,
-            $args['amount'] ?? null
+            $args['amount'] ?? null,
+            "trigger"
         );
 
         $engine->process();

@@ -3,6 +3,8 @@
 namespace App\Services;
 
 
+use App\DTO\ProcessedIncomingData;
+use App\Handlers\DataNotFound;
 use App\Repositories\ExpenseRepository;
 
 class ExpenseService extends BaseService
@@ -29,5 +31,57 @@ class ExpenseService extends BaseService
             'total_distance_covered' => 'sometimes|numeric|min:0',
             'description' => 'required|string|min:3',
         ];
+    }
+
+    /**
+     * @throws DataNotFound
+     */
+    public function processExpenses(ProcessedIncomingData $processedIncomingData): bool
+    {
+        $document = processor()->resourceResolver($processedIncomingData->document_id, 'document');
+        $payment = processor()->resourceResolver($processedIncomingData->document_resource_id, 'payment');
+        $claim = processor()->resourceResolver($processedIncomingData->state['claim_id'], 'claim');
+        $editor = processor()->resourceResolver($processedIncomingData->state['editor_id'], 'resourceeditor');
+
+        if (!$document || !$payment || !$claim || !$editor) {
+            return false;
+        }
+
+        $expenses = collect($processedIncomingData->resources)->map(function ($item) {
+            return $item['raw'] ?? [];
+        });
+
+        foreach ($expenses as $obj) {
+            $expense = $this->show($obj['id']);
+
+            if ($expense) {
+                parent::update($expense->id, $obj);
+            }
+        }
+
+        $claimSum = array_reduce($expenses->toArray(), function ($carry, $item) use ($editor) {
+            $key = $editor->resource_column_name;
+            return $carry + ($item[$key] ?? 0);
+        }, 0);
+
+        $document->update([
+            'status' => $processedIncomingData->status,
+            'document_action_id' => $processedIncomingData->document_action_id,
+        ]);
+
+        $payment->update([
+            'total_amount_paid' => $processedIncomingData->status === "audited" ? $claimSum : 0
+        ]);
+
+        $payment->expenditure->update([
+            'status' => $processedIncomingData->status,
+        ]);
+
+        $claim->update([
+            'status' => $processedIncomingData->status,
+            'total_amount_approved' => $processedIncomingData->status === "audited" ? $claimSum : 0,
+        ]);
+
+        return true;
     }
 }

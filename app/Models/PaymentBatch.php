@@ -38,4 +38,9 @@ class PaymentBatch extends Model
     {
         return $this->hasMany(DocumentDraft::class, 'sub_document_reference_id');
     }
+
+    public function payments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Payment::class, 'payment_batch_id');
+    }
 }

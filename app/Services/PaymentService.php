@@ -5,7 +5,6 @@ namespace App\Services;
 use App\DTO\PaymentConsolidatedIncomingData;
 use App\DTO\ProcessedIncomingData;
 use App\Handlers\CodeGenerationErrorException;
-use App\Models\Document;
 use App\Models\Expenditure;
 use App\Repositories\DocumentRepository;
 use App\Repositories\ExpenditureRepository;
@@ -84,7 +83,7 @@ class PaymentService extends BaseService
 
             foreach ($expenditures as $expenditure) {
                 // Prepare Payment Values
-                $voucherData = $this->preparePaymentLedger($data, $state, $expenditure, $batchDocument);
+                $voucherData = $this->preparePaymentLedger($data, $state, $expenditure);
                 $voucher = parent::store($voucherData);
                 $resourceDocument = $expenditure->draft->document;
                 // $transaction = $this->createFirstTransaction($voucher, $data, $state);
@@ -102,6 +101,10 @@ class PaymentService extends BaseService
 
                 if (!$documentCreated) continue;
             }
+
+            $batchDocument->update([
+                'status' => 'voucher-generated'
+            ]);
 
             return $batchDocument;
         });
@@ -202,8 +205,7 @@ class PaymentService extends BaseService
     private function preparePaymentLedger(
         ProcessedIncomingData $data,
         PaymentConsolidatedIncomingData $state,
-        Expenditure $expenditure,
-        Document $document
+        Expenditure $expenditure
     ): array {
         return [
             'code' => $this->generate('code', 'PV'),
@@ -214,11 +216,13 @@ class PaymentService extends BaseService
             'user_id' => Auth::id(),
             'period' => Carbon::parse($state->period),
             'budget_year' => $state->budget_year,
-            'resource_id' => $document->documentable_id,
-            'resource_type' => $document->documentable_type,
+            'resource_id' => $expenditure->expenditureable_id,
+            'resource_type' => $expenditure->expenditureable_type,
             'narration' => "Payment Voucher for {$expenditure->purpose}",
             'total_approved_amount' => $expenditure->amount,
             'type' => $data->type,
+            'chart_of_account_id' => $state->account_code_id,
+            'ledger_id' => $state->ledger_id,
         ];
     }
 }

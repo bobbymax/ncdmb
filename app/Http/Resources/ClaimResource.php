@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Facades\Storage;
@@ -29,6 +30,13 @@ class ClaimResource extends JsonResource
                 'staff_no' => $this->staff?->staff_no ?? "none",
                 'grade_level' => $this->staff?->gradeLevel?->key ?? "none",
                 'name' => "{$this->staff?->surname}, {$this->staff?->firstname} {$this->staff?->middlename}"
+            ],
+            'beneficiary' => [
+                'payment_number' => $this->staff?->staff_no ?? "none",
+                'classification' => $this->staff?->gradeLevel?->key ?? "none",
+                'name' => "{$this->staff?->surname}, {$this->staff?->firstname} {$this->staff?->middlename}",
+                'resource_type' => User::class,
+                'beneficiary_id' => $this->user_id,
             ],
             'claimant_signature' => $this->getClaimSignature($this->claimant_signature),
             'approval_signature' => $this->getClaimSignature($this->approval_signature),

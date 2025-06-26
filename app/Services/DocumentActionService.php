@@ -28,7 +28,7 @@ class DocumentActionService extends BaseService
             'has_update' => 'nullable|boolean',
             'description' => 'nullable|sometimes|string|min:3',
             'carder_id' => 'required|exists:carders,id',
-            'trigger_workflow_id' => 'sometimes|integer|min:0',
+            'trigger_workflow_id' => 'sometimes|min:0',
         ];
     }
 }

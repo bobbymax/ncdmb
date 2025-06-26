@@ -14,11 +14,14 @@ class SignatoryResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $department = $this->department_id > 0 ? $this->department->abv : "Originating Dept.";
+
         return [
             ...parent::toArray($request),
             'group_name' => $this->group->name,
             'page_name' => $this->page->name,
-            'department' => $this->department_id > 0 ? $this->department->abv : "Originating Department"
+            'department' => $department,
+            'compound' => "{$this->page->name} / {$this->group->name} / {$this->type}"
         ];
     }
 }

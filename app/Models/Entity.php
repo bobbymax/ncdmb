@@ -12,4 +12,8 @@ class Entity extends Model
     protected $guarded = [''];
 
     // Model Relationships or Scope Here...
+    public function journalTypes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(JournalType::class);
+    }
 }

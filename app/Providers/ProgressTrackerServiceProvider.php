@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Repositories\DocumentActionRepository;
 use App\Repositories\MailingListRepository;
+use App\Repositories\WidgetRepository;
 use App\Repositories\WorkflowRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\ProgressTrackerRepository;
@@ -24,8 +25,15 @@ class ProgressTrackerServiceProvider extends ServiceProvider
             $documentActionRepository = $app->make(DocumentActionRepository::class);
             $mailingListRepository = $app->make(MailingListRepository::class);
             $workflowRepository = $app->make(WorkflowRepository::class);
+            $widgetRepository = $app->make(WidgetRepository::class);
 
-            return new ProgressTrackerService($progressTrackerRepository, $documentActionRepository, $mailingListRepository, $workflowRepository);
+            return new ProgressTrackerService(
+                $progressTrackerRepository,
+                $documentActionRepository,
+                $mailingListRepository,
+                $workflowRepository,
+                $widgetRepository
+            );
         });
     }
 }
