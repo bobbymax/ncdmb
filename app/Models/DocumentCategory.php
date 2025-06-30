@@ -31,4 +31,9 @@ class DocumentCategory extends Model
     {
         return $this->morphToMany(DocumentRequirement::class, 'document_requirementable');
     }
+
+    public function blocks(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(Block::class, 'blockable');
+    }
 }

@@ -13,6 +13,14 @@ return new class extends Migration
     {
         Schema::create('blocks', function (Blueprint $table) {
             $table->id();
+            $table->string('title');
+            $table->string('label')->unique();
+            $table->string('data_type'); // textarea, input, event, table[column,source,collection],
+            $table->string('input_type');
+            $table->unsignedBigInteger('max_words')->default(0);
+            $table->enum('type', ['staff', 'third-party', 'document'])->default('document');
+//            $table->json('options')->nullable(); // header, column, data_type, input_type, format, source, condition
+            $table->boolean('active')->default(false);
             $table->timestamps();
         });
     }

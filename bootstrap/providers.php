@@ -84,5 +84,6 @@ return [
     App\Providers\JournalTypeServiceProvider::class,
     App\Providers\ResourceEditorServiceProvider::class,
     App\Providers\ActivityLogServiceProvider::class,
-    App\Providers\BlockServiceProvider::class
+    App\Providers\BlockServiceProvider::class,
+    App\Providers\TemplateServiceProvider::class
 ];

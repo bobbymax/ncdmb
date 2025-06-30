@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Repositories\BlockRepository;
 use App\Repositories\DocumentCategoryRepository;
 use App\Repositories\DocumentRequirementRepository;
 use Illuminate\Support\Facades\DB;
@@ -9,10 +10,15 @@ use Illuminate\Support\Facades\DB;
 class DocumentCategoryService extends BaseService
 {
     protected DocumentRequirementRepository $documentRequirementRepository;
-    public function __construct(DocumentCategoryRepository $documentCategoryRepository, DocumentRequirementRepository $documentRequirementRepository)
-    {
+    protected BlockRepository $blockRepository;
+    public function __construct(
+        DocumentCategoryRepository $documentCategoryRepository,
+        DocumentRequirementRepository $documentRequirementRepository,
+        BlockRepository $blockRepository
+    ) {
         parent::__construct($documentCategoryRepository);
         $this->documentRequirementRepository = $documentRequirementRepository;
+        $this->blockRepository = $blockRepository;
     }
 
     public function rules($action = "store"): array
@@ -23,6 +29,7 @@ class DocumentCategoryService extends BaseService
             'description' => 'nullable|sometimes|string|min:3',
             'icon' => 'nullable|sometimes|string',
             'selectedRequirements' => 'nullable|sometimes|array',
+            'selectedBlocks' => 'nullable|sometimes|array',
         ];
     }
 
@@ -31,8 +38,14 @@ class DocumentCategoryService extends BaseService
         return DB::transaction(function () use ($data) {
             $category = parent::store($data);
 
-            if ($category && !empty($data['selectedRequirements'])) {
-                $this->updateRequirements($category, $data['selectedRequirements']);
+            if ($category) {
+                if (!empty($data['selectedRequirements'])) {
+                    $this->updateRequirements($category, $data['selectedRequirements']);
+                }
+
+                if (!empty($data['selectedBlocks'])) {
+                    $this->updateBlocks($category, $data['selectedBlocks']);
+                }
             }
 
             return $category;
@@ -44,12 +57,30 @@ class DocumentCategoryService extends BaseService
         return DB::transaction(function () use ($id, $data) {
             $category = parent::update($id, $data);
 
-            if ($category && !empty($data['selectedRequirements'])) {
-                $this->updateRequirements($category, $data['selectedRequirements']);
+            if ($category) {
+                if (!empty($data['selectedRequirements'])) {
+                    $this->updateRequirements($category, $data['selectedRequirements']);
+                }
+
+                if (!empty($data['selectedBlocks'])) {
+                    $this->updateBlocks($category, $data['selectedBlocks']);
+                }
             }
 
             return $category;
         });
+    }
+
+    private function updateBlocks($category, array $blocks): void
+    {
+        // Fetch all requirements in a single query
+        $blockIds = array_column($blocks, 'value');
+        $blocks = $this->blockRepository->whereIn('id', $blockIds);
+
+        if ($blocks->isNotEmpty()) {
+            $ids = $blocks->pluck('id')->toArray();
+            $category->blocks()->sync($ids);
+        }
     }
 
     private function updateRequirements($category, array $requestRequirements): void
@@ -59,14 +90,9 @@ class DocumentCategoryService extends BaseService
         $requirements = $this->documentRequirementRepository
             ->whereIn('id', $requirementIds);
 
-        // Prepare new relationships
-        $newRequirements = $requirements->filter(function ($requirement) use ($category) {
-            return !$requirement->categories->contains('id', $category->id);
-        });
-
-        // Attach new relationships
-        if ($newRequirements->isNotEmpty()) {
-            $category->requirements()->saveMany($newRequirements);
+        if ($requirements->isNotEmpty()) {
+            $ids = $requirements->pluck('id')->toArray();
+            $category->requirements()->sync($ids);
         }
     }
 }

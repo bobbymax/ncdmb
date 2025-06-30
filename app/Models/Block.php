@@ -12,4 +12,14 @@ class Block extends Model
     protected $guarded = [''];
 
     // Model Relationships or Scope Here...
+
+    public function documentCategories(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphedByMany(DocumentCategory::class, 'blockable');
+    }
+
+    public function templates(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphedByMany(Template::class, 'blockable');
+    }
 }

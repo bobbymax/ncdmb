@@ -63,6 +63,8 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('signatureRequests', \App\Http\Controllers\SignatureRequestController::class);
         Route::apiResource('signatories', \App\Http\Controllers\SignatoryController::class);
         Route::apiResource('resourceEditors', \App\Http\Controllers\ResourceEditorController::class);
+        Route::apiResource('templates', \App\Http\Controllers\TemplateController::class);
+        Route::apiResource('blocks', \App\Http\Controllers\BlockController::class);
 
         Route::apiResource('documentTypes', \App\Http\Controllers\DocumentTypeController::class);
         Route::apiResource('documentRequirements', \App\Http\Controllers\DocumentRequirementController::class);

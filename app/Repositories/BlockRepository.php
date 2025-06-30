@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Block;
+use Illuminate\Support\Str;
 
 class BlockRepository extends BaseRepository
 {
@@ -12,6 +13,10 @@ class BlockRepository extends BaseRepository
 
     public function parse(array $data): array
     {
-        return $data;
+        return [
+            ...$data,
+            'label' => Str::slug($data['title']),
+//            'options' => json_encode(array_filter($data['options'], fn($value) => !is_null($value) && $value !== '')),
+        ];
     }
 }

@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class DocumentCategoryResource extends JsonResource
+class TemplateResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,10 +16,7 @@ class DocumentCategoryResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'document_type' => $this->documentType?->label,
-            'workflow' => new WorkflowResource($this->workflow),
-            'requirements' => $this->requirements,
-            'blocks' => BlockResource::collection($this->blocks)
+            'blocks' => BlockResource::collection($this->documentCategory->blocks)
         ];
     }
 }
