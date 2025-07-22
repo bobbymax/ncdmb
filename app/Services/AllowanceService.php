@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Repositories\AllowanceRepository;
 use App\Repositories\GradeLevelRepository;
 use App\Repositories\RemunerationRepository;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class AllowanceService extends BaseService
@@ -33,6 +34,8 @@ class AllowanceService extends BaseService
             'description' => 'nullable|string|min:3',
             'category' => 'required|string|in:parent,item',
             'component' => 'required|string|max:255',
+            'payment_basis' => 'required|string|max:255',
+            'payment_route' => 'required|string|in:one-off,round-trip,computable',
             'selectedRemunerations' => 'sometimes|array',
         ];
     }
@@ -52,8 +55,8 @@ class AllowanceService extends BaseService
                                 'grade_level_id' => $gradeLevel->id,
                                 'allowance_id' => $allowance->id,
                                 'amount' => (float) $value['amount'],
-                                'start_date' => $value['start_date'] ?? null,
-                                'expiration_date' => $value['expiration_date'] ?? null,
+                                'start_date' => Carbon::now(),
+                                'expiration_date' => null,
                                 'currency' => $value['currency'] ?? 'NGN',
                             ]);
                         }
@@ -85,8 +88,8 @@ class AllowanceService extends BaseService
                                 'grade_level_id' => $gradeLevel->id,
                                 'allowance_id' => $allowance->id,
                                 'amount' => (float) $value['amount'],
-                                'start_date' => $value['start_date'] ?? null,
-                                'expiration_date' => $value['expiration_date'] ?? null,
+                                'start_date' => Carbon::now(),
+                                'expiration_date' => null,
                             ]);
                         }
                     }

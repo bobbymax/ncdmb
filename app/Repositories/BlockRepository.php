@@ -16,7 +16,7 @@ class BlockRepository extends BaseRepository
         return [
             ...$data,
             'label' => Str::slug($data['title']),
-//            'options' => json_encode(array_filter($data['options'], fn($value) => !is_null($value) && $value !== '')),
+            'contents' => isset($data['contents']) ? json_encode(array_filter($data['contents'], fn($value) => !is_null($value) && $value !== '')) : null,
         ];
     }
 }

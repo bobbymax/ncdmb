@@ -17,6 +17,13 @@ class GroupResource extends JsonResource
         return [
             ...parent::toArray($request),
             'carderIds' => $this->carders->pluck('id')->toArray(),
+            // This is the key part
+            'users' => $this->users->map(function ($user) {
+                return [
+                    'value' => $user->id,
+                    'label' => "{$user->surname}, {$user->firstname}", // or $user->full_name or $user->username
+                ];
+            })->values(),
         ];
     }
 }

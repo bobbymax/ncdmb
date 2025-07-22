@@ -38,6 +38,10 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::get('committment/funds/{fund}', [\App\Http\Controllers\FundController::class, 'totalCurrentCommittment']);
         Route::get('linked/documents/{parentDocumentId}', [\App\Http\Controllers\DocumentController::class, 'getLinkedDocuments']);
 
+        // Google Api Endpoints
+        Route::get('distance', [\App\Http\Controllers\GoogleApiController::class, 'getDistanceInKm']);
+        // End Google Api Endpoints
+
         Route::put('claim/updates/{claimId}', [App\Http\Controllers\ClaimController::class, 'alter']);
         Route::put('service-workers/{service}', [App\Http\Controllers\ServiceWorkerController::class, 'handleService']);
         Route::post('process/request/data', [\App\Http\Controllers\ServiceWorkerController::class, 'handleProcessServiceData']);
@@ -65,6 +69,9 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('resourceEditors', \App\Http\Controllers\ResourceEditorController::class);
         Route::apiResource('templates', \App\Http\Controllers\TemplateController::class);
         Route::apiResource('blocks', \App\Http\Controllers\BlockController::class);
+        Route::apiResource('thresholds', \App\Http\Controllers\ThresholdController::class);
+        Route::apiResource('projectCategories', \App\Http\Controllers\ProjectCategoryController::class);
+        Route::apiResource('projects', \App\Http\Controllers\ProjectController::class);
 
         Route::apiResource('documentTypes', \App\Http\Controllers\DocumentTypeController::class);
         Route::apiResource('documentRequirements', \App\Http\Controllers\DocumentRequirementController::class);

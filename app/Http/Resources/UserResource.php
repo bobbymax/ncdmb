@@ -17,7 +17,9 @@ class UserResource extends JsonResource
         return [
             ...parent::toArray($request),
             'groups' => $this->groups,
-            'name' => "{$this->surname}, {$this->firstname} {$this->middlename}"
+            'name' => "{$this->surname}, {$this->firstname} {$this->middlename}",
+            'grade_level' => $this->gradeLevel->key,
+            'remunerations' => RemunerationResource::collection($this->gradeLevel->remunerations)
         ];
     }
 }

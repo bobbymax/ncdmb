@@ -14,7 +14,9 @@ class TemplateRepository extends BaseRepository
     {
         return [
             ...$data,
-            'body' => json_encode(array_filter($data['body'], fn($value) => !is_null($value) && $value !== ''))
+            'config' => isset($data['config']) ? json_encode($data['config']) : null,
+            'body' => null,
+            'content' => json_encode(array_filter($data['body'], fn($value) => !is_null($value) && $value !== ''))
         ];
     }
 }

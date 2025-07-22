@@ -85,5 +85,9 @@ return [
     App\Providers\ResourceEditorServiceProvider::class,
     App\Providers\ActivityLogServiceProvider::class,
     App\Providers\BlockServiceProvider::class,
-    App\Providers\TemplateServiceProvider::class
+    App\Providers\TemplateServiceProvider::class,
+    App\Providers\ThresholdServiceProvider::class,
+    App\Providers\ProjectCategoryServiceProvider::class,
+    App\Providers\ProjectServiceProvider::class,
+    App\Providers\MilestoneServiceProvider::class
 ];
