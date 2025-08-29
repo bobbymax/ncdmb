@@ -4,6 +4,7 @@ namespace App\Interfaces;
 
 interface IService
 {
+    public function resolveContent(array $data);
     public function rules();
     public function index();
     public function store(array $data);

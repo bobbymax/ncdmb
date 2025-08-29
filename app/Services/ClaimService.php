@@ -4,11 +4,14 @@ namespace App\Services;
 
 
 use App\DTO\ProcessedIncomingData;
+use App\Handlers\CodeGenerationErrorException;
+use App\Handlers\DataNotFound;
 use App\Models\Document;
 use App\Repositories\{ClaimRepository, DocumentRepository, ExpenseRepository, UploadRepository};
 use App\Traits\DocumentFlow;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\{Auth, DB, Log};
+use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 
 class ClaimService extends BaseService
@@ -52,6 +55,48 @@ class ClaimService extends BaseService
         ];
     }
 
+    /**
+     * @param array $data
+     * @return array
+     */
+    public function resolveContent(array $data): array
+    {
+        $resolvedContents = [
+            'title' => null,
+            'claim' => null,
+            'expenses' => null,
+            'total_amount_spent' => 0
+        ];
+
+        foreach ($data['content'] as $item) {
+            // Paper Title
+            if (isset($item['content']['paper_title'])) {
+                $resolvedContents['title'] = $item['content']['paper_title']['title'] ?? 'Unknown Title';
+            }
+
+            // Expenses
+            if (isset($item['content']['expense'])) {
+                $expenseBlock = $item['content']['expense'];
+
+                $resolvedContents['claim'] = $expenseBlock['claim'] ?? null;
+                $resolvedContents['expenses']   = $expenseBlock['expenses'] ?? null;
+
+                // Sum total_amount_spent
+                $resolvedContents['total_amount_spent'] = collect($expenseBlock['expenses'] ?? [])
+                    ->sum(function ($expense) {
+                        return (float) $expense['total_amount_spent'];
+                    });
+            }
+        }
+
+        return [
+            'document_owner' => $data['document_owner'],
+            'department_owner' => $data['department_owner'],
+            'category' => $data['category'] ?? null,
+            'contents' => $resolvedContents
+        ];
+    }
+
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {
@@ -72,6 +117,94 @@ class ClaimService extends BaseService
 
             return $claim;
         });
+    }
+
+    /**
+     * @throws CodeGenerationErrorException
+     * @throws \Exception
+     */
+    public function buildDocumentFromTemplate(array $data)
+    {
+       return DB::transaction(function () use ($data) {
+           $resolved = $this->resolveContent($data);
+
+           $start_date = $resolved['contents']['claim']['start_date'] ?? null;
+           $end_date = $resolved['contents']['claim']['end_date'] ?? null;
+           $document_owner = $resolved['contents']['claim']['document_owner'] ?? null;
+           $department_owner = $resolved['contents']['claim']['department_owner'] ?? null;
+
+           $claimData = [
+               'user_id' => $document_owner['value'] ?? Auth::id(),
+               'department_id' => $department_owner['value'] ?? Auth::user()->department_id,
+               'sponsoring_department_id' => $resolved['contents']['claim']['sponsoring_department_id'] ?? Auth::user()->department_id,
+               'document_category_id' => $resolved['category']['id'] ?? null,
+               'code' => $this->repository->generate('code', 'SC'),
+               'title' => $resolved['contents']['title'] ?? null,
+               'start_date' => $start_date ? Carbon::parse($start_date) : null,
+               'end_date' => $end_date ? Carbon::parse($end_date) : null,
+               'total_amount_spent' => $resolved['contents']['total_amount_spent'] ?? 0,
+               'type' => 'claim',
+               'status' => 'generated'
+           ];
+
+           $claim = parent::store($claimData);
+
+           if (!$claim) {
+               return null;
+           }
+
+           $expenses = $resolved['contents']['expenses'] ?? [];
+           $this->syncExpenses($claim, $expenses);
+
+           return $claim;
+       });
+    }
+
+    /**
+     * @throws DataNotFound
+     * @throws \Exception
+     */
+    public function syncExpenses(mixed $claim, array $incomingExpenses): void
+    {
+        foreach ($incomingExpenses as $expenseData) {
+            $existing = $this->expenseRepository->getRecordByColumn('identifier', $expenseData['identifier']);
+            if ($existing) {
+                // Remove fields that should not trigger update check (like timestamps)
+                $compareExisting = collect($existing->toArray())
+                    ->only(array_keys($expenseData))
+                    ->toArray();
+
+                // Compare current DB record with incoming values
+                if ($this->hasChanged($compareExisting, $expenseData)) {
+                    $this->expenseRepository->update($existing->id, $expenseData);
+                }
+            } else {
+                // Create if it doesn't exist
+                $this->expenseRepository->create([
+                    ...$expenseData,
+                    'claim_id' => $claim->id,
+                    'start_date' => Carbon::parse($expenseData['start_date']),
+                    'end_date' => Carbon::parse($expenseData['end_date']),
+                ]);
+            }
+        }
+    }
+
+    /**
+     * Check if any field value has changed.
+     */
+    protected function hasChanged(array $existing, array $incoming): bool
+    {
+        foreach ($incoming as $key => $value) {
+            // Normalize numbers and dates to avoid false positives
+            $old = is_numeric($existing[$key] ?? null) ? (float) $existing[$key] : $existing[$key] ?? null;
+            $new = is_numeric($value) ? (float) $value : $value;
+
+            if ($old != $new) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public function consolidate(ProcessedIncomingData $data): mixed
@@ -145,7 +278,7 @@ class ClaimService extends BaseService
                 'relationship_type' => 'approval_memo'
             ],
             $claim,
-            $data['sponsoring_department_id'],
+            $claim->sponsoring_department_id,
             $claim->title,
             $claim->title,
             true,

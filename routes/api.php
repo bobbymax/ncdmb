@@ -37,6 +37,9 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::get('fetch/{resource}/editor/{trackerId}', [\App\Http\Controllers\ApiServiceController::class, 'fetchEditor']);
         Route::get('committment/funds/{fund}', [\App\Http\Controllers\FundController::class, 'totalCurrentCommittment']);
         Route::get('linked/documents/{parentDocumentId}', [\App\Http\Controllers\DocumentController::class, 'getLinkedDocuments']);
+        Route::get('resource/{service}/collection', [\App\Http\Controllers\ServiceWorkerController::class, 'resourceCollection']);
+        Route::get('documents/ref/{ref}', [\App\Http\Controllers\ServiceWorkerController::class, 'fetchDocumentUsingRef'])->where('ref', '.*');
+        Route::post('generate/document', [\App\Http\Controllers\DocumentBuilderController::class, 'buildDocument']);
 
         // Google Api Endpoints
         Route::get('distance', [\App\Http\Controllers\GoogleApiController::class, 'getDistanceInKm']);
@@ -72,6 +75,8 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('thresholds', \App\Http\Controllers\ThresholdController::class);
         Route::apiResource('projectCategories', \App\Http\Controllers\ProjectCategoryController::class);
         Route::apiResource('projects', \App\Http\Controllers\ProjectController::class);
+        Route::apiResource('invoices', \App\Http\Controllers\InvoiceController::class);
+        Route::apiResource('invoiceItems', \App\Http\Controllers\InvoiceItemController::class);
 
         Route::apiResource('documentTypes', \App\Http\Controllers\DocumentTypeController::class);
         Route::apiResource('documentRequirements', \App\Http\Controllers\DocumentRequirementController::class);

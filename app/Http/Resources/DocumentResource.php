@@ -20,9 +20,9 @@ class DocumentResource extends JsonResource
         return [
             ...parent::toArray($request),
             'documentable' => $this->resolveDocumentableResource(),
-            'drafts' => DocumentDraftResource::collection($this->getLatestDraftsPerResource()),
-            'complete_or_linked_drafts' => isset($this->complete_or_linked_drafts) ? DocumentDraftResource::collection($this->complete_or_linked_drafts) : [],
-            'document_template' => $this->getDocumentType($this->documentable_type),
+//            'drafts' => DocumentDraftResource::collection($this->getLatestDraftsPerResource()),
+//            'complete_or_linked_drafts' => isset($this->complete_or_linked_drafts) ? DocumentDraftResource::collection($this->complete_or_linked_drafts) : [],
+//            'document_template' => $this->getDocumentType($this->documentable_type),
             'document_type' => new DocumentTypeResource($this->documentType),
             'workflow' => new WorkflowResource($this->workflow),
             'dept' => $this->department->abv,
@@ -43,7 +43,7 @@ class DocumentResource extends JsonResource
                 'variant' => $this->documentAction->variant,
                 'carder_id' => $this->documentAction->carder_id,
             ] : null,
-            'updates' => DocumentUpdateResource::collection($this->updates),
+//            'updates' => DocumentUpdateResource::collection($this->updates),
             'uploads' => UploadResource::collection(
                 ($this->uploads ?? collect())
                     ->merge(

@@ -15,7 +15,7 @@ class DocumentCategoryRepository extends BaseRepository
     {
         return [
             ...$data,
-            'label' => Str::slug($data['name']),
+            'label' => Str::slug($data['name'])
         ];
     }
 }

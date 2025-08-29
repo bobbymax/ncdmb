@@ -21,7 +21,6 @@ class ClaimResource extends JsonResource
             'document_id' => $this->document->id,
             'department_name' => $this->sponsoring_department_id > 0 ? $this->sponsor?->abv : $this->department->abv,
             'expenses' => ExpenseResource::collection($this->expenses),
-            'uploads' => UploadResource::collection($this->document->uploads),
             'total_amount_spent' => (float) $this->total_amount_spent,
             'total_amount_approved' => (float) $this->total_amount_approved,
             'total_amount_retired' => (float) $this->total_amount_retired,

@@ -7,7 +7,9 @@ use App\Models\DocumentDraft;
 use App\Models\Setting;
 use App\Observers\DocumentDraftObserver;
 use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
@@ -32,6 +34,10 @@ class AppServiceProvider extends ServiceProvider
     {
         // Observe Document Draft Model
         DocumentDraft::observe(DocumentDraftObserver::class);
+
+        RateLimiter::for('document-notify', function () {
+            return Limit::perMinute(60); // tune as needed
+        });
 
         ResetPassword::createUrlUsing(function (object $notifiable, string $token) {
             return config('app.frontend_url')."/password-reset/$token?email={$notifiable->getEmailForPasswordReset()}";

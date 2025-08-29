@@ -4,6 +4,7 @@ namespace App\Repositories;
 
 use App\Models\Upload;
 use App\Traits\DocumentFlow;
+use finfo;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -53,6 +54,56 @@ class UploadRepository extends BaseRepository
         ];
     }
 
+    public function normalizeFile($file): ?UploadedFile
+    {
+        // Case 1: Already an UploadedFile
+        if ($file instanceof UploadedFile) {
+            return $file;
+        }
+
+        // Case 2: Base64 / Data URL
+        if (is_string($file) && preg_match('/^data:.*;base64,/', $file)) {
+            [$meta, $content] = explode(',', $file);
+
+            // Decode the base64 string
+            $binaryData = base64_decode($content);
+
+            // Detect MIME type from the binary data
+            $finfo = new finfo(FILEINFO_MIME_TYPE);
+            $mimeType = $finfo->buffer($binaryData);
+
+            // Restrict to allowed types
+            $allowed = [
+                'application/pdf' => 'pdf',
+                'image/jpeg'      => 'jpg',
+                'image/png'       => 'png',
+            ];
+
+            if (!array_key_exists($mimeType, $allowed)) {
+                return null;
+            }
+
+            $extension = $allowed[$mimeType];
+
+            // Create temporary file
+            $tmpFile = tmpfile();
+            $tmpPath = stream_get_meta_data($tmpFile)['uri'];
+
+            // Write the binary content
+            file_put_contents($tmpPath, $binaryData);
+
+            return new UploadedFile(
+                $tmpPath,
+                'upload.' . $extension,
+                $mimeType,
+                null,
+                true // mark as "test" file
+            );
+        }
+
+        return null;
+    }
+
     public function uploadMany(
         array $files,
         int $uploadableId,
@@ -61,10 +112,17 @@ class UploadRepository extends BaseRepository
         $uploads = [];
 
         foreach ($files as $file) {
-            if ($file instanceof UploadedFile) {
-                $scrambled = $this->encodeFile($file);
+
+            $normalized = $this->normalizeFile($file);
+
+            if (!$normalized) {
+                continue; // skip invalid file
+            }
+
+            if ($normalized instanceof UploadedFile) {
+                $scrambled = $this->encodeFile($normalized);
                 $uploads[] = $this->prepareUpload(
-                    $file,
+                    $normalized,
                     $scrambled,
                     $uploadableId,
                     $uploadableType

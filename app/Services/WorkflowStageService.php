@@ -35,6 +35,8 @@ class WorkflowStageService extends BaseService
             'category' => 'nullable|sometimes|string|in:staff,third-party,system',
             'can_appeal' => 'nullable|boolean',
             'append_signature' => 'nullable|boolean',
+            'flow' => 'required|string|in:process,tracker,both',
+            'isDisplayed' => 'nullable|in:0,1',
             'groups' => 'required|array',
             'actions' => 'required|array',
             'recipients' => 'required|array',

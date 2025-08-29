@@ -121,7 +121,6 @@ abstract class BaseRepository implements IRepository
 
         // Extract only the expenditures from drafts
         // Optional: in case some are null
-
         return $drafts->map(function ($draft) {
             $expenditure = $draft->documentDraftable;
 
@@ -181,6 +180,54 @@ abstract class BaseRepository implements IRepository
     public function getCollectionByColumn(string $column, mixed $value, string $operator = '=')
     {
         return $this->model->where($column, $operator, $value)->latest()->get();
+    }
+
+    public function dynamicCollection(
+        array $conditions = [],
+        array $scopes = [],
+        array $with = [],
+        bool $withTrashed = false,
+        string $orderBy = 'created_at',
+        string $orderDirection = 'desc',
+    ): \Illuminate\Database\Eloquent\Collection
+    {
+        $query = $this->model->newQuery();
+
+        // Load relationships if provided
+        if (!empty($with)) {
+            $query->with($with);
+        }
+
+        // Include soft-deleted models if applicable
+        if ($withTrashed && in_array(\Illuminate\Database\Eloquent\SoftDeletes::class, class_uses_recursive($this->model))) {
+            $query->withTrashed();
+        }
+
+        // Apply scopes if any
+        foreach ($scopes as $scope => $params) {
+            if (is_int($scope)) {
+                // Scope without parameters
+                $query->$params();
+            } elseif (is_array($params)) {
+                $query->$scope(...$params);
+            } else {
+                $query->$scope($params);
+            }
+        }
+
+        // Apply where conditions
+        foreach ($conditions as $condition) {
+            if (is_array($condition) && count($condition) === 3) {
+                [$column, $operator, $value] = $condition;
+                $query->where($column, $operator, $value);
+            } elseif (is_array($condition)) {
+                foreach ($condition as $column => $value) {
+                    $query->where($column, '=', $value);
+                }
+            }
+        }
+
+        return $query->orderBy($orderBy, $orderDirection)->get();
     }
 
     public function instanceOfModel(): \Illuminate\Database\Eloquent\Builder

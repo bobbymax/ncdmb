@@ -19,6 +19,11 @@ class Signatory extends Model
         return $this->belongsTo(Page::class, 'page_id');
     }
 
+    public function documentCategory(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(DocumentCategory::class, 'document_category_id');
+    }
+
     public function group(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Group::class, 'group_id');

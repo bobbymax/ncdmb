@@ -205,4 +205,9 @@ class User extends Authenticatable
     {
         return $this->morphToMany(Group::class, 'groupable');
     }
+
+    public function notificationPreference(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(NotificationPreference::class);
+    }
 }

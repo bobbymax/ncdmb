@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\DocumentResource;
 use App\Services\DocumentService;
+use Illuminate\Http\Request;
 
 class DocumentController extends BaseController
 {
@@ -21,5 +22,10 @@ class DocumentController extends BaseController
         }
 
         return $this->success($this->jsonResource::collection($document->linkedDocuments));
+    }
+
+    public function generateDocument(Request $request): \Illuminate\Http\JsonResponse
+    {
+        return $this->success($this->service->generateDocument($request->all()));
     }
 }

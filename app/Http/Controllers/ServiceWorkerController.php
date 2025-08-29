@@ -40,6 +40,23 @@ class ServiceWorkerController extends Controller
     }
 
     /**
+     * Get service class collection with params
+     */
+    public function resourceCollection(string $service): \Illuminate\Http\JsonResponse
+    {
+        $params = [
+          [['status', '=', 'pending']]
+        ];
+
+        return $this->success(processor()->processCollection($service, $params));
+    }
+
+    public function fetchDocumentUsingRef(string $ref): \Illuminate\Http\JsonResponse
+    {
+        return $this->success($this->documentService->getRecordByColumn('ref', $ref));
+    }
+
+    /**
      * @throws ValidationException
      * @throws \Exception
      */

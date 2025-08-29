@@ -36,7 +36,14 @@ class TruncateTables extends Command
         'payments',
         'signature_requests',
         'transactions',
-        'document_hierarchy'
+        'document_hierarchy',
+        'progress_trackers',
+        'workflows',
+        'journals',
+        'mailing_lists',
+        'projects',
+        'trackables',
+        'widgets',
     ];
 
     /**

@@ -19,6 +19,8 @@ class TemplateResource extends JsonResource
             'blocks' => BlockResource::collection($this->documentCategory->blocks),
             'config' => json_decode($this->config),
             'body' => json_decode($this->content, true),
+            'content' => null,
+            // 'category' => new DocumentCategoryResource($this->documentCategory),
         ];
     }
 }

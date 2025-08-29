@@ -17,6 +17,11 @@ class DocumentCategory extends Model
         return $this->belongsTo(DocumentType::class, 'document_type_id');
     }
 
+    public function template(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Template::class);
+    }
+
     public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Workflow::class, 'workflow_id');
@@ -35,5 +40,10 @@ class DocumentCategory extends Model
     public function blocks(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
         return $this->morphToMany(Block::class, 'blockable');
+    }
+
+    public function signatories(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Signatory::class, 'document_category_id');
     }
 }

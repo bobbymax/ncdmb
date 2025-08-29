@@ -116,6 +116,30 @@ class Processor
             : ($mode === 'update' && method_exists($service, 'update') ? 'update' : null));
     }
 
+    public function processCollection(string $serviceRequest, array $params)
+    {
+        $service = $this->invokeService($serviceRequest);
+
+        $actualMethod = $this->resolveMethod($service, 'collection', 'index');
+
+        if (!$actualMethod || !method_exists($service, $actualMethod)) {
+            throw new \BadMethodCallException("Neither method nor fallback [update] exist on service.");
+        }
+
+        return call_user_func_array([$service, $actualMethod], $params);
+    }
+
+    public function saveResource(array $params, bool $isUpdate)
+    {
+        $service = $this->invokeService($params['service']);
+        $actualMethod = $this->resolveMethod($service, 'buildDocumentFromTemplate', $isUpdate ? 'update' : 'store');
+
+        if (!$actualMethod || !method_exists($service, $actualMethod)) {
+            throw new \BadMethodCallException("Neither method nor fallback [update] exist on service.");
+        }
+
+        return $service->buildDocumentFromTemplate($params);
+    }
 
     /**
      * @throws ValidationException
@@ -231,6 +255,11 @@ class Processor
         if (!$this->document || !$this->workflow) {
             throw new \RuntimeException("Invalid document or workflow ID.");
         }
+    }
+
+    public function documentBuild(Request $request)
+    {
+
     }
 
     public function all(): array

@@ -89,5 +89,8 @@ return [
     App\Providers\ThresholdServiceProvider::class,
     App\Providers\ProjectCategoryServiceProvider::class,
     App\Providers\ProjectServiceProvider::class,
-    App\Providers\MilestoneServiceProvider::class
+    App\Providers\MilestoneServiceProvider::class,
+    App\Providers\InvoiceServiceProvider::class,
+    App\Providers\InvoiceItemServiceProvider::class,
+    App\Providers\NotificationPreferenceServiceProvider::class
 ];

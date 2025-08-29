@@ -18,6 +18,11 @@ abstract class BaseService implements IService
         $this->repository = $repository;
     }
 
+    public function resolveContent(array $data): array
+    {
+        return collect($data)->toArray();
+    }
+
     /**
      * @throws CodeGenerationErrorException
      */
@@ -47,6 +52,30 @@ abstract class BaseService implements IService
     public function index()
     {
         return $this->repository->all();
+    }
+
+    public function buildDocumentFromTemplate(array $data)
+    {
+        return $data;
+    }
+
+    public function collection(
+        array $conditions = [],
+        array $scopes = [],
+        array $with = [],
+        bool $withTrashed = false,
+        string $orderBy = 'created_at',
+        string $orderDirection = 'desc'
+    ): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->repository->dynamicCollection(
+            $conditions,
+            $scopes,
+            $with,
+            $withTrashed,
+            $orderBy,
+            $orderDirection
+        );
     }
 
     /**

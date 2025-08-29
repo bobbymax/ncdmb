@@ -105,37 +105,37 @@ class DocumentRepository extends BaseRepository
         return $query->latest()->paginate(50);
     }
 
-    public function create(array $data)
-    {
-        $transaction = DB::transaction(function () use ($data) {
-            $args = $data['args'];
-            $document = parent::create($data);
-
-            if (!$document) return null;
-
-            if (!empty($data['linked_document']) && !empty($data['relationship_type'])) {
-                $this->linkRelatedDocument($document, $data['linked_document'], $data['relationship_type']);
-            }
-
-            if (!empty($data['supporting_documents'])) {
-                $this->processSupportingDocuments($data['supporting_documents'], $document->id);
-            }
-
-            if ($data['trigger_workflow']) {
-                processor()->trigger($args['service'], $document, $args);
-            }
-
-            return $document;
-        });
-
-        NotificationProcessor::for(
-            $transaction->id,
-            Auth::id(),
-            $transaction->document_action_id
-        )->sendAll();
-
-        return $transaction;
-    }
+//    public function create(array $data)
+//    {
+//        $transaction = DB::transaction(function () use ($data) {
+//            $args = $data['args'];
+//            $document = parent::create($data);
+//
+//            if (!$document) return null;
+//
+//            if (!empty($data['linked_document']) && !empty($data['relationship_type'])) {
+//                $this->linkRelatedDocument($document, $data['linked_document'], $data['relationship_type']);
+//            }
+//
+//            if (!empty($data['supporting_documents'])) {
+//                $this->processSupportingDocuments($data['supporting_documents'], $document->id);
+//            }
+//
+//            if ($data['trigger_workflow']) {
+//                processor()->trigger($args['service'], $document, $args);
+//            }
+//
+//            return $document;
+//        });
+//
+//        NotificationProcessor::for(
+//            $transaction->id,
+//            Auth::id(),
+//            $transaction->document_action_id
+//        )->sendAll();
+//
+//        return $transaction;
+//    }
 
     public function processSupportingDocuments(array $files, int $documentId): void
     {

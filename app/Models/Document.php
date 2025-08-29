@@ -13,6 +13,15 @@ class Document extends Model
     protected $guarded = [''];
     protected $dates = ['deleted_at'];
 
+    protected $casts = [
+        'contents' => 'array',
+        'config' => 'json',
+        'meta_data' => 'json',
+        'uploaded_requirements' => 'array',
+        'preferences' => 'json',
+        'watchers' => 'array',
+    ];
+
     // Model Relationships or Scope Here...
     public function expenditures(): \Illuminate\Database\Eloquent\Relations\HasMany
     {

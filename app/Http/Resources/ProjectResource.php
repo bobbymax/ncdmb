@@ -16,7 +16,8 @@ class ProjectResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'milestones' => MilestoneResource::collection($this->milestones)
+            'milestones' => MilestoneResource::collection($this->milestones),
+            'invoice' => new InvoiceResource($this->invoice)
         ];
     }
 }

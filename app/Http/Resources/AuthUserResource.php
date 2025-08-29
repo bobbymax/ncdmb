@@ -19,6 +19,11 @@ class AuthUserResource extends JsonResource
             'id' => $this->id,
             'name' => "{$this->firstname} {$this->surname}",
             'department_id' => $this->department_id,
+            'department' => [
+                'value' => $this->department_id,
+                'label' => $this->department->abv
+            ],
+            'grade_level_object' => $this->gradeLevel,
             'grade_level' => $this->gradeLevel->key,
             'grade_level_id' => $this->gradeLevel->id,
             'carder' => $this->gradeLevel->carder,

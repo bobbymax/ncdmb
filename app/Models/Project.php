@@ -16,4 +16,9 @@ class Project extends Model
     {
         return $this->morphMany(Milestone::class, 'milestoneable');
     }
+
+    public function invoice(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(Invoice::class, 'invoiceable');
+    }
 }
