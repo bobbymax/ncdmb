@@ -138,7 +138,7 @@ class Processor
             throw new \BadMethodCallException("Neither method nor fallback [update] exist on service.");
         }
 
-        return $service->buildDocumentFromTemplate($params);
+        return $service->buildDocumentFromTemplate($params, $isUpdate);
     }
 
     /**

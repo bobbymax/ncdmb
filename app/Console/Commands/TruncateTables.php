@@ -40,10 +40,10 @@ class TruncateTables extends Command
         'progress_trackers',
         'workflows',
         'journals',
-        'mailing_lists',
         'projects',
         'trackables',
         'widgets',
+        'templates'
     ];
 
     /**

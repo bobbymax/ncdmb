@@ -90,9 +90,9 @@ class ClaimService extends BaseService
         }
 
         return [
-            'document_owner' => $data['document_owner'],
-            'department_owner' => $data['department_owner'],
-            'category' => $data['category'] ?? null,
+            'user_id' => $data['user_id'],
+            'category' => $data['category'],
+            'existing_resource_id' => $data['existing_resource_id'],
             'contents' => $resolvedContents
         ];
     }
@@ -123,37 +123,105 @@ class ClaimService extends BaseService
      * @throws CodeGenerationErrorException
      * @throws \Exception
      */
-    public function buildDocumentFromTemplate(array $data)
+    public function buildDocumentFromTemplate(array $data, bool $isUpdate = false)
     {
-       return DB::transaction(function () use ($data) {
+       return DB::transaction(function () use ($data, $isUpdate) {
            $resolved = $this->resolveContent($data);
 
-           $start_date = $resolved['contents']['claim']['start_date'] ?? null;
-           $end_date = $resolved['contents']['claim']['end_date'] ?? null;
-           $document_owner = $resolved['contents']['claim']['document_owner'] ?? null;
-           $department_owner = $resolved['contents']['claim']['department_owner'] ?? null;
+           $claimPayload   = data_get($resolved, 'contents.claim', []);
+           $userId         = (int) data_get($resolved, 'user_id', Auth::id());
+           $categoryId     = (int) data_get($resolved, 'category.id');
+           $existingId     = (int) data_get($resolved, 'existing_resource_id', 0);
+
+           // Dates – tolerant parsing
+           $startRaw = data_get($resolved, 'contents.claim.start_date');
+           $endRaw   = data_get($resolved, 'contents.claim.end_date');
+           $startAt  = $startRaw ? Carbon::make($startRaw) : null; // make() returns null on invalid
+           $endAt    = $endRaw   ? Carbon::make($endRaw)   : null;
+
+           $auth = Auth::user();
+           $sponsoringDeptId = (int) data_get($claimPayload, 'sponsoring_department_id', $auth->department_id);
+           $departmentId     = (int) data_get($resolved, 'contents.claim.sponsoring_department_id', $auth->department_id);
+
+           // Route/mode/distance
+           $distance = (float) data_get($claimPayload, 'distance', 0);
+           $mode     = data_get($claimPayload, 'mode') ?? ($distance > 300 ? 'flight' : 'road');
+           $route    = data_get($claimPayload, 'route', 'return');
+
+           // Title & totals
+           $title   = data_get($resolved, 'contents.title');
+           $total   = (float) data_get($resolved, 'contents.total_amount_spent', 0);
 
            $claimData = [
-               'user_id' => $document_owner['value'] ?? Auth::id(),
-               'department_id' => $department_owner['value'] ?? Auth::user()->department_id,
-               'sponsoring_department_id' => $resolved['contents']['claim']['sponsoring_department_id'] ?? Auth::user()->department_id,
-               'document_category_id' => $resolved['category']['id'] ?? null,
-               'code' => $this->repository->generate('code', 'SC'),
-               'title' => $resolved['contents']['title'] ?? null,
-               'start_date' => $start_date ? Carbon::parse($start_date) : null,
-               'end_date' => $end_date ? Carbon::parse($end_date) : null,
-               'total_amount_spent' => $resolved['contents']['total_amount_spent'] ?? 0,
+               'user_id' => $userId,
+               'department_id' => $departmentId,
+               'sponsoring_department_id' => $sponsoringDeptId,
+               'document_category_id' => $categoryId,
+               'title' => $title,
+               'start_date' => $startAt,
+               'end_date' => $endAt,
+               'total_amount_spent' => $total,
+               'departure_city_id' => data_get($claimPayload, 'departure_city_id'),
+               'destination_city_id' => data_get($claimPayload, 'destination_city_id'),
+               'airport_id' => data_get($claimPayload, 'airport_id'),
+               'resident_type' => data_get($claimPayload, 'resident_type', 'non-resident'),
+               'distance' => $distance,
+               'mode' => $mode,
+               'route' => $route,
                'type' => 'claim',
-               'status' => 'generated'
            ];
 
-           $claim = parent::store($claimData);
+           if ($existingId > 0 && $isUpdate) {
+               $claim = parent::update($existingId, $claimData);
+           } else {
+               $claimData['code'] = $this->repository->generate('code', 'SC');
+               $claimData['status'] = 'generated';
+               $claim = parent::store($claimData);
+           }
 
            if (!$claim) {
                return null;
            }
 
-           $expenses = $resolved['contents']['expenses'] ?? [];
+           $expenses = (array) data_get($resolved, 'contents.expenses', []);
+
+           $fillables = [
+               "allowance_id", "remuneration_id", "claim_id", "description", "parent_id",
+               "total_distance_covered", "unit_price", "start_date", "end_date", "no_of_days",
+               "total_amount_spent", "cleared_amount", "audited_amount", "total_amount_paid",
+               "status", "remark", "identifier"
+           ];
+
+           $numerics = ["total_amount_spent", "total_amount_paid", "audited_amount", "cleared_amount"];
+           $ints = ["no_of_days"];
+
+           $expenses = array_map(function ($exp) use ($fillables, $numerics, $ints) {
+               $row = (array) $exp;
+
+               unset($row['id'], $row['created_at'], $row['updated_at']);
+
+               $row = array_intersect_key($row, array_flip($fillables));
+
+               foreach ($numerics as $k) if (isset($row[$k])) $row[$k] = (float) $row[$k];
+               foreach ($ints as $k)     if (isset($row[$k])) $row[$k] = (int)   $row[$k];
+
+               foreach (['start_date','end_date'] as $k) {
+                   if (isset($row[$k])) {
+                       $c = Carbon::make($row[$k]);
+                       $row[$k] = $c?->toDateString(); // or keep as Carbon if your ORM expects it
+                   }
+               }
+
+               return $row;
+           }, $expenses);
+
+            // Enforce claim_id from server
+           $claimId = $claim->id;
+           $expenses = array_map(function ($row) use ($claimId) {
+               $row['claim_id'] = $claimId;
+               return $row;
+           }, $expenses);
+
            $this->syncExpenses($claim, $expenses);
 
            return $claim;

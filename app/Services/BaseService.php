@@ -54,7 +54,7 @@ abstract class BaseService implements IService
         return $this->repository->all();
     }
 
-    public function buildDocumentFromTemplate(array $data)
+    public function buildDocumentFromTemplate(array $data, bool $isUpdate = false)
     {
         return $data;
     }

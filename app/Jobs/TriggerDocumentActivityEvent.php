@@ -6,7 +6,7 @@ use App\DTO\DocumentActivityContext;
 use App\Events\DocumentActionPerformed;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Bus\Queueable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Illuminate\Queue\SerializesModels;
@@ -14,9 +14,7 @@ use Illuminate\Queue\SerializesModels;
 class TriggerDocumentActivityEvent implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    public $queue   = 'notifications';
-    public int $tries   = 5;
+    public int $tries = 5;
     public array $backoff = [10, 60, 120];
 
     /**

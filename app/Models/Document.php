@@ -20,6 +20,7 @@ class Document extends Model
         'uploaded_requirements' => 'array',
         'preferences' => 'json',
         'watchers' => 'array',
+        'threads' => 'array',
     ];
 
     // Model Relationships or Scope Here...

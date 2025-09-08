@@ -20,9 +20,6 @@ class DocumentResource extends JsonResource
         return [
             ...parent::toArray($request),
             'documentable' => $this->resolveDocumentableResource(),
-//            'drafts' => DocumentDraftResource::collection($this->getLatestDraftsPerResource()),
-//            'complete_or_linked_drafts' => isset($this->complete_or_linked_drafts) ? DocumentDraftResource::collection($this->complete_or_linked_drafts) : [],
-//            'document_template' => $this->getDocumentType($this->documentable_type),
             'document_type' => new DocumentTypeResource($this->documentType),
             'workflow' => new WorkflowResource($this->workflow),
             'dept' => $this->department->abv,

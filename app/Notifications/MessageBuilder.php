@@ -29,7 +29,8 @@ class MessageBuilder
         }
 
         if (in_array('creator_ack', $tags)) {
-            $lines[] = "You created **{$ctx->document_title}** for **{$ctx->document_owner['label']}**.";
+            $ownerLabel = $ctx->document_owner['label'] ?? 'Unknown User';
+            $lines[] = "You created **{$ctx->document_title}** for **{$ownerLabel}**.";
         }
 
         if (in_array('self_created', $tags)) {

@@ -28,7 +28,8 @@ class UploadRepository extends BaseRepository
 
     public function encodeFile(UploadedFile $file): string
     {
-        $content = file_get_contents($file->getRealPath());
+        $path = $file->getRealPath() ?: $file->getPathname();
+        $content = file_get_contents($path);
         return $this->scramble($content, Auth::user());
     }
 
@@ -86,8 +87,12 @@ class UploadRepository extends BaseRepository
             $extension = $allowed[$mimeType];
 
             // Create temporary file
-            $tmpFile = tmpfile();
-            $tmpPath = stream_get_meta_data($tmpFile)['uri'];
+//            $tmpFile = tmpfile();
+//            $tmpPath = stream_get_meta_data($tmpFile)['uri'];
+
+            // Create a persistent temp file path
+            $tmpPath = tempnam(sys_get_temp_dir(), 'upload_');
+            if ($tmpPath === false) return null;
 
             // Write the binary content
             file_put_contents($tmpPath, $binaryData);
@@ -114,19 +119,24 @@ class UploadRepository extends BaseRepository
         foreach ($files as $file) {
 
             $normalized = $this->normalizeFile($file);
+            if (!$normalized) continue;
 
-            if (!$normalized) {
-                continue; // skip invalid file
-            }
-
-            if ($normalized instanceof UploadedFile) {
+            try {
                 $scrambled = $this->encodeFile($normalized);
+
                 $uploads[] = $this->prepareUpload(
                     $normalized,
                     $scrambled,
                     $uploadableId,
                     $uploadableType
                 );
+            } finally {
+                // If normalizeFile() produced a tempnam file, clean it up
+                // Heuristic: only unlink if it's in the system temp dir and still exists
+                $p = $normalized->getRealPath() ?: $normalized->getPathname();
+                if ($p && str_starts_with($p, sys_get_temp_dir()) && is_file($p)) {
+                    @unlink($p);
+                }
             }
         }
 

@@ -38,17 +38,17 @@ class SendDocumentActivityNotification implements ShouldQueue
         if ($toOwner) {
             $audiences->push([
                 'type' => 'owner',
-                'users' => User::whereKey($ownerId)->get(['id','name','email'])
+                'users' => User::whereKey($ownerId)->get(['id','firstname','surname','email'])
             ]);
             $audiences->push([
                 'type' => 'creator_ack',
-                'users' => User::whereKey($creatorId)->get(['id','name','email'])
+                'users' => User::whereKey($creatorId)->get(['id','firstname','surname','email'])
             ]);
         } else {
             // same person created for self → maybe just one “created” message
             $audiences->push([
                 'type' => 'self_created',
-                'users' => User::whereKey($ownerId)->get(['id','name','email'])
+                'users' => User::whereKey($ownerId)->get(['id','firstname','surname','email'])
             ]);
         }
 
@@ -68,8 +68,8 @@ class SendDocumentActivityNotification implements ShouldQueue
 
             foreach ($groupIds as $gid) {
                 $users = Cache::remember("group_users:{$gid}", 600, function () use ($gid) {
-                    return Group::with(['users:id,name,email'])
-                        ->find($gid)?->users->map->only(['id','name','email']) ?? collect();
+                    return Group::with(['users:id,firstname,surname,email'])
+                        ->find($gid)?->users->map->only(['id','firstname','surname','email']) ?? collect();
                 });
 
                 $groupUsers = $groupUsers->concat($users);
@@ -80,7 +80,7 @@ class SendDocumentActivityNotification implements ShouldQueue
             if ($groupUsers->isNotEmpty()) {
                 $audiences->push([
                     'type' => 'watcher_group',
-                    'users' => User::whereIn('id', $groupUsers->pluck('id'))->get(['id','name','email'])
+                    'users' => User::whereIn('id', $groupUsers->pluck('id'))->get(['id','firstname','surname','email'])
                 ]);
             }
         }
