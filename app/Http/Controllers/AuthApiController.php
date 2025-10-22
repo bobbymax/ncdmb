@@ -22,6 +22,25 @@ class AuthApiController extends BaseController
         parent::__construct($userService, 'Authentication', AuthUserResource::class);
     }
 
+    public function getChatToken(Request $request): \Illuminate\Http\JsonResponse
+    {
+        // Check if user is authenticated via session
+        if (!Auth::check()) {
+            return $this->error(null, 'User not authenticated', 401);
+        }
+
+        $user = Auth::user();
+
+        // Generate a chat-specific token
+        $chatToken = $user->createToken('chat-token', ['chat:read', 'chat:write'])->plainTextToken;
+
+        return response()->json([
+            'token' => $chatToken,
+            'expires_in' => 3600, // 1 hour
+            'user' => new $this->jsonResource($user)
+        ]);
+    }
+
     public function refreshToken(Request $request): \Illuminate\Http\JsonResponse
     {
         // Validate the refresh token

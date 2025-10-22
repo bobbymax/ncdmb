@@ -11,6 +11,10 @@ class Payment extends Model
     use HasFactory, SoftDeletes;
 
     protected $guarded = [''];
+    protected $casts = [
+        'period' => 'date',
+        'process_metadata' => 'json',
+    ];
 
     // Model Relationships or Scope Here...
     public function expenditure(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -51,5 +55,15 @@ class Payment extends Model
     public function journal(): \Illuminate\Database\Eloquent\Relations\MorphOne
     {
         return $this->morphOne(Journal::class, 'journalable');
+    }
+
+    public function processCard(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ProcessCard::class, 'process_card_id');
+    }
+
+    public function settledBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'settled_by');
     }
 }

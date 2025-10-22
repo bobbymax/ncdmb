@@ -66,4 +66,19 @@ class Fund extends Model
     {
         return $this->hasMany(Reserve::class);
     }
+
+    public function fundTransactions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(FundTransaction::class, 'fund_id');
+    }
+
+    public function reconciliations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Reconciliation::class, 'fund_id');
+    }
+
+    public function ledgerAccountBalances(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LedgerAccountBalance::class, 'fund_id');
+    }
 }

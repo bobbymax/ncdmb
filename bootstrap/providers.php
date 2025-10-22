@@ -92,5 +92,9 @@ return [
     App\Providers\MilestoneServiceProvider::class,
     App\Providers\InvoiceServiceProvider::class,
     App\Providers\InvoiceItemServiceProvider::class,
-    App\Providers\NotificationPreferenceServiceProvider::class
+    App\Providers\NotificationPreferenceServiceProvider::class,
+    App\Providers\ThreadServiceProvider::class,
+    App\Providers\ConversationServiceProvider::class,
+    App\Providers\ProcessCardServiceProvider::class,
+    App\Providers\DocumentPanelServiceProvider::class
 ];

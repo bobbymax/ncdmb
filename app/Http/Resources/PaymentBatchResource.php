@@ -17,7 +17,7 @@ class PaymentBatchResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'expenditures' => ExpenditureResource::collection($this->document->expenditures),
+            'expenditures' => ExpenditureResource::collection($this->expenditures),
             'directorate' => $this->placement($this->document->ref, 1),
             'department' => $this->placement($this->document->ref, 2),
         ];

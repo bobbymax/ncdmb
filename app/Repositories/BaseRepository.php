@@ -11,11 +11,28 @@ use App\Interfaces\IRepository;
 use App\Models\Expenditure;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Symfony\Component\HttpKernel\Exception\UnauthorizedHttpException;
 
 abstract class BaseRepository implements IRepository
 {
     protected Model $model;
+
+    /**
+     * Default scope for this repository
+     * Override in child repositories to set a default scope
+     */
+    protected string $defaultScope = 'personal';
+
+    /**
+     * Strict policy flag
+     * If true, repository scope takes precedence over user rank
+     * If false, user rank takes precedence
+     */
+    protected bool $strictPolicy = false;
+
 
     public function __construct(Model $model)
     {
@@ -24,9 +41,76 @@ abstract class BaseRepository implements IRepository
 
     abstract public function parse(array $data): array;
 
-    public function all()
+    public function rank(): string
+    {
+        $user = Auth::user();
+        $gradeLevelRank = (int) $user->gradeLevel->rank;
+
+        // Get the highest-ranked group for this user
+        $highestGroupRank = $user->groups->min('rank') ?? 0; // Default to 0 if no groups
+
+        // Use the higher rank (lower number = higher access)
+        $effectiveRank = min($gradeLevelRank, $highestGroupRank);
+
+        return match ($effectiveRank) {
+            1 => 'board',
+            2, 3 => 'directorate',
+            4, 5, 6, 7, 8, 9 => 'departmental',
+            default => 'personal',
+        };
+    }
+
+    /**
+     * Get the effective scope based on user rank and repository policy
+     */
+    public function getEffectiveScope(): string
+    {
+        $userRank = $this->rank();
+
+        // If strict policy is enabled, use repository's default scope
+        if ($this->strictPolicy) {
+            return $this->defaultScope;
+        }
+
+        // Otherwise, use the higher access level between user rank and default scope
+        return $this->getHigherAccessLevel($userRank, $this->defaultScope);
+    }
+
+    /**
+     * Determine which scope provides higher access level
+     */
+    private function getHigherAccessLevel(string $scope1, string $scope2): string
+    {
+        $accessLevels = [
+            'board' => 1,
+            'directorate' => 2,
+            'departmental' => 3,
+            'personal' => 4
+        ];
+
+        $level1 = $accessLevels[$scope1] ?? 4;
+        $level2 = $accessLevels[$scope2] ?? 4;
+
+        // Return the scope with lower number (higher access)
+        return $level1 <= $level2 ? $scope1 : $scope2;
+    }
+
+    public function accessible()
     {
         return $this->model->latest()->get();
+    }
+
+    public function all()
+    {
+        $period = config('site.jolt_budget_year');
+
+        $query = $this->model->newQuery();
+        // Apply scope-based filtering first
+        $query = $this->applyScopeFilter($query, $this->getEffectiveScope());
+        // Apply budget year filter if column exists
+        $query = $this->applyBudgetYearFilter($query, $period);
+
+        return $query->latest()->get();
     }
 
     public function owner($id)
@@ -177,9 +261,127 @@ abstract class BaseRepository implements IRepository
         return $this->model->where($column, $operator, $value)->first();
     }
 
-    public function getCollectionByColumn(string $column, mixed $value, string $operator = '=')
+    /*
+     * @scope - personal, departmental, directorate, board
+     */
+    public function getCollectionByColumn(
+        string $column,
+        mixed $value,
+        string $operator = '=',
+        $scope = "personal",
+        $budget_year = 0
+    ): \Illuminate\Database\Eloquent\Collection {
+
+        $period = $budget_year < 1 ? config('site.jolt_budget_year') : $budget_year;
+
+        $query = $this->model->newQuery();
+        // Apply scope-based filtering first
+        $query = $this->applyScopeFilter($query, $scope);
+
+        // Then apply the column condition
+        $query->where($column, $operator, $value);
+
+        // Apply budget year filter if column exists
+        $query = $this->applyBudgetYearFilter($query, $period);
+
+        return $query->latest()->get();
+    }
+
+    /**
+     * Apply budget year filtering to the query
+     * Only applies if budget_year column exists
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function applyBudgetYearFilter($query, $period): \Illuminate\Database\Eloquent\Builder
     {
-        return $this->model->where($column, $operator, $value)->latest()->get();
+        $tableColumns = $this->getTableColumns();
+
+        // Check if budget_year column exists
+        if (in_array('budget_year', $tableColumns)) {
+            if ($period) {
+                $query->where('budget_year', $period);
+            }
+        }
+
+        return $query;
+    }
+
+    protected function applyScopeFilter($query, string $scope)
+    {
+        // If scope is board, no filtering needed
+        if ($scope === 'board') {
+            return $query;
+        }
+
+        $user = Auth::user();
+
+        if (!$user) {
+            throw new UnauthorizedHttpException('User not authenticated');
+        }
+
+        // Check if required columns exist and fallback to board if they don't
+        $fallbackScope = $this->shouldFallbackToBoard($scope);
+        if ($fallbackScope) {
+            Log::info("Scope '{$scope}' not applicable for model " . get_class($this->model) . ", falling back to board scope");
+            return $query; // Return unfiltered query (board scope)
+        }
+
+        return match ($scope) {
+            'personal' => $this->applyPersonalScope($query, $user),
+            'departmental' => $this->applyDepartmentalScope($query, $user),
+            'directorate' => $this->applyDirectorateScope($query, $user),
+            default => throw new \InvalidArgumentException("Invalid scope: {$scope}"),
+        };
+    }
+
+    protected function shouldFallbackToBoard(string $scope): bool
+    {
+        $tableColumns = $this->getTableColumns();
+
+        return match ($scope) {
+            'personal' => !in_array('user_id', $tableColumns),
+            'departmental', 'directorate' => !in_array('department_id', $tableColumns),
+            default => false,
+        };
+    }
+
+    protected function getTableColumns(): array
+    {
+        return Schema::getColumnListing($this->model->getTable());
+    }
+
+    /**
+     * Apply personal scope filtering
+     * Override in specific repositories if needed
+     */
+    protected function applyPersonalScope($query, $user)
+    {
+        return $query->where('user_id', $user->id);
+    }
+
+    /**
+     * Apply departmental scope filtering
+     * Override in specific repositories if needed
+     */
+    protected function applyDepartmentalScope($query, $user)
+    {
+        return $query->where('department_id', $user->department_id);
+    }
+
+    /**
+     * Apply directorate scope filtering
+     * Override in specific repositories if needed
+     */
+    protected function applyDirectorateScope($query, $user)
+    {
+        return $query->where(function ($q) use ($user) {
+            $q->where('department_id', $user->department_id)
+                ->orWhereHas('department', function ($subQ) use ($user) {
+                    $subQ->where('parentId', $user->department_id);
+                });
+        });
     }
 
     public function dynamicCollection(

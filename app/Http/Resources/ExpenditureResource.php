@@ -19,17 +19,6 @@ class ExpenditureResource extends JsonResource
         $resource = $this->resolveExpenditureResource();
         return [
             ...parent::toArray($request),
-            'owner' => [
-                'name' => $this->department->name,
-                'abv' => $this->department->abv,
-                'department_payment_code' => $this->department->department_payment_code ?? "",
-            ],
-            'controller' => [
-                'name' => "{$this->controller->surname}, {$this->controller->firstname} {$this->controller->middlename}",
-                'staff_no' => $this->controller->staff_no,
-                'department' => $this->controller->department->abv,
-                'role' => $this->controller->role->name
-            ],
             'fund' => [
                 'department' => $this->fund->department->abv,
                 'budget_code' => $this->fund->budgetCode->code,
@@ -37,8 +26,21 @@ class ExpenditureResource extends JsonResource
                 'type' => $this->fund->type,
                 'total_approved_amount' => (float) $this->fund->total_approved_amount,
             ],
-            'expenditureable' => $resource,
-            'beneficiary' => $resource?->beneficiary ?? null,
+            'linked_document' => [
+                'title' => $this->document->title,
+                'ref' => $this->document->ref,
+                'document_category_id' => $this->document->document_category_id,
+                'published_at' => $this->document->created_at->format('Y-m-d'),
+                'published_by' => [
+                    'name' => "{$this->document->user->surname}, {$this->document->user->firstname} {$this->document->user->middlename}",
+                    'staff_no' => $this->document->user->staff_no,
+                    'department' => $this->document->user->department->abv,
+                ],
+                'approved_amount' => $this->document->approved_amount,
+                'type' => $this->document->documentCategory->name,
+                'resource_id' => $this->document->documentable_id,
+                'resource_type' => $this->document->documentable_type,
+            ]
         ];
     }
 

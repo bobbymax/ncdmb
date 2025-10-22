@@ -71,7 +71,16 @@ class WorkflowDistributionNotification extends Notification implements ShouldQue
         int|string|array $value,
         string $service
     ) {
-        return processor()->resourceResolver($value, $service);
+        try {
+            return processor()->resourceResolver($value, $service);
+        } catch (\Throwable $e) {
+            \Log::warning('WorkflowDistributionNotification: Failed to resolve resource', [
+                'value' => $value,
+                'service' => $service,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
     }
 
     /**

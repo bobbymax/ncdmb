@@ -43,6 +43,11 @@ class WorkflowStageService extends BaseService
         ];
     }
 
+    public function index()
+    {
+        return $this->repository->accessible();
+    }
+
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {

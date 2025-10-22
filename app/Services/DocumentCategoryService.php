@@ -5,20 +5,24 @@ namespace App\Services;
 use App\Repositories\BlockRepository;
 use App\Repositories\DocumentCategoryRepository;
 use App\Repositories\DocumentRequirementRepository;
+use App\Repositories\SignatoryRepository;
 use Illuminate\Support\Facades\DB;
 
 class DocumentCategoryService extends BaseService
 {
     protected DocumentRequirementRepository $documentRequirementRepository;
     protected BlockRepository $blockRepository;
+    protected SignatoryRepository $signatoryRepository;
     public function __construct(
         DocumentCategoryRepository $documentCategoryRepository,
         DocumentRequirementRepository $documentRequirementRepository,
-        BlockRepository $blockRepository
+        BlockRepository $blockRepository,
+        SignatoryRepository $signatoryRepository
     ) {
         parent::__construct($documentCategoryRepository);
         $this->documentRequirementRepository = $documentRequirementRepository;
         $this->blockRepository = $blockRepository;
+        $this->signatoryRepository = $signatoryRepository;
     }
 
     public function rules($action = "store"): array
@@ -43,13 +47,7 @@ class DocumentCategoryService extends BaseService
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {
-            $category = parent::store([
-                ...$data,
-                'config' => isset($data['config']) ? json_encode($data['config']) : null,
-                'workflow' => isset($data['workflow']) ? json_encode($data['workflow']) : null,
-                'content' => json_encode($data['content'] ?? []),
-                'meta_data' => isset($data['meta_data']) ? json_encode($data['meta_data']) : null,
-            ]);
+            $category = parent::store($data);
 
             if ($category) {
                 if (!empty($data['selectedRequirements'])) {
@@ -65,16 +63,44 @@ class DocumentCategoryService extends BaseService
         });
     }
 
+    public function addSignatories(array $data)
+    {
+        return DB::transaction(function () use ($data) {
+            $category = parent::show($data['document_category_id']);
+
+            if (!$category) {
+                return null;
+            }
+
+            foreach ($data['signatories'] as $obj) {
+
+                if ($obj['id'] > 0) {
+                    $signatory = $this->signatoryRepository->find($obj['id']);
+                    if ($signatory) {
+                        $this->signatoryRepository->update($signatory->id, [
+                            ...$obj,
+                            'user_id' => $obj['user_id'] > 0 ? $obj['user_id'] : null,
+                        ]);
+                    }
+                } else {
+                    unset($obj['id']);
+
+                    $this->signatoryRepository->create([
+                        ...$obj,
+                        'document_category_id' => $category->id,
+                        'user_id' => $obj['user_id'] > 0 ? $obj['user_id'] : null,
+                    ]);
+                }
+            }
+
+            return $category;
+        });
+    }
+
     public function update(int $id, array $data, $parsed = true)
     {
         return DB::transaction(function () use ($id, $data) {
-            $category = parent::update($id, [
-                ...$data,
-                'config' => isset($data['config']) ? json_encode($data['config']) : null,
-                'meta_data' => isset($data['meta_data']) ? json_encode($data['meta_data']) : null,
-                'workflow' => isset($data['workflow']) ? json_encode($data['workflow']) : null,
-                'content' => json_encode($data['content'] ?? []),
-            ]);
+            $category = parent::update($id, $data);
 
             if ($category) {
                 if (!empty($data['selectedRequirements'])) {

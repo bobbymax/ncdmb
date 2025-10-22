@@ -6,6 +6,7 @@ use App\DTO\PaymentConsolidatedIncomingData;
 use App\DTO\ProcessedIncomingData;
 use App\Handlers\CodeGenerationErrorException;
 use App\Models\Expenditure;
+use App\Models\ProcessCard;
 use App\Repositories\DocumentRepository;
 use App\Repositories\ExpenditureRepository;
 use App\Repositories\PaymentRepository;
@@ -17,6 +18,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class PaymentService extends BaseService
 {
@@ -67,6 +69,199 @@ class PaymentService extends BaseService
             'paid_at' => 'nullable|date',
             'type' => 'required|string|in:staff,third-party',
             'status' => 'required|string|in:draft,posted,reversed',
+        ];
+    }
+
+    public function documentProcessor(array $data, string $mode = "update")
+    {
+        return DB::transaction(function () use ($data, $mode) {
+            if ($mode === "store") {
+                if (!empty($data)) {
+
+                foreach ($data as &$d) {
+                    // Extract journal types before unsetting (if provided from frontend)
+                    $journalTypes = $d['journal_types'] ?? null;
+
+                    // Remove fields that shouldn't be stored in payment table
+                    unset($d['document_category_id']);
+                    unset($d['document_type_id']);
+                    unset($d['id']);
+                    unset($d['payable_id']);
+                    unset($d['payable_type']);
+                    unset($d['payment_method']);
+                    unset($d['journal_types']);  // Don't store in payment table
+                    unset($d['process_metadata']); // Don't store raw metadata
+
+                    // Create payment record
+                    $payment = parent::store($d);
+
+                    // If auto-settlement is enabled and journal types provided, execute accounting cycle
+                    if ($payment && ($d['auto_generated'] ?? false) && !empty($journalTypes)) {
+                        try {
+                            // Get process card for this payment
+                            $processCard = $payment->processCard;
+
+                            if ($processCard && ($processCard->rules['generate_transactions'] ?? false)) {
+                                // Execute accounting cycle with frontend journal types
+                                app(\App\Services\ProcessCardExecutionService::class)
+                                    ->executeAccountingCycle($payment, $processCard, $journalTypes);
+                            }
+                        } catch (\Exception $e) {
+                            // Log error but don't fail the payment creation
+                            \Log::error('Auto-settlement failed', [
+                                'payment_id' => $payment->id,
+                                'error' => $e->getMessage(),
+                                'trace' => $e->getTraceAsString(),
+                            ]);
+
+                            // Optionally re-throw if you want to fail the entire transaction
+                            // throw $e;
+                        }
+                    }
+                }
+                    unset($d);
+                }
+            }
+
+
+            return true;
+        });
+    }
+
+    /**
+     * Process treasury clearance with journal types from frontend
+     * Handles payment settlements with user-selected journal types
+     *
+     * @param array $data Clearance data from EmployeeTreasuryClear component
+     * @return array Processing results
+     * @throws \Exception If validation fails or processing errors occur
+     */
+    public function processPaymentClearance(array $data, ?string $mode = "update"): array
+    {
+        $payments = $data['payments'] ?? [];
+        $processCardId = $data['process_card_id'] ?? null;
+        $documentDraftId = $data['document_draft_id'] ?? null;
+        $summary = $data['summary'] ?? null;
+
+        if (empty($payments)) {
+            throw new \Exception('No payments provided for clearance');
+        }
+
+        // Get process card
+        $processCard = ProcessCard::find($processCardId);
+        if (!$processCard) {
+            throw new \Exception("ProcessCard not found: {$processCardId}");
+        }
+
+        $results = [];
+        $successCount = 0;
+        $errorCount = 0;
+
+        foreach ($payments as $paymentData) {
+            $paymentId = $paymentData['payment_id'] ?? null;
+            $frontendTransactions = $paymentData['transactions'] ?? [];
+            $expenditureId = $paymentData['expenditure_id'] ?? null;
+
+            if (!$paymentId) {
+                Log::warning('Payment data missing payment_id', ['data' => $paymentData]);
+                continue;
+            }
+
+            if (empty($frontendTransactions)) {
+                Log::warning('Payment data missing transactions', ['payment_id' => $paymentId]);
+                $results[] = [
+                    'payment_id' => $paymentId,
+                    'status' => 'error',
+                    'error' => 'No transactions provided for payment'
+                ];
+                $errorCount++;
+                continue;
+            }
+
+            // Get payment from database
+            $payment = $this->repository->find($paymentId);
+
+            if (!$payment) {
+                $results[] = [
+                    'payment_id' => $paymentId,
+                    'status' => 'error',
+                    'error' => 'Payment not found'
+                ];
+                $errorCount++;
+                continue;
+            }
+
+            try {
+                // Execute accounting cycle with frontend-generated transactions
+                $steps = app(\App\Services\ProcessCardExecutionService::class)
+                    ->executeAccountingCycleWithTransactions($payment, $processCard, $frontendTransactions);
+
+                $results[] = [
+                    'payment_id' => $paymentId,
+                    'payment_code' => $payment->code,
+                    'amount' => $paymentData['amount'],
+                    'status' => 'success',
+                    'steps_completed' => count($steps),
+                    'steps' => $steps,
+                    'transactions_saved' => count($frontendTransactions),
+                ];
+
+                $successCount++;
+
+                Log::info('Payment clearance executed successfully', [
+                    'payment_id' => $payment->id,
+                    'payment_code' => $payment->code,
+                    'transactions_count' => count($frontendTransactions),
+                    'steps_count' => count($steps),
+                ]);
+
+            } catch (\Exception $e) {
+                $results[] = [
+                    'payment_id' => $paymentId,
+                    'payment_code' => $payment->code ?? "Unknown",
+                    'status' => 'error',
+                    'error' => $e->getMessage(),
+                ];
+                $errorCount++;
+
+                Log::error('Payment clearance failed', [
+                    'payment_id' => $paymentId,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString(),
+                ]);
+
+                // Optional: Fail entire batch on first error
+                // throw $e;
+            }
+        }
+
+        // Update document draft status if all successful
+        if ($documentDraftId && $errorCount === 0) {
+            \App\Models\DocumentDraft::find($documentDraftId)?->update([
+                'status' => 'processed',
+                'processed_at' => now(),
+                'processed_by' => Auth::id(),
+                'metadata' => [
+                    'clearance_summary' => $summary,
+                    'processed_payments' => $successCount,
+                ],
+            ]);
+        }
+
+        \Log::info('Treasury clearance batch completed', [
+            'total_payments' => count($payments),
+            'successful' => $successCount,
+            'failed' => $errorCount,
+            'summary' => $summary,
+        ]);
+
+        return [
+            'success' => $errorCount === 0,
+            'total_processed' => count($payments),
+            'successful' => $successCount,
+            'failed' => $errorCount,
+            'results' => $results,
+            'summary' => $summary,
         ];
     }
 

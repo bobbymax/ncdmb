@@ -97,6 +97,17 @@ class ClaimService extends BaseService
         ];
     }
 
+    public function resolveDocumentAmount(int $resourceId)
+    {
+        $raw = $this->repository->find($resourceId);
+
+        if (!$raw) {
+            return null;
+        }
+
+        return $this->updateDocumentAmount($raw, 'total_amount_spent');
+    }
+
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {

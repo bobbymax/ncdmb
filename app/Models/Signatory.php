@@ -13,10 +13,19 @@ class Signatory extends Model
 
     public static $type = ['owner', 'initiator', 'vendor', 'witness', 'approval', 'authorised', 'attestation', 'auditor', 'other'];
 
+    protected $casts = [
+        'actions' => 'array',
+    ];
+
     // Model Relationships or Scope Here...
     public function page(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Page::class, 'page_id');
+    }
+
+    public function desk(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(WorkflowStage::class, 'workflow_stage_id');
     }
 
     public function documentCategory(): \Illuminate\Database\Eloquent\Relations\BelongsTo

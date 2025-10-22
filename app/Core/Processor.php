@@ -2,9 +2,12 @@
 
 namespace App\Core;
 
+use App\Core\Contracts\ResourceResolverInterface;
+use App\Core\Contracts\ServiceResolverInterface;
+use App\Core\Contracts\WorkflowProcessorInterface;
 use App\DTO\ProcessedIncomingData;
 use App\Engine\ControlEngine;
-use App\Models\{Document, ProgressTracker, Workflow};
+use App\Models\{Document, DocumentAction, ProgressTracker, Workflow};
 use App\Traits\DocumentFlow;
 use Illuminate\Http\Request;
 use Illuminate\Support\{Arr, Str};
@@ -15,77 +18,36 @@ use InvalidArgumentException;
 class Processor
 {
     use DocumentFlow;
-    protected string $serviceNamespace = 'App\\Services\\';
-    protected string $repositoryNamespace = 'App\\Repositories\\';
-    protected array $classMap = [];
+    
+    private ServiceResolverInterface $serviceResolver;
+    private ResourceResolverInterface $resourceResolver;
+    private WorkflowProcessorInterface $workflowProcessor;
+    
     protected mixed $resolvedService = null;
-
     public ?Document $document = null;
     public ?Workflow $workflow = null;
 
-    public function __construct()
-    {
-        $this->loadServices();
-        $this->loadRepositories();
+    public function __construct(
+        ServiceResolverInterface $serviceResolver,
+        ResourceResolverInterface $resourceResolver,
+        WorkflowProcessorInterface $workflowProcessor
+    ) {
+        $this->serviceResolver = $serviceResolver;
+        $this->resourceResolver = $resourceResolver;
+        $this->workflowProcessor = $workflowProcessor;
     }
 
     public function __invoke(string $key): static
     {
-        // 🔐 First, check if the key is already bound in the container
-        if (App::bound($key)) {
-            $this->resolvedService = App::make($key);
-            return $this;
-        }
-
-        // 🧠 Fallback: Guess from convention like 'payment_batch' -> PaymentBatchService
-        $className = $this->guessClassFromKey($key);
-
-        if (class_exists($className)) {
-            $this->resolvedService = App::make($className);
-            return $this;
-        }
-
-        throw new InvalidArgumentException("Processor key [$key] could not be resolved.");
+        $this->resolvedService = $this->serviceResolver->resolve($key);
+        return $this;
     }
 
-    protected function guessClassFromKey(string $key): string
+    public function getResolvedService(): mixed
     {
-        $isRepo = Str::endsWith($key, 'Repo');
-        $base = $isRepo ? Str::replaceLast('Repo', '', $key) : $key;
-        $studly = Str::studly($base);
-
-        return $isRepo
-            ? "$this->repositoryNamespace{$studly}Repository"
-            : "$this->serviceNamespace{$studly}Service";
+        return $this->resolvedService;
     }
 
-    protected function loadServices(): void
-    {
-        $path = app_path('Services');
-
-        foreach (File::files($path) as $file) {
-            $name = $file->getFilenameWithoutExtension(); // e.g. ClaimService
-            if (Str::endsWith($name, 'Service')) {
-                $shortKey = Str::camel(Str::replaceLast('Service', '', $name)); // e.g. claim
-                $fqcn = $this->serviceNamespace . $name;
-                $this->classMap[$shortKey] = $fqcn;
-            }
-        }
-    }
-
-    protected function loadRepositories(): void
-    {
-        $path = app_path('Repositories');
-
-        foreach (File::files($path) as $file) {
-            $name = $file->getFilenameWithoutExtension(); // e.g. ClaimRepository
-            if (Str::endsWith($name, 'Repository')) {
-                $shortKey = Str::camel(Str::replaceLast('Repository', '', $name)) . 'Repo'; // e.g. claimRepo
-                $fqcn = $this->repositoryNamespace . $name;
-                $this->classMap[$shortKey] = $fqcn;
-            }
-        }
-    }
 
     private function preProcessor(Request $request): array
     {
@@ -105,7 +67,7 @@ class Processor
 
     private function invokeService($serviceKey): mixed
     {
-        return $this->__invoke($serviceKey)->resolvedService;
+        return $this->serviceResolver->resolve($serviceKey);
     }
 
     private function resolveMethod($service, $method, $mode): ?string
@@ -170,50 +132,17 @@ class Processor
         );
     }
 
+    public function executeWorkflowAction(string $action, Document $document, ?DocumentAction $documentAction = null): mixed
+    {
+        return $this->workflowProcessor->executeAction($action, $document, $documentAction);
+    }
+
     public function resourceResolver(
         string|int|array $value,
         string $serviceKey,
         array $args = [],
     ): mixed {
-        $service = $this->invokeService($serviceKey);
-
-        $column = $args['column'] ?? 'id';  // default to 'id' if not specified
-        $category = $args['category'] ?? 'single'; // 'collection' or 'single'
-
-        if (is_numeric($value)) {
-            // If value is a single ID
-            return $service->show($value);
-        }
-
-        if (is_string($value)) {
-            // If value is a single string (e.g. search by name, email, etc.)
-            if ($category === 'collection') {
-                return $service->getCollectionByColumn($column, $value);
-            } else {
-                return $service->getRecordByColumn($column, $value);
-            }
-        }
-
-        if (is_array($value)) {
-            if (empty($value)) {
-                return collect();
-            }
-
-            // If arrayed, check if array of numbers or array of strings
-            $isNumericArray = collect($value)->every(fn ($v) => is_numeric($v));
-
-            if ($isNumericArray) {
-                return $service->whereIn('id', $value);
-            } else {
-                if (!isset($args['column'])) {
-                    throw new \InvalidArgumentException("When passing an array of strings, you must specify a [column] in args.");
-                }
-
-                return $service->whereIn($column, $value);
-            }
-        }
-
-        throw new InvalidArgumentException("Invalid value type passed to resourceResolver.");
+        return $this->resourceResolver->resolve($value, $serviceKey, $args);
     }
 
     protected function currentTracker()
@@ -249,22 +178,17 @@ class Processor
             }
         }
 
-        $this->document = $this->resourceResolver($data['document_id'], 'document');
-        $this->workflow = $this->resourceResolver($data['workflow_id'], 'workflow');
+        $this->document = $this->resourceResolver->resolve($data['document_id'], 'document');
+        $this->workflow = $this->resourceResolver->resolve($data['workflow_id'], 'workflow');
 
         if (!$this->document || !$this->workflow) {
             throw new \RuntimeException("Invalid document or workflow ID.");
         }
     }
 
-    public function documentBuild(Request $request)
-    {
-
-    }
-
     public function all(): array
     {
-        return $this->classMap;
+        return $this->serviceResolver->getServiceMap();
     }
 
     public function trigger(

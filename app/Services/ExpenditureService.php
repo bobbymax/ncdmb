@@ -15,7 +15,6 @@ class ExpenditureService extends BaseService
     {
         return [
             'fund_id' => 'required|integer|exists:funds,id',
-            'document_draft_id' => 'required|integer|min:1|exists:document_drafts,id',
             'department_id' => 'required|integer|min:1|exists:departments,id',
             'purpose' => 'required|string|min:5',
             'code' => 'required|string|min:5|unique:expenditures,code',

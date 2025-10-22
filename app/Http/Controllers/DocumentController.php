@@ -28,4 +28,9 @@ class DocumentController extends BaseController
     {
         return $this->success($this->service->generateDocument($request->all()));
     }
+
+    public function queuedDocuments(string $status): \Illuminate\Http\JsonResponse
+    {
+        return $this->success($this->jsonResource::collection($this->service->collateDocumentsByStatus($status, $this->service->getScope())));
+    }
 }

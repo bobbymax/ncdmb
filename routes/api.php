@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\DocumentBuilderController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+
 
 Route::middleware(['auth:sanctum'])->get('/user', function (Request $request) {
     return new \App\Http\Resources\AuthUserResource($request->user());
@@ -40,6 +42,12 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::get('resource/{service}/collection', [\App\Http\Controllers\ServiceWorkerController::class, 'resourceCollection']);
         Route::get('documents/ref/{ref}', [\App\Http\Controllers\ServiceWorkerController::class, 'fetchDocumentUsingRef'])->where('ref', '.*');
         Route::post('generate/document', [\App\Http\Controllers\DocumentBuilderController::class, 'buildDocument']);
+        Route::post('process/document', [\App\Http\Controllers\DocumentBuilderController::class, 'process']);
+        Route::get('collated/{status}/documents', [\App\Http\Controllers\DocumentController::class, 'queuedDocuments']);
+        Route::post('process/handle/request', [\App\Http\Controllers\GoogleApiController::class, 'assign']);
+
+        Route::get('chat-token', [\App\Http\Controllers\AuthApiController::class, 'getChatToken']);
+        Route::post('document-category/signatories', [\App\Http\Controllers\DocumentCategoryController::class, 'addSignatories']);
 
         // Google Api Endpoints
         Route::get('distance', [\App\Http\Controllers\GoogleApiController::class, 'getDistanceInKm']);
@@ -53,6 +61,11 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::get('document/documentDrafts/{status}', [\App\Http\Controllers\DocumentDraftController::class, 'drafts']);
         Route::get('resolvers/{status}/{access_level}/{user_column}/{draftScope}', [\App\Http\Controllers\ApiServiceController::class, 'records']);
         Route::get('group/ledgers', [\App\Http\Controllers\LedgerController::class, 'getLedgers']);
+        Route::post('threads/create-and-message', [\App\Http\Controllers\ThreadController::class, 'saveAndSendMessage']);
+        Route::get('threads/{thread}/conversations', [\App\Http\Controllers\ThreadController::class, 'conversations']);
+        Route::post('threads/{thread}/conversations', [\App\Http\Controllers\ThreadController::class, 'send']);
+        Route::post('configure/settings', [\App\Http\Controllers\SettingController::class, 'updateConfig']);
+        Route::post('document/processor', [\App\Http\Controllers\DocumentBuilderController::class, 'systemFlow']);
 
         Route::apiResource('departments', \App\Http\Controllers\DepartmentController::class);
         Route::apiResource('roles', \App\Http\Controllers\RoleController::class);
@@ -77,6 +90,9 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('projects', \App\Http\Controllers\ProjectController::class);
         Route::apiResource('invoices', \App\Http\Controllers\InvoiceController::class);
         Route::apiResource('invoiceItems', \App\Http\Controllers\InvoiceItemController::class);
+        Route::apiResource('threads', \App\Http\Controllers\ThreadController::class);
+        Route::apiResource('settings', \App\Http\Controllers\SettingController::class);
+        Route::apiResource('processCards', \App\Http\Controllers\ProcessCardController::class);
 
         Route::apiResource('documentTypes', \App\Http\Controllers\DocumentTypeController::class);
         Route::apiResource('documentRequirements', \App\Http\Controllers\DocumentRequirementController::class);
@@ -94,6 +110,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('ledgers', \App\Http\Controllers\LedgerController::class);
         Route::apiResource('payments', \App\Http\Controllers\PaymentController::class);
         Route::apiResource('journalTypes', \App\Http\Controllers\JournalTypeController::class);
+        Route::apiResource('documentPanels', \App\Http\Controllers\DocumentPanelController::class);
 
         Route::apiResource('budgetHeads', \App\Http\Controllers\BudgetHeadController::class);
         Route::apiResource('budgetCodes', \App\Http\Controllers\BudgetCodeController::class);

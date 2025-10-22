@@ -25,12 +25,4 @@ class FundService extends BaseService
             'is_logistics' => 'nullable|sometimes|boolean',
         ];
     }
-
-    /**
-     * @throws \Exception
-     */
-    public function index()
-    {
-        return $this->indexFilter(Auth::user()->department_id, "department");
-    }
 }

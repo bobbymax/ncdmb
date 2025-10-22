@@ -3,28 +3,45 @@
 namespace App\Http\Controllers;
 
 use App\DTO\DocumentActivityContext;
+use App\DTOs\NotificationContext;
+use App\Engine\ControlPanel;
 use App\Http\Resources\DocumentResource;
 use App\Jobs\TriggerDocumentActivityEvent;
 use App\Models\Document;
+use App\Models\DocumentAction;
+use App\Models\DocumentDraft;
+use App\Models\ProgressTracker;
+use App\Repositories\DocumentActionRepository;
 use App\Repositories\DocumentRepository;
+use App\Repositories\ThreadRepository;
 use App\Repositories\UploadRepository;
+use App\Repositories\WorkflowRepository;
+use App\Services\NotificationService;
+use App\Services\WorkflowService;
 use App\Traits\ApiResponse;
+use App\Traits\TrackerResolver;
+use App\Core\Contracts\ServiceResolverInterface;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use App\Handlers\ValidationErrors;
 
 class DocumentBuilderController extends Controller
 {
-    use ApiResponse;
+    use ApiResponse, TrackerResolver;
 
     public function __construct(
         protected DocumentRepository $documentRepository,
-        protected UploadRepository $uploadRepository
+        protected UploadRepository $uploadRepository,
+        protected NotificationService $notificationService,
+        protected WorkflowRepository $workflowRepository,
+        protected DocumentActionRepository $documentActionRepository,
+        protected ThreadRepository $threadRepository,
     ) {}
 
-    protected function documentValidations(Request $request)
+    protected function documentValidations(Request $request): \Illuminate\Validation\Validator
     {
         return Validator::make($request->all(), [
             'service' => 'required|string',
@@ -41,7 +58,7 @@ class DocumentBuilderController extends Controller
             'config' => 'required',
             'loggedInUser' => 'required|array',
             'preferences' => 'nullable|array',
-            'threads' => 'nullable|array',
+            'conversations' => 'nullable|array',
 
             // watchers normalization
             'watchers' => 'array',
@@ -55,6 +72,7 @@ class DocumentBuilderController extends Controller
 
             'title' => 'nullable|string',
             'category.document_type_id' => 'required|integer|exists:document_types,id',
+            'category.type' => 'required|string|in:staff,third-party',
             'mode' => 'required|string|in:store,update',
             'requirements' => 'array',
             'linked_documents' => 'array',
@@ -97,7 +115,9 @@ class DocumentBuilderController extends Controller
             $actionPerformed= (string) $request->input('performed', 'generated');
             $existingResourceId = (int) $request->input('existing_resource_id', 0);
             $existingDocumentId = (int) $request->input('existing_document_id', 0);
-            $threads            = (array) $request->input('threads', []);
+            $conversations      = (array) $request->input('conversations', []);
+            $budgetYear        = (int) $request->input('budget_year', 0);
+            $type             = (string) $category['type'] ?? 'staff';
 
             // Guard: we need at least one tracker with order=1 to derive pointer
             $currentPointer = collect($trackers)
@@ -122,7 +142,7 @@ class DocumentBuilderController extends Controller
             DB::transaction(function () use (
                 $service, $content, $mode, $owner, $department, $fund, $config, $title, $typeId,
                 $approvalMemo, $metaData, $requirements, $watchers, $uploads, $currentPointer, $category, $existingResourceId,
-                $preferences, $userId, $existingDocumentId, $threads, &$document
+                $preferences, $userId, $existingDocumentId, $conversations, $budgetYear, $type, &$document
             ) {
                 // Resolve Service & persist resource (keep args tiny; your processor() may already do this)
                 $resource = processor()->saveResource([
@@ -130,7 +150,12 @@ class DocumentBuilderController extends Controller
                     'category' => $category,
                     'service' => $service,
                     'content' => $content,
+                    'department_owner' => $department,
                     'existing_resource_id' => $existingResourceId,
+                    'budget_year' => $budgetYear,
+                    'existing_document_id' => $existingDocumentId,
+                    'fund' => $fund,
+                    'type' => $type,
                 ], $mode === "update");
 
                 if (!$resource) {
@@ -158,7 +183,7 @@ class DocumentBuilderController extends Controller
                     'preferences'          => $preferences ?? [], // keep preferences separate if needed
                     'watchers'             => $watchers,                       // raw watchers snapshot for audit
                     'pointer'              => $currentPointer->identifier,
-                    'threads'              => $threads ?? [],
+                    'budget_year'          => $budgetYear,
                 ];
 
                 if ($mode === "update" && $existingDocumentId > 0) {
@@ -167,10 +192,43 @@ class DocumentBuilderController extends Controller
                     $documentData['ref'] = $this->documentRepository->generateRef($departmentId, $resource['code']);
                     $documentData['created_by'] = Auth::id();
                     $document = $this->documentRepository->create($documentData);
+
+                    if (!empty($conversations)) {
+                        foreach ($conversations as $valueDump) {
+                            unset($valueDump['id']);
+                            unset($valueDump['created_at']);
+                            unset($valueDump['conversations']);
+
+                            if ((int) $valueDump['thread_owner_id'] == Auth::id()) continue;
+
+                            $conversation = $this->threadRepository->create([
+                                ...$valueDump,
+                                'document_id' => $document->id,
+                                'recipient_id' => Auth::id(),
+                            ]);
+
+                            if (!$conversation) continue;
+                        }
+                    }
                 }
 
                 if (!$document) {
                     throw new \RuntimeException("Document not found or stored.");
+                }
+
+                Log::info('Document created successfully', ['document_id' => $document->id]);
+
+                $serviceClass = processor($service)->getResolvedService();
+
+                if (!$serviceClass) {
+                    throw new \RuntimeException("Service not resolved.");
+                }
+
+                $resource->refresh();
+
+                if ($resource->document) {
+                    $serviceClass->resolveDocumentAmount($resource['id']);
+                    $serviceClass->bindRelatedDocuments($resource->document, $resource, "batched");
                 }
 
                 if ($mode === "store" && !empty($uploads)) {
@@ -180,30 +238,7 @@ class DocumentBuilderController extends Controller
                         Document::class
                     );
                 }
-            }, 3);
-
-            // Build Notification Context (keep it small & explicit)
-        //    $ctx = new DocumentActivityContext(
-        //        document_id:        $document->id,
-        //        workflow_stage_id:   $workflowStageId,
-        //        action_performed:   $actionPerformed,
-        //        loggedInUser:      $loggedInUser,
-        //        document_owner:     $owner ?? ['value'=>auth()->id(), 'label'=>auth()->user()->firstname . ' ' . auth()->user()->surname, 'email'=>auth()->user()->email],
-        //        department_owner:   $department ?? [],
-        //        document_ref:       $document->ref,
-        //        document_title:     $document->title,
-        //        service:           $service,
-        //        pointer:    (array) $currentPointer,
-        //        threads: [],
-        //        watchers: $watchers,
-        //        desk_name: $workflowStageName
-        //    );
-
-            // Queue the event dispatch AFTER the DB commit and AFTER the HTTP response
-        //    dispatch(new TriggerDocumentActivityEvent($ctx))
-        //        ->onQueue('notifications')
-        //        ->afterCommit()
-        //        ->afterResponse();
+            }); // This retries the transaction 3 times
 
             return $this->success(new DocumentResource($document), 'Document generated successfully.');
 
@@ -212,7 +247,7 @@ class DocumentBuilderController extends Controller
         }
     }
 
-    public function process(Request $request)
+    public function process(Request $request): \Illuminate\Http\JsonResponse
     {
         $validator = Validator::make($request->all(), [
             'action_id' => 'required|integer|exists:document_actions,id',
@@ -223,8 +258,6 @@ class DocumentBuilderController extends Controller
             'metadata' => 'required',
             'service' => 'required|string',
             'status' => 'required|string',
-            'threads' => 'required|array',
-            'document_activities' => 'required|array',
             'user_id' => 'required|integer|exists:users,id',
             'trackers' => 'required|array',
         ]);
@@ -243,7 +276,6 @@ class DocumentBuilderController extends Controller
             $status                 = (string) $request->input('status');
             $currentPointer         = (string) $request->input('currentPointer');
             $metaData               = (array)  $request->input('metadata', []);
-            $threads                = (array) $request->input('threads', []);
             $contents               = (array)  $request->input('body', []);
             $document_activities    = (array)  $request->input('document_activities', []);
             $trackers               = (array) $request->input('trackers', []);
@@ -253,22 +285,357 @@ class DocumentBuilderController extends Controller
                 'status' => $status,
                 'pointer' => $currentPointer,
                 'contents' => $contents,
-                'threads' => $threads,
                 'activities' => $document_activities,
             ]);
 
             if (!$document) {
-                return null;
+                return $this->error(null, 'Document not found or could not be updated.', 404);
             }
 
-            // Get the previous state (if passed) and the next state
-            // Use only the current pointer if process stalled or failed
-            // Otherwise, use the previous pointer
+            if ($actionStatus === 'complete') {
+                $document->is_completed = true;
+                // Check the Document Category metadata activities
+                // if it has activities, then we need to process the activities
+                $postProcesses = $document->documentCategory->meta_data['activities'] ?? [];
+                if (!empty($postProcesses)) {
+                    $activities = collect($postProcesses);
+                    $process = $activities->firstWhere('document_action_id', $documentActionId);
 
+                    // Workflow takes priority over Actions
+                    if (isset($process['workflow_id']) && $process['workflow_id'] > 0) {
+                        $workflow = $this->workflowRepository->find($process['workflow_id']);
+                        if ($workflow) {
+                            $document->workflow_id = $workflow->id;
+                            $document->save();
 
+                            // Get the document action for context
+                            $documentAction = $this->documentActionRepository->find($documentActionId);
+
+                            // Trigger Workflow with action context!
+                            processor()->executeWorkflowAction('first', $document, $documentAction);
+                        }
+                    } else if ($process['trigger_action_id'] && $process['trigger_action_id'] > 0) {
+                        $action = $this->documentActionRepository->find($process['trigger_action_id']);
+
+                        if ($action) {
+                            $document->status = $action->draft_status;
+                            $document->save();
+                        }
+                    }
+                }
+
+                $document->save();
+            }
+
+            $currentTracker = $this->findCurrentTracker($document->pointer, $trackers);
+
+            // Process workflow notifications
+            try {
+                $context = NotificationContext::from($document, [
+                    'documentId' => $document->id,
+                    'currentTracker' => $currentTracker,
+                    'previousTracker' => $this->findPreviousTracker($currentTracker, $trackers),
+                    'trackers' => $trackers,
+                    'loggedInUser' => [
+                        'id' => $userId,
+                        'firstname' => auth()->user()->firstname ?? 'User',
+                        'department_id' => auth()->user()->department_id ?? 0,
+                        'surname' => auth()->user()->surname ?? '',
+                        'email' => auth()->user()->email ?? ''
+                    ],
+                    'actionStatus' => $actionStatus,
+                    'watchers' => $document->watchers,
+                    'meta_data' => $document->meta_data,
+                ]);
+
+                // Validate notification context before processing
+                if (!$context->isValid()) {
+                    $missingFields = $context->getMissingFields();
+                    Log::error('DocumentBuilderController: Invalid notification context', [
+                        'document_id' => $document->id,
+                        'missing_fields' => $missingFields,
+                        'context_data' => [
+                            'document_id' => $context->documentId,
+                            'action_status' => $context->actionStatus,
+                            'current_tracker_identifier' => $context->currentTracker['identifier'] ?? 'missing',
+                            'logged_in_user_id' => $context->loggedInUser['id'] ?? 'missing',
+                            'tracker_count' => count($context->trackers),
+                        ]
+                    ]);
+                    return $this->error(null, 'Invalid notification context: ' . implode(', ', $missingFields), 422);
+                }
+
+                Log::info('DocumentBuilderController: Notification context validated successfully', [
+                    'document_id' => $context->documentId,
+                    'document_ref' => $context->documentRef,
+                    'document_title' => $context->documentTitle,
+                    'action_status' => $context->actionStatus,
+                    'current_tracker' => $context->currentTracker['identifier'] ?? 'unknown',
+                    'previous_tracker' => $context->previousTracker['identifier'] ?? 'none',
+                    'department_id' => $context->departmentId,
+                    'user_id' => $context->userId,
+                ]);
+
+                $this->notificationService->notify($context);
+
+                Log::info('DocumentBuilderController: Notification service called successfully', [
+                    'document_id' => $document->id,
+                    'action_status' => $actionStatus
+                ]);
+
+            } catch (\Throwable $e) {
+                // Log the error but don't fail the main process
+                Log::error('DocumentBuilderController: Failed to process workflow notifications', [
+                    'document_id' => $document->id,
+                    'action_status' => $actionStatus,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+
+            return $this->success(new DocumentResource($document), 'Document processed successfully.');
 
         } catch (\Exception $e) {
-            //
+            return $this->error(null, $e->getMessage(), 500);
         }
+    }
+
+    public function systemFlow(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'service' => 'required|string|max:255',
+            'method' => 'required|string|max:255',
+            'mode' => 'required|string|max:255|in:store,update,destroy',
+            'data' => 'required',
+            'document_id' => 'required|integer|exists:documents,id',
+            'document_draft_id' => 'required|integer|exists:document_drafts,id',
+            'document_action_id' => 'required|integer|exists:document_actions,id',
+            'progress_tracker_id' => 'required|integer|exists:progress_trackers,id',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->error($validator->errors(), 'Please fix the following errors', 422);
+        }
+
+        try {
+            // Extract validated data
+            $service = $request->input('service');
+            $method = $request->input('method');
+            $mode = $request->input('mode');
+            $data = $request->input('data');
+            $documentId = $request->input('document_id');
+            $documentDraftId = $request->input('document_draft_id');
+            $documentActionId = $request->input('document_action_id');
+            $progressTrackerId = $request->input('progress_tracker_id');
+
+            // Get the document and related models
+            $document = $this->documentRepository->find($documentId);
+            $documentDraft = DocumentDraft::find($documentDraftId);
+            $documentAction = $this->documentActionRepository->find($documentActionId);
+            $progressTracker = ProgressTracker::find($progressTrackerId);
+
+            if (!$document || !$documentDraft || !$documentAction || !$progressTracker) {
+                return $this->error(null, 'One or More Required models not found', 404);
+            }
+
+            DB::transaction(function () use (
+                $service, $method, $mode, $data, $document, $documentDraft,
+                $documentAction, $progressTracker
+            ) {
+                // 1. Resolve Service
+                $serviceClass = processor($service)->getResolvedService();
+
+                if (!$serviceClass) {
+                    throw new \RuntimeException("Service '{$service}' not resolved.");
+                }
+
+                // 2. Verify Method Exists in serviceClass
+                if (!method_exists($serviceClass, $method)) {
+                    throw new \RuntimeException("Method '{$method}' does not exist in service class.");
+                }
+
+                // 3. If the method exists send $request->data into the method
+                $result = $serviceClass->{$method}($data, $mode);
+
+                // 4. Trigger the workflow using ControlPanel
+                $workflow = $progressTracker->workflow;
+                if ($workflow) {
+                    $controlPanel = new ControlPanel(
+                        app(ServiceResolverInterface::class),
+                        $document,
+                        $workflow,
+                        $documentAction
+                    );
+
+                    // Determine workflow action based on document action status
+                    $workflowAction = $this->determineWorkflowAction($mode, $result, $documentAction);
+
+                    switch ($workflowAction) {
+                        case 'next':
+                            $controlPanel->next();
+                            break;
+                        case 'wait':
+                            $controlPanel->wait();
+                            break;
+                        case 'end':
+                            $controlPanel->end();
+                            break;
+                        case 'rollback':
+                            $controlPanel->rollback();
+                            break;
+                        case 'reject':
+                            $controlPanel->reject();
+                            break;
+                        default:
+                            // No workflow action needed
+                            break;
+                    }
+                }
+
+                // 5. Carry out document updates using the $request->document_id
+                $documentUpdates = $this->prepareDocumentUpdates($result, $mode);
+                if (!empty($documentUpdates)) {
+                    $this->documentRepository->update($document->id, $documentUpdates);
+                }
+
+                // 6. Carry out document draft updates
+                $draftUpdates = $this->prepareDraftUpdates($result, $mode);
+                if (!empty($draftUpdates)) {
+                    $documentDraft->update($draftUpdates);
+                }
+
+                // 7. Notify Recipients
+//                try {
+//                    $this->triggerNotification($document, $documentAction, $progressTracker, $workflowAction ?? null);
+//                } catch (\Throwable $e) {
+//                    Log::error('Failed to send notifications', [
+//                        'document_id' => $document->id,
+//                        'error' => $e->getMessage()
+//                    ]);
+//                }
+            });
+
+            // 8. Return document
+            $document->refresh();
+            return $this->success(new DocumentResource($document), 'System flow processed successfully.');
+
+        } catch (\Throwable $e) {
+            Log::error('SystemFlow error', [
+                'request' => $request->all(),
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return $this->error(null, $e->getMessage(), 500);
+        }
+    }
+
+    /**
+     * Determine the appropriate workflow action based on document action status
+     */
+    private function determineWorkflowAction(string $mode, $result, DocumentAction $documentAction): ?string
+    {
+        // Check if result contains workflow action (highest priority)
+        if (is_array($result) && isset($result['workflow_action'])) {
+            return $result['workflow_action'];
+        }
+
+        // Map document action status to workflow actions
+        return match ($documentAction->action_status) {
+            'passed' => 'next',
+            'failed' => 'reject',
+            'cancelled', 'complete' => 'end',
+            'reversed' => 'rollback',
+            default => 'wait',
+        };
+    }
+
+    /**
+     * Prepare document updates based on result and mode
+     */
+    private function prepareDocumentUpdates($result, string $mode): array
+    {
+        $updates = [];
+
+        if (is_array($result)) {
+            // Update document status if provided
+            if (isset($result['status'])) {
+                $updates['status'] = $result['status'];
+            }
+
+            // Update document contents if provided
+            if (isset($result['contents'])) {
+                $updates['contents'] = $result['contents'];
+            }
+
+            // Update document meta data if provided
+            if (isset($result['meta_data'])) {
+                $updates['meta_data'] = $result['meta_data'];
+            }
+        }
+
+        return $updates;
+    }
+
+    /**
+     * Prepare document draft updates based on result and mode
+     */
+    private function prepareDraftUpdates($result, string $mode): array
+    {
+        $updates = [
+            'operator_id' => Auth::id(),
+            'updated_at' => now(),
+        ];
+
+        if (is_array($result)) {
+            // Update draft status if provided
+            if (isset($result['draft_status'])) {
+                $updates['status'] = $result['draft_status'];
+            }
+
+            // Update draft data if provided
+            if (isset($result['draft_data'])) {
+                $updates['data'] = $result['draft_data'];
+            }
+        }
+
+        return $updates;
+    }
+
+    /**
+     * Trigger notifications for workflow changes
+     * @throws \Throwable
+     */
+    private function triggerNotification(
+        Document $document,
+        DocumentAction $documentAction,
+        ProgressTracker $progressTracker,
+        ?string $workflowAction
+    ): void
+    {
+        if (!$workflowAction) {
+            return; // No workflow action, no notification needed
+        }
+
+        // Create notification context similar to the process() method
+        $context = NotificationContext::from($document, [
+            'documentId' => $document->id,
+            'currentTracker' => $progressTracker->toArray(),
+            'previousTracker' => $this->findPreviousTracker($progressTracker->toArray(), $document->workflow->trackers ?? []),
+            'trackers' => $document->workflow->trackers ?? [],
+            'loggedInUser' => [
+                'id' => Auth::id(),
+                'firstname' => Auth::user()->firstname ?? 'User',
+                'department_id' => Auth::user()->department_id ?? 0,
+                'surname' => Auth::user()->surname ?? '',
+                'email' => Auth::user()->email ?? ''
+            ],
+            'actionStatus' => 'complete', // System flow is always complete
+            'watchers' => $document->watchers,
+            'meta_data' => $document->meta_data,
+            'workflow_action' => $workflowAction,
+        ]);
+
+        $this->notificationService->notify($context);
     }
 }

@@ -42,4 +42,29 @@ class Transaction extends Model
     {
         return $this->belongsTo(JournalType::class, 'journal_type_id');
     }
+
+    public function processCard(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ProcessCard::class, 'process_card_id');
+    }
+
+    public function contraTransaction(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(self::class, 'contra_transaction_id');
+    }
+
+    public function reconciledBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reconciled_by');
+    }
+
+    public function accountPostings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(AccountPosting::class, 'transaction_id');
+    }
+
+    public function journalEntries(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(JournalEntry::class, 'transaction_id');
+    }
 }

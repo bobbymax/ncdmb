@@ -13,8 +13,6 @@ return new class extends Migration
     {
         Schema::create('signatories', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('page_id');
-            $table->foreign('page_id')->references('id')->on('pages')->onDelete('cascade');
             $table->unsignedBigInteger('group_id');
             $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
             $table->unsignedBigInteger('department_id')->default(0);

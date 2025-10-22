@@ -9,6 +9,7 @@ use App\Models\Workflow;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DocumentRepository extends BaseRepository
 {
@@ -61,81 +62,80 @@ class DocumentRepository extends BaseRepository
     public function all()
     {
         $user = Auth::user();
-        $accessLevel = $user->role->access_level;
         $userDepartmentId = $user->department_id;
         $groupIds = $user->groups->pluck('id')->toArray();
+        $userId = $user->id;
 
-        // Check if user has "sovereign" access level (view all documents)
-        if ($accessLevel === 'sovereign') {
-            return Document::with([
-                'drafts',
-                'uploads',
-                'linkedDocuments.drafts',
-                'linkedDocuments.uploads'
-            ])->latest()->paginate(50);
-        }
+        // Get user's effective scope based on rank
+        $scope = $this->getEffectiveScope();
+        $departmentScope = $this->getDepartmentScopeForRank($scope, $userDepartmentId);
 
-        // Initialize query with eager loading for performance
-        $query = Document::with([
+        Log::info('User Scope: ' . $scope);
+        Log::info('Department Scope: ' . json_encode($departmentScope));
+
+        // Single optimized query combining all access algorithms
+        $query = $this->instanceOfModel()->with([
             'drafts',
             'uploads',
+            'conversations',
             'linkedDocuments.drafts',
             'linkedDocuments.uploads'
         ]);
 
-        // Apply filtering based on access level
-        $query->where(function ($q) use ($user, $accessLevel, $userDepartmentId, $groupIds) {
+        $query = $this->applyBudgetYearFilter($query, config('site.jolt_budget_year'));
 
-            // If user is "basic", they can only see their own documents
-            if ($accessLevel === 'basic') {
-                $q->where('user_id', $user->id);
-            } else {
-                // User can see documents they own
-                $q->where('user_id', $user->id)
-                    // Or documents that belong to their department
-                    ->orWhere('department_id', $userDepartmentId)
-                    // Or documents that have a draft in both their group and department
-                    ->orWhereHas('drafts', function ($draftQuery) use ($groupIds, $userDepartmentId) {
-                        $draftQuery->whereIn('group_id', $groupIds)
-                            ->where('department_id', $userDepartmentId);
-                    });
+        // For board users, skip all filtering - they can see everything
+        // if ($scope === 'board') {
+        //     return $query->latest()->paginate(50);
+        // }
+
+        $query->where(function ($q) use ($userId, $userDepartmentId, $groupIds, $departmentScope, $scope) {
+
+            // Algorithm 1: Department-based access (based on user's rank scope)
+            if (!empty($departmentScope)) {
+                if ($scope === 'personal') {
+                    $q->whereIn('user_id', $departmentScope);
+                } else {
+                    $q->whereIn('department_id', $departmentScope);
+                }
             }
+
+            // Algorithm 2: Documents with drafts where user is creator or in group
+            $q->orWhereHas('drafts', function ($draftQuery) use ($userId, $groupIds) {
+                $draftQuery->where('operator_id', $userId)
+                          ->orWhereIn('group_id', $groupIds);
+            });
+
+            // Algorithm 3: Documents with conversations where user is thread owner or recipient
+            $q->orWhereHas('conversations', function ($conversationQuery) use ($userId) {
+                $conversationQuery->where('thread_owner_id', $userId)
+                                 ->orWhere('recipient_id', $userId);
+            });
+
+            // Algorithm 4: Documents with workflow trackers where user belongs to the group
+            $q->orWhereHas('workflow.trackers', function ($trackerQuery) use ($userId, $groupIds) {
+                $trackerQuery->where('user_id', $userId)
+                            ->orWhereIn('group_id', $groupIds);
+            });
+
+            // Algorithm 5: Documents accessible through config workflow (JSON-based access)
+            $q->orWhere(function ($configQuery) use ($userId, $groupIds) {
+                // Check for user_id in all three objects
+                $configQuery->whereRaw('JSON_EXTRACT(config->"$.to.user_id", "$") = ?', [$userId])
+                    ->orWhereRaw('JSON_EXTRACT(config->"$.from.user_id", "$") = ?', [$userId])
+                    ->orWhereRaw('JSON_EXTRACT(config->"$.through.user_id", "$") = ?', [$userId]);
+
+                // Check for group_id in all three objects
+                foreach ($groupIds as $groupId) {
+                    $configQuery->orWhereRaw('JSON_EXTRACT(config->"$.to.group_id", "$") = ?', [$groupId])
+                        ->orWhereRaw('JSON_EXTRACT(config->"$.from.group_id", "$") = ?', [$groupId])
+                        ->orWhereRaw('JSON_EXTRACT(config->"$.through.group_id", "$") = ?', [$groupId]);
+                }
+            });
         });
 
         return $query->latest()->paginate(50);
     }
-
-//    public function create(array $data)
-//    {
-//        $transaction = DB::transaction(function () use ($data) {
-//            $args = $data['args'];
-//            $document = parent::create($data);
-//
-//            if (!$document) return null;
-//
-//            if (!empty($data['linked_document']) && !empty($data['relationship_type'])) {
-//                $this->linkRelatedDocument($document, $data['linked_document'], $data['relationship_type']);
-//            }
-//
-//            if (!empty($data['supporting_documents'])) {
-//                $this->processSupportingDocuments($data['supporting_documents'], $document->id);
-//            }
-//
-//            if ($data['trigger_workflow']) {
-//                processor()->trigger($args['service'], $document, $args);
-//            }
-//
-//            return $document;
-//        });
-//
-//        NotificationProcessor::for(
-//            $transaction->id,
-//            Auth::id(),
-//            $transaction->document_action_id
-//        )->sendAll();
-//
-//        return $transaction;
-//    }
 
     public function processSupportingDocuments(array $files, int $documentId): void
     {
@@ -149,88 +149,16 @@ class DocumentRepository extends BaseRepository
     public function linkRelatedDocument(
         Document $document,
         Document $linked,
-        string $type
+        string $type,
+        string $status = "processing"
     ): void {
         $document->linkedDocuments()->attach($linked->id, [
             'relationship_type' => $type,
         ]);
 
         $linked->update([
-            'status' => 'processed'
+            'status' => $status
         ]);
-    }
-
-    /**
-     * Get department scope based on user's access level
-     *
-     * @param string $accessLevel
-     * @param Department $userDepartment
-     * @return array
-     */
-    private static function getDepartmentScope(string $accessLevel, Department $userDepartment): array
-    {
-        return match ($accessLevel) {
-            'basic' => [],
-            'operative' => [$userDepartment->id],
-            'control' => self::getControlDepartments($userDepartment),
-            'command' => self::getCommandDepartments($userDepartment),
-            'sovereign' => [], // No restriction, fetch all documents
-            default => [$userDepartment->id],
-        };
-    }
-
-    /**
-     * Get department scope for 'control' access level
-     *
-     * @param Department $userDepartment
-     * @return array
-     */
-    private static function getControlDepartments(Department $userDepartment): array
-    {
-        if ($userDepartment->type === "division") {
-            return Department::where('id', $userDepartment->id)
-                ->orWhere('parentId', $userDepartment->id)
-                ->pluck('id')
-                ->toArray();
-        } else {
-            // If user's department is not a division, find its division parent
-            $division = Department::where('id', $userDepartment->parentId)
-                ->where('type', 'division')
-                ->first();
-
-            return $division ? Department::where('parentId', $division->id)->pluck('id')->toArray() : [];
-        }
-    }
-
-    /**
-     * Get department scope for 'command' access level
-     *
-     * @param Department $userDepartment
-     * @return array
-     */
-    private static function getCommandDepartments(Department $userDepartment): array
-    {
-        // If user is already in a directorate, get all divisions and their departments
-        if ($userDepartment->type === 'directorate') {
-            return Department::where('id', $userDepartment->id)
-                ->orWhere('parentId', $userDepartment->id)
-                ->pluck('id')
-                ->toArray();
-        }
-
-        // If user is in a division or department, get the parent directorate
-        $directorate = Department::where('id', function ($query) use ($userDepartment) {
-            $query->select('parentId')
-                ->from('departments')
-                ->where('id', $userDepartment->parentId)
-                ->where('type', 'division');
-        })->first();
-
-        return $directorate ? Department::where('id', $directorate->id)
-            ->orWhere('parentId', $directorate->id)
-            ->pluck('id')
-            ->toArray()
-            : [];
     }
 
     public function build(
@@ -316,5 +244,58 @@ class DocumentRepository extends BaseRepository
         }
 
         return implode("/", $hierarchy) . "/";
+    }
+
+    /**
+     * Get department scope based on user's rank
+     *
+     * @param string $rank
+     * @param int $userDepartmentId
+     * @return array
+     */
+    private function getDepartmentScopeForRank(string $rank, int $userDepartmentId): array
+    {
+        $userDepartment = Department::find($userDepartmentId);
+        if (!$userDepartment) {
+            return [];
+        }
+
+        return match ($rank) {
+            'board' => [], // No restriction - can see all documents
+            'directorate' => $this->getDirectorateScope($userDepartment),
+            'departmental' => [$userDepartmentId],
+            'personal' => [Auth::id()], // Only own department
+            default => [$userDepartmentId],
+        };
+    }
+
+    /**
+     * Get directorate scope (all departments under the directorate)
+     *
+     * @param Department $userDepartment
+     * @return array
+     */
+    private function getDirectorateScope(Department $userDepartment): array
+    {
+        // If user is in a directorate, get all departments under it
+        if ($userDepartment->type === 'directorate') {
+            return Department::where('id', $userDepartment->id)
+                ->orWhere('parentId', $userDepartment->id)
+                ->pluck('id')
+                ->toArray();
+        }
+
+        // If user is in a division or department, find the parent directorate
+        $directorate = Department::where('id', function ($query) use ($userDepartment) {
+            $query->select('parentId')
+                  ->from('departments')
+                  ->where('id', $userDepartment->parentId)
+                  ->where('type', 'division');
+        })->first();
+
+        return $directorate ? Department::where('id', $directorate->id)
+            ->orWhere('parentId', $directorate->id)
+            ->pluck('id')
+            ->toArray() : [$userDepartment->id];
     }
 }

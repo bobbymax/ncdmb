@@ -21,4 +21,24 @@ class Ledger extends Model
     {
         return $this->hasMany(JournalType::class);
     }
+
+    public function processCards(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProcessCard::class);
+    }
+
+    public function ledgerAccountBalances(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LedgerAccountBalance::class, 'ledger_id');
+    }
+
+    public function reconciliations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Reconciliation::class, 'ledger_id');
+    }
+
+    public function accountPostings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(AccountPosting::class, 'ledger_id');
+    }
 }

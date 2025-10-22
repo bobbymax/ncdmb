@@ -23,6 +23,11 @@ class WorkflowStage extends Model
         return $this->belongsTo(Department::class, 'department_id');
     }
 
+    public function signatories(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Signatory::class, 'workflow_stage_id');
+    }
+
     public function groups(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {
         return $this->morphToMany(Group::class, 'groupable');

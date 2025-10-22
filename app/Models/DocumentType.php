@@ -56,4 +56,9 @@ class DocumentType extends Model
     {
         return $this->hasMany(Widget::class);
     }
+
+    public function processCards(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProcessCard::class);
+    }
 }

@@ -68,11 +68,6 @@ class DocumentDraft extends Model
         return $this->belongsTo(DocumentAction::class, 'document_action_id');
     }
 
-    public function authorisingStaff(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(User::class, 'authorising_staff_id');
-    }
-
     public function documentDraftable(): \Illuminate\Database\Eloquent\Relations\MorphTo
     {
         return $this->morphTo();

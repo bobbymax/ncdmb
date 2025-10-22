@@ -23,6 +23,8 @@ class DepartmentService extends BaseService
             'bco' => 'sometimes|integer|min:0',
             'bo' => 'sometimes|integer|min:0',
             'director' => 'sometimes|integer|min:0',
+            'signatory_staff_id' => 'sometimes|integer|min:0',
+            'alternate_signatory_staff_id' => 'sometimes|integer|min:0',
         ];
 
         if ($action === "store") {

@@ -21,4 +21,34 @@ class ChartOfAccount extends Model
     {
         return $this->hasMany(Payment::class);
     }
+
+    public function ledgerAccountBalances(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LedgerAccountBalance::class, 'chart_of_account_id');
+    }
+
+    public function accountPostings(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(AccountPosting::class, 'chart_of_account_id');
+    }
+
+    public function debitProcessCards(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProcessCard::class, 'debit_account_id');
+    }
+
+    public function creditProcessCards(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProcessCard::class, 'credit_account_id');
+    }
+
+    public function debitJournalTypes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(JournalType::class, 'debit_account_id');
+    }
+
+    public function creditJournalTypes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(JournalType::class, 'credit_account_id');
+    }
 }

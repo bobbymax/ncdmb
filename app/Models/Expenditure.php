@@ -21,6 +21,11 @@ class Expenditure extends Model
         return $this->belongsTo(User::class, 'user_id');
     }
 
+    public function document(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Document::class, 'document_id');
+    }
+
     public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Department::class, 'department_id');
@@ -31,19 +36,9 @@ class Expenditure extends Model
         return $this->belongsTo(Fund::class, 'fund_id');
     }
 
-    public function expenditureable(): \Illuminate\Database\Eloquent\Relations\MorphTo
+    public function paymentBatch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->morphTo();
-    }
-
-    public function draft(): \Illuminate\Database\Eloquent\Relations\MorphOne
-    {
-        return $this->morphOne(DocumentDraft::class, 'document_draftable');
-    }
-
-    public function batch(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(Document::class, 'document_reference_id');
+        return $this->belongsTo(PaymentBatch::class, 'payment_batch_id');
     }
 
     public function payment(): \Illuminate\Database\Eloquent\Relations\HasOne

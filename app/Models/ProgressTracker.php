@@ -29,6 +29,11 @@ class ProgressTracker extends Model
         return $this->belongsTo(WorkflowStage::class, 'workflow_stage_id');
     }
 
+    public function processCard(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ProcessCard::class, 'process_card_id');
+    }
+
     public function group(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Group::class, 'group_id');

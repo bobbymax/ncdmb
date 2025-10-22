@@ -37,13 +37,19 @@ class TruncateTables extends Command
         'signature_requests',
         'transactions',
         'document_hierarchy',
-        'progress_trackers',
-        'workflows',
         'journals',
         'projects',
         'trackables',
         'widgets',
-        'templates'
+        'threads',
+        'conversations',
+        'notifications',
+        'account_postings',
+        'accounting_audit_trails',
+        'fund_transactions',
+        'ledger_account_balances',
+        'posting_batches',
+        'trial_balances'
     ];
 
     /**

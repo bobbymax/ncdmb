@@ -43,4 +43,9 @@ class PaymentBatch extends Model
     {
         return $this->hasMany(Payment::class, 'payment_batch_id');
     }
+
+    public function expenditures(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Expenditure::class, 'payment_batch_id');
+    }
 }

@@ -116,32 +116,34 @@ class UploadRepository extends BaseRepository
     ): void {
         $uploads = [];
 
-        foreach ($files as $file) {
+        if (!empty($files)) {
+            foreach ($files as $file) {
 
-            $normalized = $this->normalizeFile($file);
-            if (!$normalized) continue;
+                $normalized = $this->normalizeFile($file);
+                if (!$normalized) continue;
 
-            try {
-                $scrambled = $this->encodeFile($normalized);
+                try {
+                    $scrambled = $this->encodeFile($normalized);
 
-                $uploads[] = $this->prepareUpload(
-                    $normalized,
-                    $scrambled,
-                    $uploadableId,
-                    $uploadableType
-                );
-            } finally {
-                // If normalizeFile() produced a tempnam file, clean it up
-                // Heuristic: only unlink if it's in the system temp dir and still exists
-                $p = $normalized->getRealPath() ?: $normalized->getPathname();
-                if ($p && str_starts_with($p, sys_get_temp_dir()) && is_file($p)) {
-                    @unlink($p);
+                    $uploads[] = $this->prepareUpload(
+                        $normalized,
+                        $scrambled,
+                        $uploadableId,
+                        $uploadableType
+                    );
+                } finally {
+                    // If normalizeFile() produced a tempnam file, clean it up
+                    // Heuristic: only unlink if it's in the system temp dir and still exists
+                    $p = $normalized->getRealPath() ?: $normalized->getPathname();
+                    if ($p && str_starts_with($p, sys_get_temp_dir()) && is_file($p)) {
+                        @unlink($p);
+                    }
                 }
             }
-        }
 
-        if (!empty($uploads)) {
-            $this->insert($uploads);
+            if (!empty($uploads)) {
+                $this->insert($uploads);
+            }
         }
     }
 }

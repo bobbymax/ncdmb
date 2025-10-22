@@ -19,9 +19,7 @@ class SignatoryResource extends JsonResource
         return [
             ...parent::toArray($request),
             'group_name' => $this->group->name,
-            'page_name' => $this->page->name,
             'department' => $department,
-            'compound' => "{$this->page->name} / {$this->group->name} / {$this->type}"
         ];
     }
 }

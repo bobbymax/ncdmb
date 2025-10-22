@@ -20,18 +20,22 @@ class Document extends Model
         'uploaded_requirements' => 'array',
         'preferences' => 'json',
         'watchers' => 'array',
-        'threads' => 'array',
+        'activities' => 'json',
     ];
 
-    // Model Relationships or Scope Here...
     public function expenditures(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(Expenditure::class, 'document_reference_id');
+        return $this->hasMany(Expenditure::class);
     }
 
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function conversations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(Thread::class, 'document_id');
     }
 
     public function updates(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
@@ -44,11 +48,6 @@ class Document extends Model
         return $this->morphTo();
     }
 
-    public function parentDocument(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(self::class, 'document_reference_id');
-    }
-
     public function documentAction(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(DocumentAction::class, 'document_action_id');
@@ -59,11 +58,6 @@ class Document extends Model
         return $this->belongsTo(Department::class, 'department_id');
     }
 
-    public function documentCategory(): \Illuminate\Database\Eloquent\Relations\BelongsTo
-    {
-        return $this->belongsTo(DocumentCategory::class);
-    }
-
     public function drafts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(DocumentDraft::class);
@@ -72,11 +66,6 @@ class Document extends Model
     public function lastDraft()
     {
         return $this->drafts()->latest()->first();
-    }
-
-    public function linkedDrafts(): \Illuminate\Database\Eloquent\Relations\HasMany
-    {
-        return $this->hasMany(DocumentDraft::class, 'sub_document_reference_id');
     }
 
     public function linkedDocuments() // children
@@ -96,6 +85,11 @@ class Document extends Model
     public function documentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(DocumentType::class);
+    }
+
+    public function documentCategory(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(DocumentCategory::class, 'document_category_id');
     }
 
     public function workflow(): \Illuminate\Database\Eloquent\Relations\BelongsTo

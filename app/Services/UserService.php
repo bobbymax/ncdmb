@@ -45,6 +45,11 @@ class UserService extends BaseService
         return $rules;
     }
 
+    public function index()
+    {
+        return $this->repository->accessible();
+    }
+
     public function store(array $data)
     {
         return DB::transaction(function () use ($data) {

@@ -20,6 +20,7 @@ class TemplateResource extends JsonResource
             'config' => json_decode($this->config),
             'body' => json_decode($this->content, true),
             'content' => null,
+            'add_dates' => $this->with_dates ? 'Yes' : 'No'
             // 'category' => new DocumentCategoryResource($this->documentCategory),
         ];
     }

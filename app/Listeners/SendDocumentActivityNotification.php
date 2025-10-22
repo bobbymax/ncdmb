@@ -6,7 +6,6 @@ use App\Events\DocumentActionPerformed;
 use App\Models\Group;
 use App\Models\User;
 use App\Notifications\DocumentActivityNotification;
-use App\Notifications\IdempotencyGuard;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Support\Collection;

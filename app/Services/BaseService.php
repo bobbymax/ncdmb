@@ -6,8 +6,11 @@ use App\DTO\ProcessedIncomingData;
 use App\Handlers\CodeGenerationErrorException;
 use App\Handlers\DataNotFound;
 use App\Interfaces\IService;
+use App\Models\Document;
 use App\Repositories\BaseRepository;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 abstract class BaseService implements IService
 {
@@ -21,6 +24,70 @@ abstract class BaseService implements IService
     public function resolveContent(array $data): array
     {
         return collect($data)->toArray();
+    }
+
+    public function getScope(): string
+    {
+        return $this->repository->rank();
+    }
+
+    public function bindRelatedDocuments(
+        Document $document,
+        mixed $resource,
+        string $status = "processing"
+    ) {
+        if (!$resource) {
+            return null;
+        }
+    }
+
+    /**
+     * @throws \Exception
+     */
+    public function documentProcessor(array $data, string $mode = "update")
+    {
+        return $this->store([
+            ...$data,
+            'mode' => $mode,
+        ]);
+    }
+
+    public function resolveDocumentAmount(int $resourceId)
+    {
+        $raw = $this->repository->find($resourceId);
+
+        if (!$raw) {
+            return null;
+        }
+
+        return $this->updateDocumentAmount($raw);
+    }
+
+    public static function generatePaymentCode($prefix = "PAY"): string
+    {
+        // Timestamp (10 chars: Unix timestamp)
+        $timestamp = now()->timestamp;
+
+        // Random component (15 chars: uppercase alphanumeric)
+        $random = Str::upper(Str::random(15));
+
+        // Checksum (4 chars: from hash of prefix+timestamp+random)
+        $checksum = strtoupper(substr(
+            hash('crc32b', $prefix . $timestamp . $random),
+            0,
+            4
+        ));
+
+        // Total: 3 + 10 + 15 + 4 = 32 chars
+        return $prefix . $timestamp . $random . $checksum;
+    }
+
+    protected function updateDocumentAmount(mixed $raw, string $column = "amount")
+    {
+        $raw->document->approved_amount = $raw[$column] ?? 0;
+        $raw->document->save();
+
+        return $raw;
     }
 
     /**

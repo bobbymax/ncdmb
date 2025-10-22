@@ -11,6 +11,13 @@ class DocumentCategory extends Model
 
     protected $guarded = [''];
 
+    protected $casts = [
+        'config' => 'json',
+        'meta_data' => 'json',
+        'workflow' => 'json',
+        'content' => 'array',
+    ];
+
     // Model Relationships or Scope Here...
     public function documentType(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

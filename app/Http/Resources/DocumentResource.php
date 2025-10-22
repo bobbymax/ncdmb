@@ -19,8 +19,10 @@ class DocumentResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
+            'threads' => ThreadResource::collection($this->conversations),
             'documentable' => $this->resolveDocumentableResource(),
             'document_type' => new DocumentTypeResource($this->documentType),
+            'document_category' => new DocumentCategoryResource($this->documentCategory),
             'workflow' => new WorkflowResource($this->workflow),
             'dept' => $this->department->abv,
             'owner' => [
@@ -30,8 +32,11 @@ class DocumentResource extends JsonResource
                 'role' => $this->user->role->name,
                 'department' => $this->user->department->abv,
                 'groups' => $this->loadGroups($this->user->groups),
-                'gradel_level' => $this->user->gradeLevel->key
+                'gradel_level' => $this->user->gradeLevel->key,
+                'staff_no' => $this->user->staff_no,
             ],
+            'drafts' => $this->drafts,
+            'processes' => $this->workflow_id > 0 ? ProgressTrackerResource::collection($this->workflow->trackers) : [],
             'action' => $this->document_action_id > 0 ? [
                 'id' => $this->document_action_id,
                 'name' => $this->documentAction->name,
@@ -40,15 +45,8 @@ class DocumentResource extends JsonResource
                 'variant' => $this->documentAction->variant,
                 'carder_id' => $this->documentAction->carder_id,
             ] : null,
-//            'updates' => DocumentUpdateResource::collection($this->updates),
-            'uploads' => UploadResource::collection(
-                ($this->uploads ?? collect())
-                    ->merge(
-                        $this->linkedDocuments
-                            ->flatMap(fn ($doc) => $doc->uploads ?? [])
-                            ->values()
-                    )
-            ),
+            'uploads' => UploadResource::collection($this->getMergedUploads()),
+// add all uploads back
             'pivot' => $this->whenPivotLoaded('document_hierarchy', function () {
                 return [
                     'relationship_type' => $this->pivot->relationship_type,
@@ -56,6 +54,7 @@ class DocumentResource extends JsonResource
                 ];
             }),
             'amount' => $this->lastDraft() ? (float) $this->lastDraft()->amount : 0,
+            'payments' => $this->documentable_type === "App\\Models\\PaymentBatch" ? PaymentResource::collection($this->documentable?->payments) : [],
         ];
     }
 
@@ -134,5 +133,29 @@ class DocumentResource extends JsonResource
             $latest->merged_uploads = $uploads;
             return $latest;
         })->values();
+    }
+
+    /**
+     * Get merged uploads from current document and all linked documents
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    private function getMergedUploads(): Collection
+    {
+        // Start with current document's uploads
+        $mergedUploads = collect($this->uploads);
+
+        // $this->relationLoaded('linkedDocuments') &&
+        // Merge uploads from all linked documents
+        if ($this->linkedDocuments) {
+            foreach ($this->linkedDocuments as $linkedDocument) {
+                if ($linkedDocument->uploads) {
+                    $mergedUploads = $mergedUploads->merge($linkedDocument->uploads);
+                }
+            }
+        }
+
+        // Remove duplicates based on upload ID
+        return $mergedUploads->unique('id');
     }
 }

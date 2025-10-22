@@ -67,6 +67,11 @@ class DocumentService extends BaseService
         ];
     }
 
+    public function collateDocumentsByStatus(string $status, string $scope): \Illuminate\Database\Eloquent\Collection
+    {
+        return $this->repository->getCollectionByColumn('status', $status, '=', $scope);
+    }
+
     public function generateDocument(array $data)
     {
         return DB::transaction(function () use ($data) {

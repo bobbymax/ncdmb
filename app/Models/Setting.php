@@ -11,6 +11,10 @@ class Setting extends Model
 
     protected $guarded = [''];
 
+    protected $casts = [
+        'configuration' => 'json',
+    ];
+
     // Model Relationships or Scope Here...
     public function roles(): \Illuminate\Database\Eloquent\Relations\MorphToMany
     {

@@ -27,11 +27,6 @@ class Workflow extends Model
         return $this->hasMany(Page::class, 'workflow_id');
     }
 
-    public function signatories(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
-    {
-        return $this->hasManyThrough(Signatory::class, Page::class);
-    }
-
     public function editors(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(ResourceEditor::class);

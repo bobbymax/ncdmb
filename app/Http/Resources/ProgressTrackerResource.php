@@ -18,6 +18,7 @@ class ProgressTrackerResource extends JsonResource
             ...parent::toArray($request),
             'group' => $this->group,
             'stage' => new WorkflowStageResource($this->stage),
+            'process_card' => new ProcessCardResource($this->processCard),
             'workflow' => $this->workflow,
             'actions' => $this->actions,
             'recipients' => $this->recipients,

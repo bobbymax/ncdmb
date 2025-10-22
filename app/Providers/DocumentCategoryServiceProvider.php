@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Repositories\BlockRepository;
 use App\Repositories\DocumentRequirementRepository;
+use App\Repositories\SignatoryRepository;
 use Illuminate\Support\ServiceProvider;
 use App\Repositories\DocumentCategoryRepository;
 use App\Services\DocumentCategoryService;
@@ -22,7 +23,8 @@ class DocumentCategoryServiceProvider extends ServiceProvider
             $documentCategoryRepository = $app->make(DocumentCategoryRepository::class);
             $documentRequirementRepository = $app->make(DocumentRequirementRepository::class);
             $blockRepository = $app->make(BlockRepository::class);
-            return new DocumentCategoryService($documentCategoryRepository, $documentRequirementRepository, $blockRepository);
+            $signatoryRepository = $app->make(SignatoryRepository::class);
+            return new DocumentCategoryService($documentCategoryRepository, $documentRequirementRepository, $blockRepository, $signatoryRepository);
         });
     }
 }

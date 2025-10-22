@@ -12,6 +12,10 @@ class JournalType extends Model
 
     protected $guarded = [''];
 
+    protected $casts = [
+        'posting_rules' => 'json'
+    ];
+
     // Model Relationships or Scope Here...
     public function journals(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
@@ -26,5 +30,15 @@ class JournalType extends Model
     public function ledger(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Ledger::class, 'ledger_id');
+    }
+
+    public function debitAccount(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'debit_account_id');
+    }
+
+    public function creditAccount(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ChartOfAccount::class, 'credit_account_id');
     }
 }

@@ -2,217 +2,94 @@
 
 namespace App\Core;
 
-use App\Models\{Document, DocumentAction, DocumentDraft, ProgressTracker, User, Workflow, WorkflowStage};
-use App\Services\BaseService;
-use Illuminate\Support\Facades\{Auth, DB, Log};
-use Illuminate\Support\Str;
-use Exception;
+use App\Core\Contracts\ServiceResolverInterface;
+use App\Core\Contracts\WorkflowProcessorInterface;
+use App\Engine\ControlPanel;
+use App\Exceptions\Processor\WorkflowContextException;
+use App\Models\Document;
+use App\Models\DocumentAction;
+use App\Models\DocumentDraft;
+use App\Models\ProgressTracker;
+use Illuminate\Support\Facades\Log;
 
-class WorkflowProcessor
+class WorkflowProcessor implements WorkflowProcessorInterface
 {
-    protected BaseService $baseService;
-    protected Document $document;
-    protected Workflow $workflow;
-    protected DocumentAction $action;
-    protected ?DocumentDraft $lastDraft;
-    protected ProgressTracker $currentProgressTracker;
-    protected $user;
-    protected array $state;
-    protected ?string $signature;
-    protected ?string $message;
+    private ServiceResolverInterface $serviceResolver;
+    private array $validActions = ['first', 'next', 'wait', 'end', 'rollback', 'reject'];
 
-    public function __construct(
-        BaseService $baseService,
-        ProgressTracker $currentProgressTracker,
-        Document $document,
-        Workflow $workflow,
-        DocumentAction $action,
-        array $state,
-        ?string $signature = null,
-        ?string $message = null
-    ) {
-        $this->baseService = $baseService;
-        $this->document = $document;
-        $this->workflow = $workflow;
-        $this->action = $action;
-        $this->user = auth()->user();
-        $this->state = $state;
-        $this->signature = $signature;
-        $this->message = $message;
-
-        $this->lastDraft = $document->drafts()->latest()->first();
-        $this->currentProgressTracker = $currentProgressTracker;
+    public function __construct(ServiceResolverInterface $serviceResolver)
+    {
+        $this->serviceResolver = $serviceResolver;
     }
 
-    public function process()
+    public function executeAction(string $action, Document $document, ?DocumentAction $documentAction = null): mixed
     {
-        Log::info("Processing workflow for user: {$this->user->id}, Document ID: {$this->document->id}");
-
-        return DB::transaction(function () {
-            return match ($this->action->action_status) {
-                'passed' => $this->gotoNextStage(),
-                'failed', 'cancelled', 'attend' => $this->terminateProcess(),
-                default => $this->stayOnTracker(),
-            };
-        }, 3);
-    }
-
-    private function stayOnTracker(): ProgressTracker
-    {
-        if ($this->lastDraft) {
-            $this->lastDraft->update(['status' => $this->action->action_status]);
-        }
-
-        return $this->currentProgressTracker;
-    }
-
-    /**
-     * @throws Exception
-     */
-    private function gotoNextStage()
-    {
-        if ($this->lastDraft) {
-            $this->lastDraft->update(['status' => $this->action->action_status]);
-        }
-
-        $currentStage = $this->getWorkflowStage($this->lastDraft?->current_workflow_stage_id);
-        if (!$currentStage) {
-            throw new Exception("Current workflow stage not found for document ID: {$this->document->id}");
-        }
-
-        if (
-            $this->currentProgressTracker->fallback_to_stage_id === $currentStage->id ||
-            $this->currentProgressTracker->return_to_stage_id === $currentStage->id
-        ) {
-            return $this->handleQueryAndResponse();
-        }
-
-        return $this->proceedToNextStage();
-    }
-
-    /**
-     * @throws Exception
-     */
-    private function handleQueryAndResponse()
-    {
-        $returnStageId = $this->currentProgressTracker->return_to_stage_id;
-        if ($returnStageId) {
-            $returnToStage = $this->getWorkflowStage($returnStageId);
-            if (!$returnToStage) {
-                throw new Exception("Return stage not found for tracker ID: {$this->currentProgressTracker->id}");
-            }
-
-            $this->createNextDraft(
-                $this->currentProgressTracker,
-                $returnToStage,
-                "response"
+        if (!$this->isValidAction($action)) {
+            throw new WorkflowContextException(
+                "Invalid workflow action: {$action}",
+                0,
+                null,
+                ['action' => $action, 'valid_actions' => $this->validActions]
             );
-            return $this->currentProgressTracker;
         }
 
-        return $this->proceedToNextStage();
-    }
+        try {
+            // For 'first' action, workflow might not be assigned yet, so we don't check $document->workflow here.
+            // ControlPanel::first() is responsible for setting it up.
+            $workflow = $document->workflow;
 
-    /**
-     * @throws Exception
-     */
-    private function terminateProcess(): ?ProgressTracker
-    {
-        if ($this->lastDraft) {
-            $this->lastDraft->update(['status' => 'terminated']);
-        }
-
-        $fallbackStage = $this->getWorkflowStage($this->currentProgressTracker->fallback_to_stage_id) ?? $this->currentProgressTracker->stage;
-        if ($fallbackStage) {
-            $this->createNextDraft($this->currentProgressTracker, $fallbackStage, "terminated");
-        }
-
-        return $this->currentProgressTracker;
-    }
-
-    /**
-     * @throws Exception
-     */
-    private function proceedToNextStage()
-    {
-        $nextTracker = $this->workflow->trackers()->where('order', $this->currentProgressTracker->order + 1)->first();
-        if (!$nextTracker) {
-            Log::info("Workflow completed for document ID: {$this->document->id}");
-            $this->document->update(['status' => 'completed']);
-            return null;
-        }
-
-        $draftableId = $this->state['resource_id'] ?? throw new Exception("Missing resource_id in state.");
-
-        return DB::transaction(function () use ($nextTracker, $draftableId) {
-            $this->document->update(['progress_tracker_id' => $nextTracker->id]);
-
-            if (!empty($this->state)) {
-                $this->baseService->update($draftableId, $this->state, false);
+            if ($action !== 'first' && !$workflow) {
+                throw new WorkflowContextException(
+                    "Document {$document->id} does not have an associated workflow for action '{$action}'"
+                );
             }
 
-            $this->createNextDraft(
-                $nextTracker,
-                $nextTracker->stage,
-                "pending"
-            );
+            // Pass null for workflow if action is 'first' and it's not yet assigned
+            $controlPanelWorkflow = ($action === 'first' && !$workflow) ? null : $workflow;
 
-            return $nextTracker;
-        }, 3);
+            $controlPanel = new ControlPanel($this->serviceResolver, $document, $controlPanelWorkflow, $documentAction);
+            return $controlPanel->{$action}();
+        } catch (\Throwable $e) {
+            Log::error('WorkflowProcessor: Failed to execute workflow action', [
+                'action' => $action,
+                'document_id' => $document->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
     }
 
-    /**
-     * @throws Exception
-     */
-    private function createNextDraft(
-        ProgressTracker $tracker,
-        WorkflowStage $stage,
-        string $status,
-    ): void {
-        DB::transaction(function () use ($tracker, $stage, $status) {
-            try {
-                $this->document->drafts()->create([
-                    'document_type_id' => $tracker->document_type_id,
-                    'group_id' => $stage->group_id,
-                    'created_by_user_id' => $this->user->id,
-                    'progress_tracker_id' => $tracker->id,
-                    'current_workflow_stage_id' => $stage->id,
-                    'department_id' => $stage->department_id ?: $this->document->department_id,
-                    'document_draftable_id' => $this->state['resource_id'],
-                    'document_draftable_type' => get_class($this->resolveServiceToModel()),
-                    'signature' => $this->signature,
-                    'status' => $status,
-                ]);
-            } catch (Exception $e) {
-                Log::error("Failed to create draft for document ID: {$this->document->id}. Error: {$e->getMessage()}");
-                throw $e;
-            }
-        }, 3);
-    }
-
-    private function resolveServiceToModel(): object
+    public function getCurrentTracker(Document $document): ProgressTracker
     {
-        $modelName = Str::replaceLast('Service', '', class_basename($this->baseService));
-        $modelClass = "App\\Models\\{$modelName}";
-
-        if (!class_exists($modelClass)) {
-            throw new Exception("Model class {$modelClass} does not exist.");
+        if (!$document->progress_tracker_id) {
+            throw new WorkflowContextException("Document {$document->id} does not have a current tracker");
         }
 
-        return app($modelClass);
+        $tracker = ProgressTracker::find($document->progress_tracker_id);
+
+        if (!$tracker) {
+            throw new WorkflowContextException("Current tracker {$document->progress_tracker_id} not found");
+        }
+
+        return $tracker;
     }
 
-    private function getWorkflowStage($stageId): ?WorkflowStage
+    public function getCurrentDraft(Document $document): ?DocumentDraft
     {
-        if (!$stageId) {
-            return null;
-        }
+        return $document->drafts()
+            ->where('progress_tracker_id', $document->progress_tracker_id)
+            ->latest()
+            ->first();
+    }
 
-        $stage = WorkflowStage::find($stageId);
-        if (!$stage) {
-            Log::error("Workflow stage not found for ID: {$stageId}");
-        }
+    public function isValidAction(string $action): bool
+    {
+        return in_array($action, $this->validActions);
+    }
 
-        return $stage;
+    public function getAvailableActions(): array
+    {
+        return $this->validActions;
     }
 }

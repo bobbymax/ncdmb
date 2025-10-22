@@ -17,7 +17,9 @@ class DocumentDraftObserver
                 return DB::transaction(function () use ($documentDraft) {
                     $maxVersion = DocumentDraft::withTrashed() // 👈 Include soft-deleted drafts
                     ->where('document_id', $documentDraft->document_id)
-                        ->where('document_type_id', $documentDraft->document_type_id)
+                        ->where('progress_tracker_id', $documentDraft->progress_tracker_id)
+                        ->where('current_workflow_stage_id', $documentDraft->current_workflow_stage_id)
+                        ->where('group_id', $documentDraft->group_id)
                         ->lockForUpdate()
                         ->max('version_number') ?? 0;
 
