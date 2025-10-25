@@ -96,5 +96,6 @@ return [
     App\Providers\ThreadServiceProvider::class,
     App\Providers\ConversationServiceProvider::class,
     App\Providers\ProcessCardServiceProvider::class,
-    App\Providers\DocumentPanelServiceProvider::class
+    App\Providers\DocumentPanelServiceProvider::class,
+    App\Providers\QueryServiceProvider::class
 ];

@@ -21,6 +21,7 @@ class DocumentPanelService extends BaseService
             'name' => 'required|string|max:255',
             'icon' => 'required|string|max:255',
             'component_path' => 'required|string|max:255',
+            'document_status' => 'nullable|string|max:255',
             'order' => 'required|integer|min:1',
             'is_active' => 'required|boolean',
             'is_editor_only' => 'required|boolean',

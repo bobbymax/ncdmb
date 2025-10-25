@@ -16,6 +16,7 @@ class DocumentPanelRepository extends BaseRepository
         return [
             ...$data,
             'label' => Str::slug($data['name']),
+            'document_category_id' => $data['document_category_id'] < 1 ? null : $data['document_category_id'],
         ];
     }
 }

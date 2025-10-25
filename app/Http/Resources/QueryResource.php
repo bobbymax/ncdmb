@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class DocumentPanelResource extends JsonResource
+class QueryResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -14,9 +14,6 @@ class DocumentPanelResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
-            ...parent::toArray($request),
-            'groups' => GroupResource::collection($this->groups),
-        ];
+        return parent::toArray($request);
     }
 }

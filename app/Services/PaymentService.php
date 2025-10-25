@@ -208,6 +208,8 @@ class PaymentService extends BaseService
 
                 $successCount++;
 
+                // Create Payment Document Here!!!!
+
                 Log::info('Payment clearance executed successfully', [
                     'payment_id' => $payment->id,
                     'payment_code' => $payment->code,
@@ -248,7 +250,7 @@ class PaymentService extends BaseService
             ]);
         }
 
-        \Log::info('Treasury clearance batch completed', [
+        Log::info('Treasury clearance batch completed', [
             'total_payments' => count($payments),
             'successful' => $successCount,
             'failed' => $errorCount,
