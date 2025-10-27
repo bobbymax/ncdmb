@@ -32,7 +32,8 @@ class NotificationTemplateService implements NotificationTemplateServiceInterfac
     {
         return match ($type) {
             'current_tracker' => ['mail', 'database'],
-            default => ['database']
+            'previous_tracker' => ['mail', 'database'],  // Previous tracker gets acknowledgment emails
+            default => ['database']  // Watchers only get database notifications
         };
     }
 
@@ -41,12 +42,9 @@ class NotificationTemplateService implements NotificationTemplateServiceInterfac
      */
     public function getQueueForRecipientType(string $type): string
     {
-        return match ($type) {
-            'current_tracker' => 'notifications-high',
-            'previous_tracker' => 'notifications-medium',
-            'watchers' => 'notifications-low',
-            default => 'notifications'
-        };
+        // Use default queue for all notifications to simplify queue management
+        // Run with: php artisan queue:work
+        return 'default';
     }
 
     /**

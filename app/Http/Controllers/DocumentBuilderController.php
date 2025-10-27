@@ -240,6 +240,67 @@ class DocumentBuilderController extends Controller
                 }
             }); // This retries the transaction 3 times
 
+            // Send notifications to relevant stakeholders
+            try {
+                // Get current tracker (first stage for new documents)
+                $currentTracker = $this->findCurrentTracker($document->pointer, $trackers);
+
+                // Determine notification type and action status based on mode
+                $notificationType = $mode === 'store' ? 'document_created' : 'document_updated';
+                $actionStatus = $mode === 'store' ? 'created' : 'updated';
+
+                // Create notification context
+                $context = NotificationContext::from($document, [
+                    'documentId' => $document->id,
+                    'currentTracker' => $currentTracker,
+                    'previousTracker' => null, // No previous tracker for creation/update
+                    'trackers' => $trackers,
+                    'loggedInUser' => [
+                        'id' => Auth::id(),
+                        'firstname' => auth()->user()->firstname ?? 'User',
+                        'department_id' => auth()->user()->department_id ?? 0,
+                        'surname' => auth()->user()->surname ?? '',
+                        'email' => auth()->user()->email ?? ''
+                    ],
+                    'actionStatus' => $actionStatus,
+                    'watchers' => $watchers,
+                    'meta_data' => $metaData,
+                ]);
+
+                // Validate context before sending
+                if ($context->isValid()) {
+                    Log::info('DocumentBuilderController: Sending notification for document ' . $mode, [
+                        'document_id' => $document->id,
+                        'document_ref' => $document->ref,
+                        'action_status' => $actionStatus,
+                        'notification_type' => $notificationType,
+                        'mode' => $mode
+                    ]);
+
+                    // Send notification
+                    $this->notificationService->notify($context);
+
+                    Log::info('DocumentBuilderController: Notification sent successfully', [
+                        'document_id' => $document->id,
+                        'mode' => $mode,
+                        'notification_type' => $notificationType
+                    ]);
+                } else {
+                    Log::warning('DocumentBuilderController: Invalid notification context for ' . $mode, [
+                        'document_id' => $document->id,
+                        'missing_fields' => $context->getMissingFields()
+                    ]);
+                }
+
+            } catch (\Throwable $e) {
+                // Log but don't fail the request
+                Log::error('DocumentBuilderController: Failed to send notification for document ' . $mode, [
+                    'document_id' => $document->id,
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
+            }
+
             return $this->success(new DocumentResource($document), 'Document generated successfully.');
 
         } catch (\Throwable $e) {
@@ -505,14 +566,14 @@ class DocumentBuilderController extends Controller
                 }
 
                 // 7. Notify Recipients
-//                try {
-//                    $this->triggerNotification($document, $documentAction, $progressTracker, $workflowAction ?? null);
-//                } catch (\Throwable $e) {
-//                    Log::error('Failed to send notifications', [
-//                        'document_id' => $document->id,
-//                        'error' => $e->getMessage()
-//                    ]);
-//                }
+                try {
+                    $this->triggerNotification($document, $documentAction, $progressTracker, $workflowAction ?? null);
+                } catch (\Throwable $e) {
+                    Log::error('Failed to send notifications', [
+                        'document_id' => $document->id,
+                        'error' => $e->getMessage()
+                    ]);
+                }
             });
 
             // 8. Return document
@@ -613,29 +674,92 @@ class DocumentBuilderController extends Controller
         ?string $workflowAction
     ): void
     {
-        if (!$workflowAction) {
-            return; // No workflow action, no notification needed
+        try {
+            // Get all workflow trackers as proper array format
+            $trackers = $document->workflow?->trackers?->map(function ($tracker) {
+                return [
+                    'id' => $tracker->id,
+                    'identifier' => $tracker->identifier,
+                    'label' => $tracker->label ?? 'Stage',
+                    'order' => $tracker->order,
+                    'user_id' => $tracker->user_id ?? 0,
+                    'group_id' => $tracker->group_id ?? 0,
+                    'department_id' => $tracker->department_id ?? 0,
+                    'workflow_stage_id' => $tracker->workflow_stage_id,
+                    'permission' => $tracker->permission ?? 'rw',
+                ];
+            })->toArray() ?? [];
+
+            if (empty($trackers)) {
+                Log::warning('DocumentBuilderController: No trackers found for systemFlow notification', [
+                    'document_id' => $document->id,
+                    'workflow_id' => $document->workflow_id ?? 'none'
+                ]);
+                return;
+            }
+
+            // Find current and previous trackers using proper array format
+            $currentTracker = $this->findCurrentTracker($document->pointer, $trackers);
+            $previousTracker = $this->findPreviousTracker($currentTracker, $trackers);
+
+            // Use actual document action status
+            $actionStatus = $documentAction->action_status;
+
+            Log::info('DocumentBuilderController: Preparing systemFlow notification', [
+                'document_id' => $document->id,
+                'action_status' => $actionStatus,
+                'workflow_action' => $workflowAction,
+                'current_tracker' => $currentTracker['identifier'] ?? 'unknown',
+                'previous_tracker' => $previousTracker['identifier'] ?? 'none'
+            ]);
+
+            // Create notification context
+            $context = NotificationContext::from($document, [
+                'documentId' => $document->id,
+                'currentTracker' => $currentTracker,
+                'previousTracker' => $previousTracker,
+                'trackers' => $trackers,
+                'loggedInUser' => [
+                    'id' => Auth::id(),
+                    'firstname' => Auth::user()->firstname ?? 'User',
+                    'department_id' => Auth::user()->department_id ?? 0,
+                    'surname' => Auth::user()->surname ?? '',
+                    'email' => Auth::user()->email ?? ''
+                ],
+                'actionStatus' => $actionStatus,  // Use actual action status!
+                'watchers' => $document->watchers ?? [],
+                'meta_data' => $document->meta_data ?? [],
+            ]);
+
+            // Validate before sending
+            if ($context->isValid()) {
+                Log::info('DocumentBuilderController: Sending systemFlow notification', [
+                    'document_id' => $document->id,
+                    'document_ref' => $context->documentRef,
+                    'action_status' => $actionStatus,
+                    'workflow_action' => $workflowAction
+                ]);
+
+                $this->notificationService->notify($context);
+
+                Log::info('DocumentBuilderController: systemFlow notification sent successfully', [
+                    'document_id' => $document->id,
+                    'action_status' => $actionStatus
+                ]);
+            } else {
+                Log::warning('DocumentBuilderController: Invalid notification context in systemFlow', [
+                    'document_id' => $document->id,
+                    'missing_fields' => $context->getMissingFields()
+                ]);
+            }
+
+        } catch (\Throwable $e) {
+            Log::error('DocumentBuilderController: Failed to trigger systemFlow notification', [
+                'document_id' => $document->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Don't re-throw to avoid breaking the main flow
         }
-
-        // Create notification context similar to the process() method
-        $context = NotificationContext::from($document, [
-            'documentId' => $document->id,
-            'currentTracker' => $progressTracker->toArray(),
-            'previousTracker' => $this->findPreviousTracker($progressTracker->toArray(), $document->workflow->trackers ?? []),
-            'trackers' => $document->workflow->trackers ?? [],
-            'loggedInUser' => [
-                'id' => Auth::id(),
-                'firstname' => Auth::user()->firstname ?? 'User',
-                'department_id' => Auth::user()->department_id ?? 0,
-                'surname' => Auth::user()->surname ?? '',
-                'email' => Auth::user()->email ?? ''
-            ],
-            'actionStatus' => 'complete', // System flow is always complete
-            'watchers' => $document->watchers,
-            'meta_data' => $document->meta_data,
-            'workflow_action' => $workflowAction,
-        ]);
-
-        $this->notificationService->notify($context);
     }
 }

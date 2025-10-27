@@ -7,7 +7,6 @@ use App\Mail\DocumentActionMail;
 use App\Models\User;
 use App\Notifications\DocumentActionNotification;
 use App\Notifications\DocumentWorkflowNotification;
-use App\Notifications\RecipientNotifiable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Bus\Queueable;
@@ -55,8 +54,17 @@ class SendNotificationJob implements ShouldQueue
         }
 
         try {
+            // Batch-load all User models for better performance
+            $recipientIds = collect($this->recipients)->pluck('id')->filter()->toArray();
+            $users = User::whereIn('id', $recipientIds)->get()->keyBy('id');
+
+            Log::info('SendNotificationJob: Users loaded from database', [
+                'requested_count' => count($recipientIds),
+                'loaded_count' => $users->count()
+            ]);
+
             foreach ($this->recipients as $recipient) {
-                $this->sendNotificationToRecipient($recipient);
+                $this->sendNotificationToRecipient($recipient, $users);
             }
 
             Log::info('SendNotificationJob: All notifications sent successfully', [
@@ -82,7 +90,7 @@ class SendNotificationJob implements ShouldQueue
     /**
      * Send notification to a single recipient
      */
-    protected function sendNotificationToRecipient(array $recipient): void
+    protected function sendNotificationToRecipient(array $recipient, $users): void
     {
         try {
             Log::info('SendNotificationJob: Sending notification to recipient', [
@@ -98,6 +106,17 @@ class SendNotificationJob implements ShouldQueue
                 return;
             }
 
+            // Get the actual User model from the pre-loaded collection
+            $user = $users->get($recipient['id']);
+
+            if (!$user) {
+                Log::warning('SendNotificationJob: User not found in database', [
+                    'recipient_id' => $recipient['id'],
+                    'recipient_email' => $recipient['email'] ?? 'not_set'
+                ]);
+                return;
+            }
+
             // Create notification instance
             $notification = new DocumentWorkflowNotification(
                 context: $this->context,
@@ -106,15 +125,12 @@ class SendNotificationJob implements ShouldQueue
                 channels: $this->channels
             );
 
-            // Create notifiable instance
-            $notifiable = new RecipientNotifiable($recipient);
-
-            // Send the notification
-            $notifiable->notify($notification);
+            // Send notification using the real User model
+            $user->notify($notification);
 
             Log::info('SendNotificationJob: Notification sent successfully', [
                 'recipient_id' => $recipient['id'],
-                'recipient_email' => $recipient['email'] ?? 'not_set',
+                'recipient_email' => $user->email ?? ($recipient['email'] ?? 'not_set'),
                 'notification_type' => $this->notificationType,
                 'channels' => $this->channels
             ]);

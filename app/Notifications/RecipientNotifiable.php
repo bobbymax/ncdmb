@@ -39,9 +39,16 @@ class RecipientNotifiable extends User
             'recipient_id' => $this->recipient['id'] ?? 'unknown'
         ]);
 
-        // Don't return anything - let Laravel handle the database channel automatically
-        // The database channel will use the notifiable's ID and type from the model
-        return null;
+        // Return the user ID so Laravel knows where to store the notification
+        return $this->recipient['id'] ?? null;
+    }
+    
+    /**
+     * Get the notifiable entity's primary key
+     */
+    public function getKey()
+    {
+        return $this->recipient['id'] ?? null;
     }
 
     /**

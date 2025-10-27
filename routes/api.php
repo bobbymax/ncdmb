@@ -22,6 +22,10 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
     })->where('path', '.*');
 
     Route::post('/login', [\App\Http\Controllers\AuthApiController::class, 'login']);
+    
+    // 2FA Verification (No auth required - happens during login)
+    Route::post('2fa/verify', [\App\Http\Controllers\Auth\TwoFactorController::class, 'verify']);
+    
     // Ping server for network monitoring
     Route::get('/ping', function (Request $request) {
         return response()->json(['ping' => true]);
@@ -32,6 +36,14 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
 
     Route::middleware(['auth:sanctum', 'verify.identity', 'log.request'])->group(function () {
         Route::post('/logout', [\App\Http\Controllers\AuthApiController::class, 'logout']);
+        
+        // 2FA Management Routes (requires authentication)
+        Route::prefix('2fa')->group(function () {
+            Route::get('status', [\App\Http\Controllers\Auth\TwoFactorController::class, 'status']);
+            Route::post('generate', [\App\Http\Controllers\Auth\TwoFactorController::class, 'generate']);
+            Route::post('confirm', [\App\Http\Controllers\Auth\TwoFactorController::class, 'confirm']);
+            Route::post('disable', [\App\Http\Controllers\Auth\TwoFactorController::class, 'disable']);
+        });
 
         Route::post('configuration/imports/{resource}', [\App\Http\Controllers\ImportController::class, 'getResource']);
         Route::get('apiServices', [\App\Http\Controllers\ApiServiceController::class, 'index']);

@@ -25,7 +25,7 @@ class NotifyWorkflowParticipants
 
             // Dispatch the processing job
             $job = new ProcessNotificationJob($context);
-            dispatch($job)->onQueue('notifications-high'); // High priority for workflow notifications
+            dispatch($job); // Uses default queue for simplified queue management
 
             Log::info('NotifyWorkflowParticipants: Notification processing job dispatched', [
                 'document_id' => $event->document->id,

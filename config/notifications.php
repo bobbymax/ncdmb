@@ -81,6 +81,22 @@ return [
                 'action_url' => '{document_url}',
                 'footer' => 'This is an informational notification about document activity.',
             ],
+            'document_created' => [
+                'subject' => 'New Document Created - {document_ref}',
+                'greeting' => 'Hello {recipient_name},',
+                'body' => 'A new document {document_ref} ({document_title}) has been created by {logged_in_user_name} and is now awaiting your action at {tracker_name}.',
+                'action_text' => 'Review Document',
+                'action_url' => '{document_url}',
+                'footer' => 'Please review and action this document at your earliest convenience.',
+            ],
+            'document_updated' => [
+                'subject' => 'Document Updated - {document_ref}',
+                'greeting' => 'Hello {recipient_name},',
+                'body' => 'Document {document_ref} ({document_title}) has been updated by {logged_in_user_name}. The document is currently at {tracker_name}.',
+                'action_text' => 'View Changes',
+                'action_url' => '{document_url}',
+                'footer' => 'Please review the updated document details.',
+            ],
         ],
 
         /*

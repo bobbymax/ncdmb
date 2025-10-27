@@ -98,12 +98,8 @@ class NotificationProcessor
 
     protected function resolveQueue(string $priority): string
     {
-        return match ($priority) {
-            'high' => 'notifications-high',
-            'medium' => 'notifications-medium',
-            'low' => 'notifications-low',
-            default => 'notifications-default'
-        };
+        // Use default queue for simplified queue management
+        return 'default';
     }
 
     protected function gatherTrackerRecipients(): void

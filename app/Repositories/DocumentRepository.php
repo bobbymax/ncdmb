@@ -5,9 +5,11 @@ namespace App\Repositories;
 use App\Core\NotificationProcessor;
 use App\Models\Department;
 use App\Models\Document;
+use App\Models\ProgressTracker;
 use App\Models\Workflow;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -62,79 +64,190 @@ class DocumentRepository extends BaseRepository
     public function all()
     {
         $user = Auth::user();
+        $userId = $user->id;
         $userDepartmentId = $user->department_id;
         $groupIds = $user->groups->pluck('id')->toArray();
-        $userId = $user->id;
 
-        // Get user's effective scope based on rank
-        $scope = $this->getEffectiveScope();
+        // Cache scope calculation for 5 minutes
+        $scope = Cache::remember("user_scope_{$userId}", 300, function () {
+            return $this->getEffectiveScope();
+        });
+
         $departmentScope = $this->getDepartmentScopeForRank($scope, $userDepartmentId);
 
-        Log::info('User Scope: ' . $scope);
-        Log::info('Department Scope: ' . json_encode($departmentScope));
+        Log::info('DocumentRepository: Fetching documents for user', [
+            'user_id' => $userId,
+            'scope' => $scope,
+            'department_scope' => $departmentScope,
+            'group_count' => count($groupIds)
+        ]);
 
-        // Single optimized query combining all access algorithms
+        // Base query with optimized eager loading
         $query = $this->instanceOfModel()->with([
-            'drafts',
+            'current_tracker',
+            'drafts' => function ($q) {
+                $q->latest()->limit(5);
+            },
             'uploads',
             'conversations',
             'linkedDocuments.drafts',
             'linkedDocuments.uploads'
         ]);
 
+        // Apply budget year filter
         $query = $this->applyBudgetYearFilter($query, config('site.jolt_budget_year'));
 
-        // For board users, skip all filtering - they can see everything
-        // if ($scope === 'board') {
-        //     return $query->latest()->paginate(50);
-        // }
+        // Board users see everything - early return for performance
+        if ($scope === 'board') {
+            Log::info('DocumentRepository: Board user - returning all documents');
+            return $query->latest()->paginate(config('pagination.documents_per_page', 50));
+        }
 
-        $query->where(function ($q) use ($userId, $userDepartmentId, $groupIds, $departmentScope, $scope) {
+        // Cache tracker IDs for 1 minute (they change rarely)
+        $currentTrackerIds = Cache::remember("user_current_trackers_{$userId}", 60, function () use ($userId, $groupIds, $userDepartmentId) {
+            return $this->getUserCurrentTrackerIds($userId, $groupIds, $userDepartmentId);
+        });
 
-            // Algorithm 1: Department-based access (based on user's rank scope)
-            if (!empty($departmentScope)) {
-                if ($scope === 'personal') {
-                    $q->whereIn('user_id', $departmentScope);
-                } else {
-                    $q->whereIn('department_id', $departmentScope);
-                }
+        $allTrackerIds = Cache::remember("user_all_trackers_{$userId}", 60, function () use ($userId, $groupIds) {
+            return $this->getUserAllTrackerIds($userId, $groupIds);
+        });
+
+        // Build access query with prioritized algorithms
+        $query->where(function ($q) use (
+            $userId,
+            $userDepartmentId,
+            $groupIds,
+            $departmentScope,
+            $scope,
+            $currentTrackerIds,
+            $allTrackerIds
+        ) {
+            // PRIORITY 1: Documents currently awaiting user's action (HIGHEST PRIORITY)
+            if (!empty($currentTrackerIds)) {
+                $q->whereIn('progress_tracker_id', $currentTrackerIds);
             }
 
-            // Algorithm 2: Documents with drafts where user is creator or in group
+            // PRIORITY 2: Department-based access (based on user's rank scope)
+            if (!empty($departmentScope)) {
+                $q->orWhere(function ($deptQuery) use ($departmentScope, $scope, $userId) {
+                    if ($scope === 'personal') {
+                        // Personal scope: only documents created by user
+                        $deptQuery->where('user_id', $userId);
+                    } else {
+                        // Departmental/Directorate: documents in department scope
+                        $deptQuery->whereIn('department_id', $departmentScope);
+                    }
+                });
+            }
+
+            // PRIORITY 3: Documents where user is the owner/creator
+            $q->orWhere('user_id', $userId);
+
+            // PRIORITY 4: Documents with active drafts in user's groups
             $q->orWhereHas('drafts', function ($draftQuery) use ($userId, $groupIds) {
-                $draftQuery->where('operator_id', $userId)
-                          ->orWhereIn('group_id', $groupIds);
+                $draftQuery->where(function ($active) use ($userId, $groupIds) {
+                    $active->whereIn('status', ['pending', 'attention', 'awaiting'])
+                          ->where(function ($userOrGroup) use ($userId, $groupIds) {
+                              $userOrGroup->where('operator_id', $userId)
+                                         ->orWhereIn('group_id', $groupIds);
+                          });
+                });
             });
 
-            // Algorithm 3: Documents with conversations where user is thread owner or recipient
+            // PRIORITY 5: Documents with active conversations
             $q->orWhereHas('conversations', function ($conversationQuery) use ($userId) {
                 $conversationQuery->where('thread_owner_id', $userId)
                                  ->orWhere('recipient_id', $userId);
             });
 
-            // Algorithm 4: Documents with workflow trackers where user belongs to the group
-            $q->orWhereHas('workflow.trackers', function ($trackerQuery) use ($userId, $groupIds) {
-                $trackerQuery->where('user_id', $userId)
-                            ->orWhereIn('group_id', $groupIds);
-            });
+            // PRIORITY 6: Documents in workflows user participates in (historical context)
+            if (!empty($allTrackerIds) && !empty($currentTrackerIds)) {
+                $q->orWhere(function ($workflowQuery) use ($allTrackerIds, $currentTrackerIds) {
+                    $workflowQuery->whereHas('workflow.trackers', function ($trackerQuery) use ($allTrackerIds) {
+                        $trackerQuery->whereIn('id', $allTrackerIds);
+                    })
+                    // Exclude documents already matched by current tracker
+                    ->whereNotIn('progress_tracker_id', $currentTrackerIds);
+                });
+            }
 
-            // Algorithm 5: Documents accessible through config workflow (JSON-based access)
-            $q->orWhere(function ($configQuery) use ($userId, $groupIds) {
-                // Check for user_id in all three objects
-                $configQuery->whereRaw('JSON_EXTRACT(config->"$.to.user_id", "$") = ?', [$userId])
-                    ->orWhereRaw('JSON_EXTRACT(config->"$.from.user_id", "$") = ?', [$userId])
-                    ->orWhereRaw('JSON_EXTRACT(config->"$.through.user_id", "$") = ?', [$userId]);
+            // PRIORITY 7: Config-based access (legacy/special cases)
+            if (!empty($groupIds)) {
+                $q->orWhere(function ($configQuery) use ($userId, $groupIds) {
+                    // User-specific config access
+                    $configQuery->whereRaw('JSON_CONTAINS(config, ?, "$.to.user_id")', [json_encode($userId)])
+                        ->orWhereRaw('JSON_CONTAINS(config, ?, "$.from.user_id")', [json_encode($userId)])
+                        ->orWhereRaw('JSON_CONTAINS(config, ?, "$.through.user_id")', [json_encode($userId)]);
 
-                // Check for group_id in all three objects
-                foreach ($groupIds as $groupId) {
-                    $configQuery->orWhereRaw('JSON_EXTRACT(config->"$.to.group_id", "$") = ?', [$groupId])
-                        ->orWhereRaw('JSON_EXTRACT(config->"$.from.group_id", "$") = ?', [$groupId])
-                        ->orWhereRaw('JSON_EXTRACT(config->"$.through.group_id", "$") = ?', [$groupId]);
-                }
-            });
+                    // Group-specific config access
+                    $groupIdsJson = json_encode($groupIds);
+                    $configQuery->orWhereRaw('JSON_OVERLAPS(JSON_EXTRACT(config, "$.to.group_id"), CAST(? AS JSON))', [$groupIdsJson])
+                        ->orWhereRaw('JSON_OVERLAPS(JSON_EXTRACT(config, "$.from.group_id"), CAST(? AS JSON))', [$groupIdsJson])
+                        ->orWhereRaw('JSON_OVERLAPS(JSON_EXTRACT(config, "$.through.group_id"), CAST(? AS JSON))', [$groupIdsJson]);
+                });
+            }
         });
 
-        return $query->latest()->paginate(50);
+        // Order by priority: current tracker docs first, then by latest
+        if (!empty($currentTrackerIds)) {
+            $trackerIdsString = implode(',', $currentTrackerIds);
+            $query->orderByRaw("CASE WHEN progress_tracker_id IN ({$trackerIdsString}) THEN 0 ELSE 1 END")
+                  ->latest();
+        } else {
+            $query->latest();
+        }
+
+        return $query->paginate(config('pagination.documents_per_page', 50));
+    }
+
+    /**
+     * Get tracker IDs where user is currently responsible
+     * Note: Trackers are assigned to groups/departments, not directly to users
+     */
+    private function getUserCurrentTrackerIds(int $userId, array $groupIds, int $departmentId): array
+    {
+        if (empty($groupIds) && !$departmentId) {
+            return [];
+        }
+
+        return ProgressTracker::query()
+            ->where(function ($q) use ($groupIds, $departmentId) {
+                // Trackers assigned to user's groups
+                if (!empty($groupIds)) {
+                    $q->whereIn('group_id', $groupIds);
+                }
+                
+                // Trackers assigned to user's department
+                if ($departmentId > 0) {
+                    $q->orWhere('department_id', $departmentId);
+                }
+                
+                // Trackers with both department and group match (highest priority)
+                if ($departmentId > 0 && !empty($groupIds)) {
+                    $q->orWhere(function ($deptGroup) use ($departmentId, $groupIds) {
+                        $deptGroup->where('department_id', $departmentId)
+                                 ->whereIn('group_id', $groupIds);
+                    });
+                }
+            })
+            ->pluck('id')
+            ->toArray();
+    }
+
+    /**
+     * Get all tracker IDs where user has ever been/will be involved
+     * Note: Based on group membership only, since trackers don't have user_id
+     */
+    private function getUserAllTrackerIds(int $userId, array $groupIds): array
+    {
+        if (empty($groupIds)) {
+            return [];
+        }
+
+        return ProgressTracker::query()
+            ->whereIn('group_id', $groupIds)
+            ->pluck('id')
+            ->toArray();
     }
 
     public function processSupportingDocuments(array $files, int $documentId): void

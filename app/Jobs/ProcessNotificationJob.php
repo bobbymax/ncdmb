@@ -69,13 +69,21 @@ class ProcessNotificationJob implements ShouldQueue
 //                $priority = $templateService->getPriorityForRecipientType('current_tracker');
                 $queueName = $templateService->getQueueForRecipientType('current_tracker');
 
+                // Determine notification type based on action status
+                $notificationType = match ($this->context->actionStatus) {
+                    'passed' => 'pending_action',
+                    'created' => 'document_created',
+                    'updated' => 'document_updated',
+                    default => 'status_update'
+                };
+
                 $job = new SendNotificationJob(
                     recipients: $currentRecipients->toArray(),
-                    notificationType: $this->context->actionStatus === 'passed' ? 'pending_action' : 'status_update',
+                    notificationType: $notificationType,
                     context: $this->context,
                     channels: $channels
                 );
-                $job->onQueue($queueName ?: 'default')->delay(0);
+                $job->onQueue($queueName ?: 'default');
                 $jobs->push($job);
             }
 

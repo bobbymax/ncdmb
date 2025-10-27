@@ -27,6 +27,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
     /**
@@ -39,7 +41,69 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'two_factor_confirmed_at' => 'datetime',
+            'two_factor_enabled' => 'boolean',
         ];
+    }
+
+    /**
+     * Enable two-factor authentication for the user.
+     */
+    public function enableTwoFactorAuthentication(string $secret): void
+    {
+        $this->forceFill([
+            'two_factor_secret' => encrypt($secret),
+            'two_factor_enabled' => true,
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+    }
+
+    /**
+     * Disable two-factor authentication for the user.
+     */
+    public function disableTwoFactorAuthentication(): void
+    {
+        $this->forceFill([
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+            'two_factor_enabled' => false,
+        ])->save();
+    }
+
+    /**
+     * Get the decrypted two-factor secret.
+     */
+    public function getTwoFactorSecret(): ?string
+    {
+        return $this->two_factor_secret ? decrypt($this->two_factor_secret) : null;
+    }
+
+    /**
+     * Generate recovery codes.
+     */
+    public function generateRecoveryCodes(): array
+    {
+        $codes = [];
+        for ($i = 0; $i < 8; $i++) {
+            $codes[] = strtoupper(substr(bin2hex(random_bytes(5)), 0, 10));
+        }
+        
+        $this->forceFill([
+            'two_factor_recovery_codes' => encrypt(json_encode($codes))
+        ])->save();
+        
+        return $codes;
+    }
+
+    /**
+     * Get decrypted recovery codes.
+     */
+    public function getRecoveryCodes(): array
+    {
+        return $this->two_factor_recovery_codes 
+            ? json_decode(decrypt($this->two_factor_recovery_codes), true)
+            : [];
     }
 
     public function advances(): \Illuminate\Database\Eloquent\Relations\HasMany

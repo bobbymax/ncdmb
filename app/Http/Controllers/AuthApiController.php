@@ -101,6 +101,22 @@ class AuthApiController extends BaseController
             return $this->error(["username" => $credentials[$username], "password" => $credentials['password']], 'Invalid Credentials', 401);
         }
 
+        $user = Auth::user();
+
+        // Check if 2FA is enabled (with null safety)
+        if ($user && isset($user->two_factor_enabled) && $user->two_factor_enabled === true) {
+            // Don't complete the login - logout immediately
+            Auth::logout();
+            
+            // Return special response indicating 2FA is required
+            return response()->json([
+                'requires_2fa' => true,
+                'user_id' => $user->id,
+                'message' => 'Please enter your authentication code'
+            ], 200);
+        }
+
+        // Normal login flow (no 2FA)
         $request->session()->regenerate();
         Session::setId($oldSession);
 

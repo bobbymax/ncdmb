@@ -50,7 +50,8 @@ class NotificationContext
      */
     public function getDocumentUrl(): string
     {
-        return config('app.url') . "/documents/{$this->documentId}";
+//        return config('app.url') . "/documents/{$this->documentId}";
+        return env('APP_FRONTEND_URL', 'http://localhost:3000') . "/desk/folders/category/{$this->getDocumentCategoryId()}/document/{$this->documentId}/edit";
     }
 
     /**
@@ -98,27 +99,27 @@ class NotificationContext
             Log::warning('NotificationContext: Invalid documentId', ['document_id' => $this->documentId]);
             return false;
         }
-        
+
         if ($this->currentTracker === null || !is_array($this->currentTracker) || empty($this->currentTracker)) {
             Log::warning('NotificationContext: Invalid currentTracker', ['current_tracker' => $this->currentTracker]);
             return false;
         }
-        
+
         if ($this->trackers === null || !is_array($this->trackers) || empty($this->trackers)) {
             Log::warning('NotificationContext: Invalid trackers', ['tracker_count' => is_array($this->trackers) ? count($this->trackers) : 'not_array']);
             return false;
         }
-        
+
         if ($this->loggedInUser === null || !is_array($this->loggedInUser) || empty($this->loggedInUser)) {
             Log::warning('NotificationContext: Invalid loggedInUser', ['logged_in_user' => $this->loggedInUser]);
             return false;
         }
-        
+
         if ($this->actionStatus === null || empty(trim($this->actionStatus))) {
             Log::warning('NotificationContext: Invalid actionStatus', ['action_status' => $this->actionStatus]);
             return false;
         }
-        
+
         // Validate currentTracker has required fields
         if (empty($this->currentTracker['identifier'])) {
             Log::warning('NotificationContext: Missing currentTracker identifier', [
@@ -126,7 +127,7 @@ class NotificationContext
             ]);
             return false;
         }
-        
+
         // Validate loggedInUser has required fields
         if (empty($this->loggedInUser['id']) || $this->loggedInUser['id'] <= 0) {
             Log::warning('NotificationContext: Invalid loggedInUser id', [
@@ -134,14 +135,14 @@ class NotificationContext
             ]);
             return false;
         }
-        
+
         Log::info('NotificationContext: Validation passed', [
             'document_id' => $this->documentId,
             'action_status' => $this->actionStatus,
             'current_tracker_identifier' => $this->currentTracker['identifier'],
             'logged_in_user_id' => $this->loggedInUser['id']
         ]);
-        
+
         return true;
     }
 
@@ -151,32 +152,43 @@ class NotificationContext
     public function getMissingFields(): array
     {
         $missing = [];
-        
+
         if ($this->documentId === null || $this->documentId <= 0) {
             $missing[] = 'documentId (null or invalid)';
         }
-        
+
         if ($this->currentTracker === null || !is_array($this->currentTracker) || empty($this->currentTracker)) {
             $missing[] = 'currentTracker (null, not array, or empty)';
         } elseif (!empty($this->currentTracker) && empty($this->currentTracker['identifier'])) {
             $missing[] = 'currentTracker.identifier';
         }
-        
+
         if ($this->trackers === null || !is_array($this->trackers) || empty($this->trackers)) {
             $missing[] = 'trackers (null, not array, or empty)';
         }
-        
+
         if ($this->loggedInUser === null || !is_array($this->loggedInUser) || empty($this->loggedInUser)) {
             $missing[] = 'loggedInUser (null, not array, or empty)';
         } elseif (!empty($this->loggedInUser) && (empty($this->loggedInUser['id']) || $this->loggedInUser['id'] <= 0)) {
             $missing[] = 'loggedInUser.id (missing or invalid)';
         }
-        
+
         if ($this->actionStatus === null || empty(trim($this->actionStatus))) {
             $missing[] = 'actionStatus (null or empty)';
         }
-        
+
         return $missing;
+    }
+
+    public function getDocumentCategoryId()
+    {
+        $document = Document::find($this->documentId);
+
+        if (!$document) {
+            return 0;
+        }
+
+        return $document->document_category_id;
     }
 
     /**
@@ -191,7 +203,7 @@ class NotificationContext
                 'document_id' => $this->documentId,
                 'error' => $e->getMessage()
             ]);
-            
+
             // Return safe fallback values
             return [
                 'document_id' => $this->documentId,

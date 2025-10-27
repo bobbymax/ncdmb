@@ -33,11 +33,8 @@ class WorkflowDistributionNotification extends Notification implements ShouldQue
 
     protected function resolveQueue(string $audience): string
     {
-        return match ($audience) {
-            'authorising_officer', 'current_distribution' => 'notifications-high',
-            'next_distribution', 'initiator' => 'notifications-medium',
-            default => 'notifications-low',
-        };
+        // Use default queue for simplified queue management
+        return 'default';
     }
 
     /**

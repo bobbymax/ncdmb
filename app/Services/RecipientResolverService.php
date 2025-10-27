@@ -75,7 +75,7 @@ class RecipientResolverService implements RecipientResolverServiceInterface
                     'firstname' => $user->firstname ?? '',
                     'surname' => $user->surname ?? '',
                     'email' => $user->email ?? '',
-                    'phone' => $user->phone ?? '',
+                    'phone' => '',
                     'type' => 'user'
                 ]);
             }
@@ -118,7 +118,7 @@ class RecipientResolverService implements RecipientResolverServiceInterface
                         $query->where('department_id', $departmentId);
                     }
 
-                    $users = $query->get(['id', 'firstname', 'surname', 'email', 'phone']);
+                    $users = $query->get(['id', 'firstname', 'surname', 'email']);
 
                     Log::info('Resolved group/department recipients', [
                         'group_id' => $groupId,
@@ -132,7 +132,7 @@ class RecipientResolverService implements RecipientResolverServiceInterface
                             'firstname' => $user->firstname ?? '',
                             'surname' => $user->surname ?? '',
                             'email' => $user->email ?? '',
-                            'phone' => $user->phone ?? '',
+                            'phone' => '',
                             'type' => 'group_department'
                         ]);
                     }
@@ -191,7 +191,7 @@ class RecipientResolverService implements RecipientResolverServiceInterface
                     ->whereHas('department', function ($query) use ($departmentId) {
                         $query->where('id', $departmentId);
                     })
-                    ->get(['id', 'firstname', 'surname', 'email', 'phone']);
+                    ->get(['id', 'firstname', 'surname', 'email']);
 
                 foreach ($users as $user) {
                     $recipients->push([
@@ -199,7 +199,7 @@ class RecipientResolverService implements RecipientResolverServiceInterface
                         'firstname' => $user->firstname ?? '',
                         'surname' => $user->surname ?? '',
                         'email' => $user->email ?? '',
-                        'phone' => $user->phone ?? '',
+                        'phone' => '',
                         'type' => 'watcher_group'
                     ]);
                 }
