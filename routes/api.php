@@ -22,10 +22,10 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
     })->where('path', '.*');
 
     Route::post('/login', [\App\Http\Controllers\AuthApiController::class, 'login']);
-    
+
     // 2FA Verification (No auth required - happens during login)
     Route::post('2fa/verify', [\App\Http\Controllers\Auth\TwoFactorController::class, 'verify']);
-    
+
     // Ping server for network monitoring
     Route::get('/ping', function (Request $request) {
         return response()->json(['ping' => true]);
@@ -34,9 +34,9 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
     Route::post('auth/refresh', [\App\Http\Controllers\AuthApiController::class, 'refreshToken']);
 
 
-    Route::middleware(['auth:sanctum', 'verify.identity', 'log.request'])->group(function () {
+    Route::middleware(['cors', 'auth:sanctum', 'verify.identity', 'log.request'])->group(function () {
         Route::post('/logout', [\App\Http\Controllers\AuthApiController::class, 'logout']);
-        
+
         // 2FA Management Routes (requires authentication)
         Route::prefix('2fa')->group(function () {
             Route::get('status', [\App\Http\Controllers\Auth\TwoFactorController::class, 'status']);
@@ -45,6 +45,8 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
             Route::post('disable', [\App\Http\Controllers\Auth\TwoFactorController::class, 'disable']);
         });
 
+        // Inbound AI analysis trigger
+        Route::post('inbounds/{id}/analyze', [\App\Http\Controllers\InboundController::class, 'analyze']);
         Route::post('configuration/imports/{resource}', [\App\Http\Controllers\ImportController::class, 'getResource']);
         Route::get('apiServices', [\App\Http\Controllers\ApiServiceController::class, 'index']);
         Route::get('imports', [\App\Http\Controllers\ApiServiceController::class, 'imports']);
@@ -123,6 +125,10 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('payments', \App\Http\Controllers\PaymentController::class);
         Route::apiResource('journalTypes', \App\Http\Controllers\JournalTypeController::class);
         Route::apiResource('documentPanels', \App\Http\Controllers\DocumentPanelController::class);
+        Route::apiResource('inbounds', \App\Http\Controllers\InboundController::class);
+
+        // AI Services (Direct API - legacy)
+        Route::post('ai/analyze-inbound', [\App\Http\Controllers\AIController::class, 'analyzeInboundDocument']);
 
         Route::apiResource('budgetHeads', \App\Http\Controllers\BudgetHeadController::class);
         Route::apiResource('budgetCodes', \App\Http\Controllers\BudgetCodeController::class);

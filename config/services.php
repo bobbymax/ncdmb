@@ -35,4 +35,22 @@ return [
         ],
     ],
 
+    'openai' => [
+        'api_key' => env('OPENAI_API_KEY'),
+        'model' => env('OPENAI_MODEL', 'gpt-5-mini'),
+        'temperature' => (float) env('OPENAI_TEMPERATURE', 0.3),
+        'max_tokens' => (int) env('OPENAI_MAX_TOKENS', 4000), // Increased for GPT-5 reasoning tokens
+    ],
+
+    'huggingface' => [
+        'api_key' => env('HUGGINGFACE_API_KEY'),
+        'model' => env('HUGGINGFACE_MODEL', 'mistralai/Mixtral-8x7B-Instruct-v0.1'),
+        'temperature' => (float) env('HUGGINGFACE_TEMPERATURE', 0.7),
+        'max_tokens' => (int) env('HUGGINGFACE_MAX_TOKENS', 1400),
+    ],
+
+    'ai' => [
+        'default_provider' => env('AI_PROVIDER', 'openai'), // openai or huggingface
+    ],
+
 ];

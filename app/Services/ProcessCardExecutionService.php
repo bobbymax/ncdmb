@@ -13,6 +13,7 @@ use App\Models\ProcessCard;
 use App\Models\Transaction;
 use App\Models\TrialBalance;
 use App\Repositories\FundRepository;
+use App\Repositories\QueryRepository;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -21,10 +22,12 @@ use Illuminate\Support\Str;
 class ProcessCardExecutionService
 {
     protected FundRepository $fundRepository;
+    protected QueryRepository $queryRepository;
 
-    public function __construct(FundRepository $fundRepository)
+    public function __construct(FundRepository $fundRepository, QueryRepository $queryRepository)
     {
         $this->fundRepository = $fundRepository;
+        $this->queryRepository = $queryRepository;
     }
 
     /**
@@ -381,50 +384,74 @@ class ProcessCardExecutionService
      *
      * @param Payment $payment The payment to process
      * @param ProcessCard $processCard The process card with rules
-     * @param array $frontendTransactions Array of transactions from frontend
+     * @param array $frontendTransactions Array of transactions from frontend OR payment data structure
      * @return array Steps completed
      * @throws \Exception If transactions are invalid or imbalanced
      */
-    public function executeAccountingCycleWithTransactions(Payment $payment, ProcessCard $processCard, array $frontendTransactions): array
-    {
-        return DB::transaction(function () use ($payment, $processCard, $frontendTransactions) {
+    public function executeAccountingCycleWithTransactions(
+        Payment $payment,
+        ProcessCard $processCard,
+        array $frontendTransactions,
+        ?array $query = null
+    ): array {
+        return DB::transaction(function () use ($payment, $processCard, $frontendTransactions, $query) {
             $steps = [];
             $rules = $processCard->rules;
 
-            // STEP 1: Validate Fund Balance
-//            $this->validateFundBalance($payment);
-//            $steps[] = ['phase' => 'validation', 'status' => 'completed'];
+            $existingTransactions = ($payment->transactions ?? collect())->all();
 
-            // STEP 2: Validate and Save Frontend Transactions
-            $transactions = $this->validateAndSaveFrontendTransactions($payment, $processCard, $frontendTransactions);
-            $steps[] = ['phase' => 'transactions', 'data' => $transactions, 'status' => 'completed'];
+            Log::info("ProcessCard with transactions details", [
+                'transactions' => $frontendTransactions,
+                'query' => $query,
+            ]);
 
-            // STEP 3: Create Account Postings
-            if (count($transactions) > 0) {
-                $postings = $this->createAccountPostings($transactions, $processCard);
-                $steps[] = ['phase' => 'postings', 'data' => $postings, 'status' => 'completed'];
+            // STEP 1: Handle Queries if present in the entire payment data structure
+            if ($query !== null) {
+                $this->handlePaymentQueries($payment, $query);
             }
 
-            // STEP 4: Update Ledger Account Balances
-            if (isset($postings) && count($postings) > 0) {
-                $this->updateLedgerAccountBalances($postings, $payment);
-                $steps[] = ['phase' => 'ledger_balances', 'status' => 'completed'];
+            // STEP 2: Extract transactions from payment data structure
+            $transactionsArray = $frontendTransactions ?? [];
+
+            // STEP 3: Compare and update transactions
+            // Only proceed if there are no existing transactions, OR if transactions have changed
+            if (count($existingTransactions) === 0) {
+                // No existing transactions - create new ones
+                $transactions = $this->validateAndSaveFrontendTransactions($payment, $processCard, $transactionsArray);
+                $steps[] = ['phase' => 'transactions', 'data' => $transactions, 'status' => 'completed'];
+            } else {
+                // Existing transactions - compare and update if needed
+                $transactions = $this->compareAndUpdateTransactions($payment, $processCard, $transactionsArray, $existingTransactions);
+                $steps[] = ['phase' => 'transactions', 'data' => $transactions, 'status' => 'updated'];
             }
 
-            // STEP 5: Settle Fund Balance
-//            if ($rules['settle'] ?? false) {
-//                $fundTransaction = $this->settleFund($payment, $processCard);
-//                $steps[] = ['phase' => 'settlement', 'data' => $fundTransaction, 'status' => 'completed'];
-//            }
 
-            // STEP 6: Update Trial Balance
-            if ($rules['update_trial_balance'] ?? false) {
-                $this->updateTrialBalance($payment, isset($postings) ? $postings : []);
-                $steps[] = ['phase' => 'trial_balance', 'status' => 'completed'];
+            if ($rules['settle'] ?? false) {
+                // STEP 4: Create Account Postings
+                if (count($transactions) > 0) {
+                    $postings = $this->createAccountPostings($transactions, $processCard);
+                    $steps[] = ['phase' => 'postings', 'data' => $postings, 'status' => 'completed'];
+                }
+
+                // STEP 5: Update Ledger Account Balances
+                if (isset($postings) && count($postings) > 0) {
+                    $this->updateLedgerAccountBalances($postings, $payment);
+                    $steps[] = ['phase' => 'ledger_balances', 'status' => 'completed'];
+                }
+
+                // STEP 5: Settle Fund Balance
+                // $fundTransaction = $this->settleFund($payment, $processCard);
+                // $steps[] = ['phase' => 'settlement', 'data' => $fundTransaction, 'status' => 'completed'];
+
+                // STEP 6: Update Trial Balance
+                if ($rules['update_trial_balance'] ?? false) {
+                    $this->updateTrialBalance($payment, isset($postings) ? $postings : []);
+                    $steps[] = ['phase' => 'trial_balance', 'status' => 'completed'];
+                }
+
+                // STEP 7: Create Audit Trail
+                $this->createAuditTrail($payment, $processCard, $steps);
             }
-
-            // STEP 7: Create Audit Trail
-            $this->createAuditTrail($payment, $processCard, $steps);
 
             // STEP 8: Update Payment Status
             $payment->update([
@@ -443,6 +470,164 @@ class ProcessCardExecutionService
 
             return $steps;
         });
+    }
+
+    /**
+     * Handle queries for payments from frontend
+     */
+    protected function handlePaymentQueries(Payment $payment, array $queryData): void
+    {
+        Log::info('handlePaymentQueries called', [
+            'payment_id' => $payment->id,
+            'query_data' => $queryData,
+        ]);
+
+        // Create query using QueryRepository
+        try {
+            $query = $this->queryRepository->create([
+                'user_id' => $queryData['user_id'] ?? Auth::id(),
+                'group_id' => $queryData['group_id'],
+                'document_id' => $queryData['document_id'],
+                'document_draft_id' => $queryData['document_draft_id'] > 0 ? $queryData['document_draft_id'] : null,
+                'message' => $queryData['message'],
+                'response' => $queryData['response'] ?? null,
+                'priority' => $queryData['priority'],
+                'status' => $queryData['status'],
+            ]);
+
+            Log::info('Query created for payment', [
+                'payment_id' => $payment->id,
+                'query_id' => $query->id,
+                'message' => $queryData['message'],
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to create query for payment', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
+     * Compare frontend transactions with existing transactions and update if changed
+     */
+    protected function compareAndUpdateTransactions(
+        Payment $payment,
+        ProcessCard $processCard,
+        array $frontendTransactions,
+        array $existingTransactions
+    ): array
+    {
+        $updatedTransactions = [];
+
+        // Create a map of existing transactions by reference
+        $existingByReference = [];
+        foreach ($existingTransactions as $existing) {
+            $existingByReference[$existing->reference] = $existing;
+        }
+
+        // Compare each frontend transaction
+        foreach ($frontendTransactions as $frontendTrans) {
+            $reference = $frontendTrans['reference'] ?? null;
+
+            // Skip if no reference (new transaction)
+            if (!$reference) {
+                continue;
+            }
+
+            // Check if this transaction exists
+            if (!isset($existingByReference[$reference])) {
+                // New transaction - create it
+                $newTransaction = $this->createSingleTransaction($payment, $processCard, $frontendTrans);
+                $updatedTransactions[] = $newTransaction;
+                Log::info('Created new transaction', ['reference' => $reference]);
+                continue;
+            }
+
+            // Transaction exists - compare values
+            $existing = $existingByReference[$reference];
+            $hasChanges = false;
+
+            // Check for changes in key fields
+            if (isset($frontendTrans['debit_amount']) && $existing->debit_amount != $frontendTrans['debit_amount']) {
+                $hasChanges = true;
+                $existing->debit_amount = $frontendTrans['debit_amount'];
+            }
+
+            if (isset($frontendTrans['credit_amount']) && $existing->credit_amount != $frontendTrans['credit_amount']) {
+                $hasChanges = true;
+                $existing->credit_amount = $frontendTrans['credit_amount'];
+            }
+
+            if (isset($frontendTrans['chart_of_account_id']) && $existing->chart_of_account_id != $frontendTrans['chart_of_account_id']) {
+                $hasChanges = true;
+                $existing->chart_of_account_id = $frontendTrans['chart_of_account_id'];
+            }
+
+            if (isset($frontendTrans['journal_type_id']) && $existing->journal_type_id != $frontendTrans['journal_type_id']) {
+                $hasChanges = true;
+                $existing->journal_type_id = $frontendTrans['journal_type_id'];
+            }
+
+            if (isset($frontendTrans['narration']) && $existing->narration != $frontendTrans['narration']) {
+                $hasChanges = true;
+                $existing->narration = $frontendTrans['narration'];
+            }
+
+            if (isset($frontendTrans['beneficiary_id']) && $existing->beneficiary_id != $frontendTrans['beneficiary_id']) {
+                $hasChanges = true;
+                $existing->beneficiary_id = $frontendTrans['beneficiary_id'];
+            }
+
+            if (isset($frontendTrans['beneficiary_type']) && $existing->beneficiary_type != $frontendTrans['beneficiary_type']) {
+                $hasChanges = true;
+                $existing->beneficiary_type = $frontendTrans['beneficiary_type'];
+            }
+
+            // If there are changes, update the transaction
+            if ($hasChanges) {
+                $existing->save();
+                $updatedTransactions[] = $existing;
+                Log::info('Updated existing transaction', [
+                    'reference' => $reference,
+                    'changes' => $frontendTrans
+                ]);
+            } else {
+                $updatedTransactions[] = $existing;
+            }
+        }
+
+        return $updatedTransactions;
+    }
+
+    /**
+     * Create a single transaction from frontend data
+     */
+    protected function createSingleTransaction(Payment $payment, ProcessCard $processCard, array $transData): Transaction
+    {
+        return Transaction::create([
+            'user_id' => Auth::id(),
+            'department_id' => $payment->department_id,
+            'payment_id' => $transData['payment_id'] ?? $payment->id,
+            'ledger_id' => $transData['ledger_id'],
+            'chart_of_account_id' => $transData['chart_of_account_id'],
+            'journal_type_id' => $transData['journal_type_id'],
+            'process_card_id' => $processCard->id,
+            'reference' => $transData['reference'] ?? 'TXN-' . Str::upper(Str::random(12)),
+            'type' => $transData['type'],
+            'debit_amount' => $transData['debit_amount'] ?? 0,
+            'credit_amount' => $transData['credit_amount'] ?? 0,
+            'narration' => $transData['narration'],
+            'beneficiary_id' => $transData['beneficiary_id'] ?? null,
+            'beneficiary_type' => $transData['beneficiary_type'] ?? null,
+            'currency' => $transData['currency'] ?? 'NGN',
+            'payment_method' => $transData['payment_method'] ?? 'bank-transfer',
+            'status' => 'pending',
+            'entry_type' => 'regular',
+            'batch_reference' => $transData['batch_reference'] ?? 'BATCH-' . Str::upper(Str::random(10)),
+            'flag' => $transData['flag'] ?? null,
+            'posted_at' => now(),
+        ]);
     }
 
     /**

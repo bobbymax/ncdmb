@@ -10,7 +10,7 @@ return [
 
     'allowed_origins_patterns' => [],
 
-    'allowed_headers' => ['X-XSRF-TOKEN', 'X-CSRF-TOKEN', 'X-Identity-Marker', 'X-Encrypted', 'X-Frontend-URL', 'X-User-Agent', 'X-Platform', 'X-Screen-Size', 'Content-Type', 'Authorization'],
+    'allowed_headers' => ['X-XSRF-TOKEN', 'X-CSRF-TOKEN', 'X-Identity-Marker', 'X-Encrypted', 'X-Frontend-URL', 'X-User-Agent', 'X-Platform', 'X-Screen-Size', 'X-Requested-With', 'Content-Type', 'Authorization'],
 
     'exposed_headers' => ['XSRF-TOKEN'], // Ensures XSRF token is exposed
 

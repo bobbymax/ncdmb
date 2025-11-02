@@ -160,7 +160,16 @@ class PaymentService extends BaseService
         foreach ($payments as $paymentData) {
             $paymentId = $paymentData['payment_id'] ?? null;
             $frontendTransactions = $paymentData['transactions'] ?? [];
+            $query = $paymentData['query'] ?? null;
             $expenditureId = $paymentData['expenditure_id'] ?? null;
+
+            // Debug: Log what we received
+            Log::info('Processing payment clearance', [
+                'payment_id' => $paymentId,
+                'has_transactions' => !empty($frontendTransactions),
+                'has_query' => $query !== null,
+                'query_data' => $query,
+            ]);
 
             if (!$paymentId) {
                 Log::warning('Payment data missing payment_id', ['data' => $paymentData]);
@@ -192,14 +201,14 @@ class PaymentService extends BaseService
             }
 
             try {
-                // Execute accounting cycle with frontend-generated transactions
+                // Execute accounting cycle with payment data (includes transactions and queries)
                 $steps = app(\App\Services\ProcessCardExecutionService::class)
-                    ->executeAccountingCycleWithTransactions($payment, $processCard, $frontendTransactions);
+                    ->executeAccountingCycleWithTransactions($payment, $processCard, $paymentData, $query);
 
                 $results[] = [
                     'payment_id' => $paymentId,
                     'payment_code' => $payment->code,
-                    'amount' => $paymentData['amount'],
+                    'amount' => $paymentData['total_approved_amount'] ?? $payment->total_approved_amount,
                     'status' => 'success',
                     'steps_completed' => count($steps),
                     'steps' => $steps,

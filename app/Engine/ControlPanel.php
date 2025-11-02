@@ -9,6 +9,7 @@ use App\Models\DocumentDraft;
 use App\Models\ProgressTracker;
 use App\Models\Workflow;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ControlPanel
 {
@@ -63,7 +64,14 @@ class ControlPanel
             ->first();
 
         if (!$nextTracker) {
-            throw new \RuntimeException('No next tracker found for workflow ID: ' . $this->workflow->id);
+            // No next tracker found - this is the final stage, end the workflow
+            Log::info('No next tracker found, ending workflow', [
+                'workflow_id' => $this->workflow->id,
+                'current_tracker_order' => $currentTracker->order,
+                'document_id' => $this->document->id
+            ]);
+
+            return $this->end();
         }
 
         // Update the last draft with operator_id

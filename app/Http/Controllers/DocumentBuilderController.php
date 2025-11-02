@@ -705,14 +705,6 @@ class DocumentBuilderController extends Controller
             // Use actual document action status
             $actionStatus = $documentAction->action_status;
 
-            Log::info('DocumentBuilderController: Preparing systemFlow notification', [
-                'document_id' => $document->id,
-                'action_status' => $actionStatus,
-                'workflow_action' => $workflowAction,
-                'current_tracker' => $currentTracker['identifier'] ?? 'unknown',
-                'previous_tracker' => $previousTracker['identifier'] ?? 'none'
-            ]);
-
             // Create notification context
             $context = NotificationContext::from($document, [
                 'documentId' => $document->id,

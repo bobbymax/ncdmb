@@ -123,4 +123,22 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Board Description
+    |--------------------------------------------------------------------------
+    |
+    | Description of the NCDMB board for AI context understanding
+    |
+    */
+
+    'board_description' => "The Nigerian Content Development and Monitoring Board (NCDMB) is responsible for:
+        - Monitoring and coordinating Nigerian content development in the oil and gas industry
+        - Implementing Nigerian content policies and guidelines
+        - Ensuring compliance with local content requirements
+        - Promoting capacity building and technology transfer
+        - Supporting local businesses in the oil and gas sector
+        - Managing funds and grants for Nigerian content initiatives
+        - Facilitating partnerships between local and international companies",
+
 ];

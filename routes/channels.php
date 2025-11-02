@@ -11,3 +11,15 @@ Broadcast::channel('threads.{threadId}', function ($user, int $threadId) {
     if (!$t) return false;
     return in_array($user->id, [$t->thread_owner_id, $t->recipient_id]);
 });
+
+Broadcast::channel('inbound.{inboundId}', function ($user, int $inboundId) {
+    // Check if user has access to this inbound document
+    $inbound = \App\Models\Inbound::find($inboundId);
+    
+    if (!$inbound) {
+        return false;
+    }
+    
+    // Allow access if user is authenticated
+    return $user !== null;
+});

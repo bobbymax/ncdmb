@@ -97,5 +97,6 @@ return [
     App\Providers\ConversationServiceProvider::class,
     App\Providers\ProcessCardServiceProvider::class,
     App\Providers\DocumentPanelServiceProvider::class,
-    App\Providers\QueryServiceProvider::class
+    App\Providers\QueryServiceProvider::class,
+    App\Providers\InboundServiceProvider::class
 ];
