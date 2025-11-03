@@ -120,14 +120,44 @@ class AuthApiController extends BaseController
         $request->session()->regenerate();
         Session::setId($oldSession);
 
-        return $this->success(null, 'Logged in successfully');
+        return $this->success([
+            'user_id' => $user->id,
+            'message' => 'Logged in successfully'
+        ], 'Logged in successfully');
     }
 
-    public function logout(): \Illuminate\Http\JsonResponse
+    public function logout(Request $request): \Illuminate\Http\JsonResponse
     {
-        Session::flush();
-        Session::regenerate();
-        Cookie::queue(Cookie::forget('staff_portal_session'));
+        $userId = Auth::id();
+        $sessionId = Session::getId();
+        
+        Log::info('Logout initiated', [
+            'user_id' => $userId,
+            'session_id_before' => $sessionId,
+        ]);
+        
+        // Clear web guard authentication (Sanctum uses RequestGuard which doesn't have logout)
+        if (Auth::guard('web')->check()) {
+            Auth::guard('web')->logout();
+        }
+        
+        // Invalidate the session completely
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        
+        Log::info('Logout completed', [
+            'user_id' => $userId,
+            'session_id_after' => Session::getId(),
+            'web_auth_check' => Auth::guard('web')->check(),
+        ]);
+        
+        // Clear all authentication cookies with exact domain/path match
+        $domain = config('session.domain');
+        $path = config('session.path', '/');
+        
+        Cookie::queue(Cookie::forget('staff_portal_session', $path, $domain));
+        Cookie::queue(Cookie::forget('XSRF-TOKEN', $path, $domain));
+        Cookie::queue(Cookie::forget('laravel_session', $path, $domain));
 
         return $this->success([
             'data' => null,

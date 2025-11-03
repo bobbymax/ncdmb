@@ -98,5 +98,6 @@ return [
     App\Providers\ProcessCardServiceProvider::class,
     App\Providers\DocumentPanelServiceProvider::class,
     App\Providers\QueryServiceProvider::class,
-    App\Providers\InboundServiceProvider::class
+    App\Providers\InboundServiceProvider::class,
+    App\Providers\InboundInstructionServiceProvider::class
 ];

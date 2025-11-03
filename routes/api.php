@@ -126,9 +126,19 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('journalTypes', \App\Http\Controllers\JournalTypeController::class);
         Route::apiResource('documentPanels', \App\Http\Controllers\DocumentPanelController::class);
         Route::apiResource('inbounds', \App\Http\Controllers\InboundController::class);
+        Route::apiResource('inboundInstructions', \App\Http\Controllers\InboundInstructionController::class);
+
+        // Notifications
+        Route::prefix('notifications')->group(function () {
+            Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index']);
+            Route::get('/unread', [\App\Http\Controllers\NotificationController::class, 'unreadCount']);
+            Route::post('/{id}/read', [\App\Http\Controllers\NotificationController::class, 'markAsRead']);
+            Route::post('/read-all', [\App\Http\Controllers\NotificationController::class, 'markAllAsRead']);
+            Route::delete('/{id}', [\App\Http\Controllers\NotificationController::class, 'destroy']);
+        });
 
         // AI Services (Direct API - legacy)
-        Route::post('ai/analyze-inbound', [\App\Http\Controllers\AIController::class, 'analyzeInboundDocument']);
+//        Route::post('ai/analyze-inbound', [\App\Http\Controllers\AIController::class, 'analyzeInboundDocument']);
 
         Route::apiResource('budgetHeads', \App\Http\Controllers\BudgetHeadController::class);
         Route::apiResource('budgetCodes', \App\Http\Controllers\BudgetCodeController::class);

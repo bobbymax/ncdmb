@@ -17,7 +17,6 @@ class Inbound extends Model
         'received_at' => 'datetime',
         'mailed' => 'datetime',
         'analysis' => 'json',
-        'instructions' => 'json',
     ];
 
     // Model Relationships or Scope Here...
@@ -45,5 +44,10 @@ class Inbound extends Model
     public function uploads(): \Illuminate\Database\Eloquent\Relations\MorphMany
     {
         return $this->morphMany(Upload::class, 'uploadable');
+    }
+
+    public function instructions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(InboundInstruction::class, 'inbound_id');
     }
 }

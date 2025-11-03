@@ -23,3 +23,10 @@ Broadcast::channel('inbound.{inboundId}', function ($user, int $inboundId) {
     // Allow access if user is authenticated
     return $user !== null;
 });
+
+Broadcast::channel('resource.{resourceType}.{resourceId}', function ($user, string $resourceType, int $resourceId) {
+    // Check if user has access to this resource
+    // For now, allow all authenticated users
+    // You can add more specific checks based on resource type
+    return $user !== null;
+});

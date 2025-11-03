@@ -5,7 +5,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class InboundResource extends JsonResource
+class InboundInstructionResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -14,10 +14,6 @@ class InboundResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return [
-            ...parent::toArray($request),
-            'uploads' => UploadResource::collection($this->uploads),
-            'instructions' => InboundInstructionResource::collection($this->instructions),
-        ];
+        return parent::toArray($request);
     }
 }
