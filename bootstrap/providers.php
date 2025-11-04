@@ -99,5 +99,13 @@ return [
     App\Providers\DocumentPanelServiceProvider::class,
     App\Providers\QueryServiceProvider::class,
     App\Providers\InboundServiceProvider::class,
-    App\Providers\InboundInstructionServiceProvider::class
+    App\Providers\InboundInstructionServiceProvider::class,
+    App\Providers\ProjectLifecycleStageServiceProvider::class,
+    App\Providers\ProjectFeasibilityStudyServiceProvider::class,
+    App\Providers\ProjectStakeholderServiceProvider::class,
+    App\Providers\ProjectRiskServiceProvider::class,
+    App\Providers\ProjectIssueServiceProvider::class,
+    App\Providers\ProjectChangeRequestServiceProvider::class,
+    App\Providers\ProjectPerformanceMetricServiceProvider::class,
+    App\Providers\ProjectInspectionServiceProvider::class
 ];
