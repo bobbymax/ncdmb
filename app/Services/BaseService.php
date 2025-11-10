@@ -82,9 +82,18 @@ abstract class BaseService implements IService
         return $prefix . $timestamp . $random . $checksum;
     }
 
-    protected function updateDocumentAmount(mixed $raw, string $column = "amount")
+    protected function updateDocumentAmount(mixed $raw, string $column = "amount", array $financials = [])
     {
+        // The financials array must follow the keys stated
+        // sub_total_amount, markup_amount & vat_amount
+        // on all other resource service classes
+
         $raw->document->approved_amount = $raw[$column] ?? 0;
+        if (!empty($financials)) {
+            $raw->document->sub_total_amount = $financials['sub_total_amount'] ?? 0;
+            $raw->document->admin_fee_amount = $financials['markup_amount'] ?? 0;
+            $raw->document->vat_amount = $financials['vat_amount'] ?? 0;
+        }
         $raw->document->save();
 
         return $raw;
@@ -215,6 +224,24 @@ abstract class BaseService implements IService
     public function instanceQuery(): \Illuminate\Database\Eloquent\Builder
     {
         return $this->repository->instanceOfModel();
+    }
+
+    public function query(
+        array $conditions = [],
+        array $scopes = [],
+        array $with = [],
+        ?array $order = null,
+        bool $paginate = false,
+        int $perPage = 50
+    ) {
+        return $this->repository->queryWithConditions(
+            $conditions,
+            $scopes,
+            $with,
+            $order,
+            $paginate,
+            $perPage
+        );
     }
 
     public function fetchDraftsInBatchQueue($departmentId, $status)

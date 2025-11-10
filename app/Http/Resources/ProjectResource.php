@@ -17,7 +17,15 @@ class ProjectResource extends JsonResource
         return [
             ...parent::toArray($request),
             'milestones' => MilestoneResource::collection($this->milestones),
-            'invoice' => new InvoiceResource($this->invoice)
+            'invoice' => new InvoiceResource($this->invoice),
+            'department_owner' => [
+                'value' => $this->department->id,
+                'label' => $this->department->abv
+            ],
+            'fund' => [
+                'value' => $this->fund->id,
+                'label' => "{$this->fund->budgetCode->code} - {$this->fund->subBudgetHead->name}"
+            ]
         ];
     }
 }

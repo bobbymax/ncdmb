@@ -11,7 +11,29 @@ class ProjectContract extends Model
 
     protected $guarded = [''];
 
+    protected $casts = [
+        'performance_bond_required' => 'boolean',
+        'performance_bond_submitted' => 'boolean',
+        'advance_payment_allowed' => 'boolean',
+        'contract_signed' => 'boolean',
+        'award_date' => 'date',
+        'contract_start_date' => 'date',
+        'contract_end_date' => 'date',
+        'tenders_board_approval_date' => 'date',
+        'published_at' => 'datetime',
+        'contract_signed_date' => 'date',
+        'standstill_start_date' => 'date',
+        'standstill_end_date' => 'date',
+        'date_of_acceptance' => 'date',
+        'is_completed' => 'boolean',
+    ];
+
     // Model Relationships or Scope Here...
+    public function project(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
+
     public function boardProject(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(BoardProject::class, 'board_project_id');

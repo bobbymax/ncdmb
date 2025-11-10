@@ -46,6 +46,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         });
 
         // Inbound AI analysis trigger
+        Route::post('query', \App\Http\Controllers\QueryBuilderController::class);
         Route::post('inbounds/{id}/analyze', [\App\Http\Controllers\InboundController::class, 'analyze']);
         Route::post('configuration/imports/{resource}', [\App\Http\Controllers\ImportController::class, 'getResource']);
         Route::get('apiServices', [\App\Http\Controllers\ApiServiceController::class, 'index']);
@@ -101,6 +102,9 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('blocks', \App\Http\Controllers\BlockController::class);
         Route::apiResource('thresholds', \App\Http\Controllers\ThresholdController::class);
         Route::apiResource('projectCategories', \App\Http\Controllers\ProjectCategoryController::class);
+        Route::apiResource('projectPrograms', \App\Http\Controllers\ProjectProgramController::class);
+        Route::get('projectPrograms/{id}/phases', [\App\Http\Controllers\ProjectProgramController::class, 'phases']);
+        Route::post('projectPrograms/{id}/recalculate', [\App\Http\Controllers\ProjectProgramController::class, 'recalculate']);
         Route::apiResource('projects', \App\Http\Controllers\ProjectController::class);
         Route::apiResource('invoices', \App\Http\Controllers\InvoiceController::class);
         Route::apiResource('invoiceItems', \App\Http\Controllers\InvoiceItemController::class);
@@ -156,5 +160,46 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('tripCategories', \App\Http\Controllers\TripCategoryController::class);
         Route::apiResource('entities', \App\Http\Controllers\EntityController::class);
         Route::apiResource('vendors', \App\Http\Controllers\VendorController::class);
+
+        // Inventory Module
+        Route::apiResource('requisitions', \App\Http\Controllers\RequisitionController::class);
+        Route::apiResource('inventory-locations', \App\Http\Controllers\InventoryLocationController::class);
+        Route::apiResource('inventory-balances', \App\Http\Controllers\InventoryBalanceController::class);
+        Route::apiResource('inventory-batches', \App\Http\Controllers\InventoryBatchController::class);
+        Route::apiResource('inventory-transactions', \App\Http\Controllers\InventoryTransactionController::class);
+        Route::apiResource('inventory-issues', \App\Http\Controllers\InventoryIssueController::class);
+        Route::apiResource('inventory-issue-items', \App\Http\Controllers\InventoryIssueItemController::class);
+        Route::apiResource('inventory-returns', \App\Http\Controllers\InventoryReturnController::class);
+        Route::apiResource('inventory-adjustments', \App\Http\Controllers\InventoryAdjustmentController::class);
+        Route::post('inventory/receipts/{storeSupply}', [\App\Http\Controllers\InventoryReceiptController::class, 'store']);
+        Route::apiResource('products', \App\Http\Controllers\ProductController::class);
+
+        // Procurement Module Routes
+        Route::prefix('procurement')->group(function () {
+            // Bid Invitations
+            Route::apiResource('bid-invitations', \App\Http\Controllers\ProjectBidInvitationController::class);
+            Route::post('bid-invitations/{id}/publish', [\App\Http\Controllers\ProjectBidInvitationController::class, 'publish']);
+            Route::post('bid-invitations/{id}/close', [\App\Http\Controllers\ProjectBidInvitationController::class, 'close']);
+
+            // Bids
+            Route::apiResource('bids', \App\Http\Controllers\ProjectBidController::class);
+            Route::post('bids/{id}/open', [\App\Http\Controllers\ProjectBidController::class, 'open']);
+            Route::post('bids/{id}/evaluate', [\App\Http\Controllers\ProjectBidController::class, 'evaluate']);
+            Route::post('bids/{id}/recommend', [\App\Http\Controllers\ProjectBidController::class, 'recommend']);
+            Route::post('bids/{id}/disqualify', [\App\Http\Controllers\ProjectBidController::class, 'disqualify']);
+
+            // Bid Evaluations
+            Route::apiResource('evaluations', \App\Http\Controllers\ProjectBidEvaluationController::class);
+            Route::post('evaluations/{id}/submit', [\App\Http\Controllers\ProjectBidEvaluationController::class, 'submit']);
+            Route::post('evaluations/{id}/approve', [\App\Http\Controllers\ProjectBidEvaluationController::class, 'approve']);
+
+            // Evaluation Committees
+            Route::apiResource('committees', \App\Http\Controllers\ProjectEvaluationCommitteeController::class);
+            Route::post('committees/{id}/dissolve', [\App\Http\Controllers\ProjectEvaluationCommitteeController::class, 'dissolve']);
+
+            // Audit Trails
+            Route::get('audit-trails', [\App\Http\Controllers\ProcurementAuditTrailController::class, 'index']);
+            Route::get('audit-trails/project/{project}', [\App\Http\Controllers\ProcurementAuditTrailController::class, 'byProject']);
+        });
     });
 });

@@ -11,6 +11,10 @@ class Upload extends Model
 
     protected $guarded = [''];
 
+    protected $casts = [
+        'file_hash' => 'string',
+    ];
+
     // Model Relationships or Scope Here...
     public function uploadable(): \Illuminate\Database\Eloquent\Relations\MorphTo
     {

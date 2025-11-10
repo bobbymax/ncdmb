@@ -26,18 +26,23 @@ class UploadRepository extends BaseRepository
         ];
     }
 
-    public function encodeFile(UploadedFile $file): string
+    public function encodeFile(UploadedFile $file): array
     {
         $path = $file->getRealPath() ?: $file->getPathname();
         $content = file_get_contents($path);
-        return $this->scramble($content, Auth::user());
+        $hash = hash('sha256', $content);
+        return [
+            'encoded' => $this->scramble($content, Auth::user()),
+            'hash'    => $hash,
+        ];
     }
 
     public function prepareUpload(
         UploadedFile $file,
         string $encoded,
         int $uploadableId,
-        string $uploadableType
+        string $uploadableType,
+        ?string $hash = null
     ): array {
         return [
             'user_id' => Auth::id(),
@@ -51,7 +56,8 @@ class UploadRepository extends BaseRepository
             'uploadable_type' => $uploadableType,
             'created_at' => now(),
             'updated_at' => now(),
-            'path' => 'some-string'
+            'path' => 'some-string',
+            'file_hash' => $hash,
         ];
     }
 
@@ -109,6 +115,22 @@ class UploadRepository extends BaseRepository
         return null;
     }
 
+    protected function extractHashFromPayload(string $payload): ?string
+    {
+        $chunks = json_decode($payload, true);
+        if (!is_array($chunks)) {
+            return null;
+        }
+
+        foreach ($chunks as $chunk) {
+            if (is_string($chunk) && str_starts_with($chunk, 'hash:')) {
+                return substr($chunk, 5);
+            }
+        }
+
+        return null;
+    }
+
     public function uploadMany(
         array $files,
         int $uploadableId,
@@ -117,20 +139,40 @@ class UploadRepository extends BaseRepository
         $uploads = [];
 
         if (!empty($files)) {
+            $existingHashes = $this->model->newQuery()
+                ->where('uploadable_id', $uploadableId)
+                ->where('uploadable_type', $uploadableType)
+                ->get(['file_path'])
+                ->map(fn($upload) => $this->extractHashFromPayload($upload->file_path))
+                ->filter()
+                ->values()
+                ->all();
+
             foreach ($files as $file) {
 
                 $normalized = $this->normalizeFile($file);
                 if (!$normalized) continue;
 
                 try {
-                    $scrambled = $this->encodeFile($normalized);
+                    $encodedPayload = $this->encodeFile($normalized);
+                    $encoded = $encodedPayload['encoded'];
+                    $hash = $encodedPayload['hash'];
+
+                    if ($hash && in_array($hash, $existingHashes, true)) {
+                        continue;
+                    }
 
                     $uploads[] = $this->prepareUpload(
                         $normalized,
-                        $scrambled,
+                        $encoded,
                         $uploadableId,
-                        $uploadableType
+                        $uploadableType,
+                        $hash
                     );
+
+                    if ($hash) {
+                        $existingHashes[] = $hash;
+                    }
                 } finally {
                     // If normalizeFile() produced a tempnam file, clean it up
                     // Heuristic: only unlink if it's in the system temp dir and still exists

@@ -59,6 +59,7 @@ class DocumentBuilderController extends Controller
             'loggedInUser' => 'required|array',
             'preferences' => 'nullable|array',
             'conversations' => 'nullable|array',
+            'resource' => 'nullable|array',
 
             // watchers normalization
             'watchers' => 'array',
@@ -118,6 +119,7 @@ class DocumentBuilderController extends Controller
             $conversations      = (array) $request->input('conversations', []);
             $budgetYear        = (int) $request->input('budget_year', 0);
             $type             = (string) $category['type'] ?? 'staff';
+            $resourceClass = (array) $request->input('resource', []);
 
             // Guard: we need at least one tracker with order=1 to derive pointer
             $currentPointer = collect($trackers)
@@ -142,7 +144,7 @@ class DocumentBuilderController extends Controller
             DB::transaction(function () use (
                 $service, $content, $mode, $owner, $department, $fund, $config, $title, $typeId,
                 $approvalMemo, $metaData, $requirements, $watchers, $uploads, $currentPointer, $category, $existingResourceId,
-                $preferences, $userId, $existingDocumentId, $conversations, $budgetYear, $type, &$document
+                $preferences, $userId, $existingDocumentId, $conversations, $budgetYear, $type, $resourceClass, &$document
             ) {
                 // Resolve Service & persist resource (keep args tiny; your processor() may already do this)
                 $resource = processor()->saveResource([
@@ -156,6 +158,7 @@ class DocumentBuilderController extends Controller
                     'existing_document_id' => $existingDocumentId,
                     'fund' => $fund,
                     'type' => $type,
+                    'model' => $resourceClass,
                 ], $mode === "update");
 
                 if (!$resource) {
@@ -227,11 +230,11 @@ class DocumentBuilderController extends Controller
                 $resource->refresh();
 
                 if ($resource->document) {
-                    $serviceClass->resolveDocumentAmount($resource['id']);
+                    $serviceClass->resolveDocumentAmount($resource->id);
                     $serviceClass->bindRelatedDocuments($resource->document, $resource, "batched");
                 }
 
-                if ($mode === "store" && !empty($uploads)) {
+                if (!empty($uploads)) {
                     $this->uploadRepository->uploadMany(
                         $uploads,
                         $document->id,

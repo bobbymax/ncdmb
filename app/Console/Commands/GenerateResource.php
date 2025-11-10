@@ -219,6 +219,10 @@ class GenerateResource extends Command
             // Build new content
             $content = "<?php\n\nreturn [\n";
             foreach ($providers as $provider) {
+                // Ensure provider has ::class suffix if it's a class name
+                if (!str_ends_with($provider, '::class') && str_contains($provider, 'Provider')) {
+                    $provider .= '::class';
+                }
                 $content .= "    {$provider},\n";
             }
             $content .= "];\n";

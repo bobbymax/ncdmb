@@ -17,9 +17,9 @@ class Fund extends Model
         return $this->hasMany(PaymentBatch::class);
     }
 
-    public function boardProjects(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function projects(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(BoardProject::class);
+        return $this->hasMany(Project::class);
     }
 
     public function expenditures(): \Illuminate\Database\Eloquent\Relations\HasMany

@@ -9,6 +9,7 @@ use App\Handlers\DataNotFound;
 use App\Handlers\RecordCreationUnsuccessful;
 use App\Interfaces\IRepository;
 use App\Models\Expenditure;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Auth;
@@ -345,6 +346,82 @@ abstract class BaseRepository implements IRepository
             'departmental', 'directorate' => !in_array('department_id', $tableColumns),
             default => false,
         };
+    }
+
+    /**
+     * Apply an array of filter conditions to the builder instance.
+     *
+     * Supports simple [column => value] maps or verbose definitions:
+     * ['column' => ..., 'operator' => ..., 'value' => ..., 'boolean' => ...].
+     */
+    protected function applyConditions(Builder $query, array $conditions): Builder
+    {
+        foreach ($conditions as $key => $condition) {
+            if (is_array($condition) && isset($condition['column'])) {
+                $column   = $condition['column'];
+                $operator = $condition['operator'] ?? '=';
+                $value    = $condition['value'] ?? null;
+                $boolean  = $condition['boolean'] ?? 'and';
+
+                $normalizedOperator = strtolower($operator);
+
+                if ($normalizedOperator === 'in' && is_array($value)) {
+                    $query->whereIn($column, $value, $boolean);
+                } elseif ($normalizedOperator === 'between' && is_array($value) && count($value) === 2) {
+                    $query->whereBetween($column, $value, $boolean);
+                } else {
+                    $query->where($column, $operator, $value, $boolean);
+                }
+            } else {
+                $query->where($key, $condition);
+            }
+        }
+
+        return $query;
+    }
+
+    /**
+     * Shared query builder invoked by the query endpoint.
+     */
+    public function queryWithConditions(
+        array $conditions = [],
+        array $scopes = [],
+        array $with = [],
+        ?array $order = null,
+        bool $paginate = false,
+        int $perPage = 50
+    ) {
+        $query = $this->model->newQuery();
+
+        if (!empty($with)) {
+            $query->with($with);
+        }
+
+        if (!empty($scopes)) {
+            foreach ($scopes as $scope) {
+                $query = $this->applyScopeFilter($query, $scope);
+            }
+        } else {
+            $query = $this->applyScopeFilter($query, $this->getEffectiveScope());
+        }
+
+        $query = $this->applyConditions($query, $conditions);
+
+        if ($order) {
+            $column    = $order['column'] ?? 'created_at';
+            $direction = $order['direction'] ?? 'desc';
+            $query->orderBy($column, $direction);
+        } else {
+            $query->latest();
+        }
+
+        $query = $this->applyBudgetYearFilter($query, config('site.jolt_budget_year'));
+
+        if ($paginate) {
+            return $query->paginate(max($perPage, 1));
+        }
+
+        return $query->get();
     }
 
     protected function getTableColumns(): array

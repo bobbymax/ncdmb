@@ -3,6 +3,8 @@
 namespace App\Services;
 
 use App\Repositories\ProjectRepository;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ProjectService extends BaseService
 {
@@ -44,5 +46,84 @@ class ProjectService extends BaseService
             'variation_amount' => 'nullable|numeric',
             'total_approved_amount' => 'nullable|numeric|min:0',
         ];
+    }
+
+    public function store(array $data)
+    {
+        return parent::store([
+            ...$data,
+            'code' => $this->generate('code', 'PROJ')
+        ]);
+    }
+
+    public function resolveDocumentAmount(int $resourceId)
+    {
+        $project = $this->repository->find($resourceId);
+
+        Log::info(
+            'project_name: ' . $project->title,
+        );
+
+        if (!$project) {
+            return null;
+        }
+
+        return $this->updateDocumentAmount($project, 'total_revised_amount', [
+            'sub_total_amount' => $project->sub_total_amount,
+            'markup_amount' => $project->markup_amount,
+            'vat_amount' => $project->vat_amount,
+        ]);
+    }
+
+    public function resolveContent(array $data): array
+    {
+        $resolvedContents = [
+            'total_revised_amount' => 0,
+            'sub_total_amount' => 0,
+            'vat_amount' => 0,
+            'markup_amount' => 0,
+            'admin_fee_revised_markup' => 0
+        ];
+
+        foreach ($data['content'] as $item) {
+            if (isset($item['content']['invoice'])) {
+                $totals = $item['content']['invoice']['totals'];
+                $settings = $item['content']['invoice']['settings'];
+
+                $resolvedContents['total_revised_amount'] = $totals['grandTotal'];
+                $resolvedContents['sub_total_amount'] = $totals['subTotal'];
+                $resolvedContents['vat_amount'] = $totals['vat'];
+                $resolvedContents['markup_amount'] = $totals['adminFee'];
+                $resolvedContents['admin_fee_revised_markup'] = $settings['adminFee'];
+            }
+        }
+
+        return $resolvedContents;
+    }
+
+    public function buildDocumentFromTemplate(array $data, bool $isUpdate = false)
+    {
+        return DB::transaction(function () use ($data, $isUpdate) {
+            $project = parent::show($data['model']['id']);
+
+            if (!$project) {
+                return null;
+            }
+
+            $resolvedContents = $this->resolveContent($data);
+
+            $project->update([
+                'status' => 'registered',
+                'lifecycle_stage' => 'feasibility',
+                'fund_id' => $data['fund_id'] ?? $project->fund_id,
+                'total_revised_amount' => $resolvedContents['total_revised_amount'] > 0 ? $resolvedContents['total_revised_amount'] : $project->total_proposed_amount,
+                'sub_total_amount' => $resolvedContents['sub_total_amount'] > 0 ? $resolvedContents['sub_total_amount'] : $project->sub_total_amount,
+                'vat_amount' => $resolvedContents['vat_amount'] > 0 ? $resolvedContents['vat_amount'] : $project->vat_amount,
+                'markup_amount' => $resolvedContents['markup_amount'] > 0 ? $resolvedContents['markup_amount'] : $project->markup_amount,
+                'service_charge_percentage' => $resolvedContents['admin_fee_revised_markup'] > 0 ? $resolvedContents['admin_fee_revised_markup'] : $project->service_charge_percentage,
+            ]);
+
+            return $project;
+        });
     }
 }

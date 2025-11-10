@@ -34,12 +34,21 @@ class Project extends Model
         'has_active_issues' => 'boolean',
         'is_multi_year' => 'boolean',
         'is_archived' => 'boolean',
+        'requires_bpp_clearance' => 'boolean',
+        'bpp_invite_date' => 'date',
+        'bpp_award_date' => 'date',
+        'advertised_at' => 'datetime',
     ];
 
     // Organizational Relationships
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function document(): \Illuminate\Database\Eloquent\Relations\MorphOne
+    {
+        return $this->morphOne(Document::class, 'documentable');
     }
 
     public function department(): \Illuminate\Database\Eloquent\Relations\BelongsTo
@@ -190,6 +199,56 @@ class Project extends Model
             ->where('status', 'completed');
     }
 
+    // Procurement Relationships
+    public function bidInvitation(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(ProjectBidInvitation::class);
+    }
+
+    public function bids(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProjectBid::class);
+    }
+
+    public function evaluationCommittees(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProjectEvaluationCommittee::class);
+    }
+
+    public function contracts(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProjectContract::class);
+    }
+
+    public function procurementAuditTrails(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ProcurementAuditTrail::class);
+    }
+
+    // Program/Phase Relationship
+    public function program(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(ProjectProgram::class, 'program_id');
+    }
+
+    // Helper methods for program/phase management
+    public function isPhase(): bool
+    {
+        return !is_null($this->program_id);
+    }
+
+    public function isStandalone(): bool
+    {
+        return is_null($this->program_id);
+    }
+
+    public function getProcurementThresholdAmount(): float
+    {
+        // For phases, use the phase's amount
+        // For standalone projects, use the project's amount
+        return $this->total_proposed_amount;
+    }
+
     // Scopes
     public function scopeActive($query)
     {
@@ -239,5 +298,26 @@ class Project extends Model
     public function getTotalVarianceAttribute(): float
     {
         return $this->total_actual_cost - $this->total_approved_amount;
+    }
+
+    // Boot method for program recalculation
+    protected static function boot()
+    {
+        parent::boot();
+
+        // Recalculate program financials when phase is updated
+        static::saved(function ($project) {
+            if ($project->program_id) {
+                $project->program->recalculateFinancials();
+                $project->program->recalculateProgress();
+            }
+        });
+
+        static::deleted(function ($project) {
+            if ($project->program_id && $project->program) {
+                $project->program->recalculateFinancials();
+                $project->program->recalculateProgress();
+            }
+        });
     }
 }
