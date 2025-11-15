@@ -14,9 +14,11 @@ use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
+use App\Policies\QueryPolicy;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -99,5 +101,10 @@ class AppServiceProvider extends ServiceProvider
                 })->toArray()
             ]);
         }
+
+        // Register Query Policy gates
+        Gate::define('query', [QueryPolicy::class, 'query']);
+        Gate::define('queryCrossDepartment', [QueryPolicy::class, 'queryCrossDepartment']);
+        Gate::define('querySensitive', [QueryPolicy::class, 'querySensitive']);
     }
 }

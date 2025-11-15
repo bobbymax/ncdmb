@@ -31,6 +31,11 @@ abstract class BaseService implements IService
         return $this->repository->rank();
     }
 
+    public function getRepository(): BaseRepository
+    {
+        return $this->repository;
+    }
+
     public function bindRelatedDocuments(
         Document $document,
         mixed $resource,

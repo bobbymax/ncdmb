@@ -2,12 +2,8 @@
 
 namespace App\Models;
 
-
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InventoryAdjustment extends Model
 {
@@ -20,17 +16,17 @@ class InventoryAdjustment extends Model
         'meta' => 'array',
     ];
 
-    public function location(): BelongsTo
+    public function location(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(InventoryLocation::class, 'location_id');
     }
 
-    public function performedBy(): BelongsTo
+    public function performedBy(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class, 'performed_by');
     }
 
-    public function transactions(): HasMany
+    public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(InventoryTransaction::class, 'adjustment_id');
     }

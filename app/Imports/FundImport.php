@@ -2,6 +2,7 @@
 
 namespace App\Imports;
 
+use App\Interfaces\Importable;
 use App\Models\BudgetCode;
 use App\Models\Department;
 use App\Models\SubBudgetHead;
@@ -9,19 +10,19 @@ use App\Repositories\FundRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class FundImport
+class FundImport implements Importable
 {
     public function __construct(protected FundRepository $fundRepository) {}
 
-    public function import(array $chunks): bool
+    public function import(array $rows): array
     {
-        if (empty($chunks)) {
+        if (empty($rows)) {
             Log::error("handleFundUpload: Data array is empty.");
-            return false;
+            return [];
         }
 
-        return DB::transaction(function () use ($chunks) {
-            foreach ($chunks as $chunk) {
+        return DB::transaction(function () use ($rows) {
+            foreach ($rows as $chunk) {
                 $inserts = [];
 
                 // Extract all IDs to reduce multiple queries
@@ -73,7 +74,10 @@ class FundImport
                 }
             }
 
-            return true;
+            return [
+                'inserted' => count($inserts),
+                'total' => count($rows)
+            ];
         });
     }
 

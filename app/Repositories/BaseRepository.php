@@ -246,10 +246,14 @@ abstract class BaseRepository implements IRepository
     public function generate(string $column, string $prefix, $transaction = false): string
     {
         try {
+            $query = method_exists($this->model, 'withTrashed')
+                ? $this->model->withTrashed()
+                : $this->model->newQuery();
+
             do {
                 $code = $prefix . random_int(10000, 99999);
                 Log::info($code);
-            } while ($this->model->withTrashed()->where($column, $code)->exists());
+            } while ($query->where($column, $code)->exists());
 
             return $code;
         } catch (QueryException $e) {
@@ -328,6 +332,7 @@ abstract class BaseRepository implements IRepository
             Log::info("Scope '{$scope}' not applicable for model " . get_class($this->model) . ", falling back to board scope");
             return $query; // Return unfiltered query (board scope)
         }
+        Log::info("All Scope $fallbackScope $scope");
 
         return match ($scope) {
             'personal' => $this->applyPersonalScope($query, $user),
@@ -390,7 +395,8 @@ abstract class BaseRepository implements IRepository
         ?array $order = null,
         bool $paginate = false,
         int $perPage = 50
-    ) {
+    ): \Illuminate\Database\Eloquent\Collection|\Illuminate\Pagination\LengthAwarePaginator
+    {
         $query = $this->model->newQuery();
 
         if (!empty($with)) {

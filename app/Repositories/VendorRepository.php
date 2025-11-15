@@ -14,10 +14,6 @@ class VendorRepository extends BaseRepository
     public function parse(array $data): array
     {
         unset($data['logo']);
-
-        return [
-            ...$data,
-            'department_id' => Auth::user()->department_id
-        ];
+        return $data;
     }
 }

@@ -173,6 +173,10 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('inventory-adjustments', \App\Http\Controllers\InventoryAdjustmentController::class);
         Route::post('inventory/receipts/{storeSupply}', [\App\Http\Controllers\InventoryReceiptController::class, 'store']);
         Route::apiResource('products', \App\Http\Controllers\ProductController::class);
+        Route::apiResource('productCategories', \App\Http\Controllers\ProductCategoryController::class);
+        Route::apiResource('productBrands', \App\Http\Controllers\ProductBrandController::class);
+        Route::apiResource('measurementTypes', \App\Http\Controllers\MeasurementTypeController::class);
+
 
         // Procurement Module Routes
         Route::prefix('procurement')->group(function () {
@@ -201,5 +205,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
             Route::get('audit-trails', [\App\Http\Controllers\ProcurementAuditTrailController::class, 'index']);
             Route::get('audit-trails/project/{project}', [\App\Http\Controllers\ProcurementAuditTrailController::class, 'byProject']);
         });
+        Route::apiResource('vendors', \App\Http\Controllers\VendorController::class);
+        Route::apiResource('workOrders', \App\Http\Controllers\WorkOrderController::class);
     });
 });

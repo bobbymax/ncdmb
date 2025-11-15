@@ -49,7 +49,10 @@ class TruncateTables extends Command
         'fund_transactions',
         'ledger_account_balances',
         'posting_batches',
-        'trial_balances'
+        'trial_balances',
+        'inbounds',
+        'products',
+        'product_categories'
     ];
 
     /**

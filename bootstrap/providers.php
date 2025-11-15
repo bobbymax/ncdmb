@@ -115,6 +115,7 @@ return [
     App\Providers\UserServiceProvider::class,
     App\Providers\VendorServiceProvider::class,
     App\Providers\WidgetServiceProvider::class,
+    App\Providers\WorkOrderServiceProvider::class,
     App\Providers\WorkflowServiceProvider::class,
     App\Providers\WorkflowStageCategoryServiceProvider::class,
     App\Providers\WorkflowStageServiceProvider::class,
