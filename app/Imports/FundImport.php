@@ -17,66 +17,84 @@ class FundImport implements Importable
     public function import(array $rows): array
     {
         if (empty($rows)) {
-            Log::error("handleFundUpload: Data array is empty.");
-            return [];
+            Log::error("FundImport: Data array is empty.");
+            return ['inserted' => 0, 'total' => 0];
         }
 
-        return DB::transaction(function () use ($rows) {
-            foreach ($rows as $chunk) {
-                $inserts = [];
+        // Accept either a flat batch or a nested single-chunk payload
+        // If nested (e.g., [ [row1, row2, ...] ]), unwrap one level.
+        if (isset($rows[0]) && is_array($rows[0]) && array_keys($rows)[0] === 0 && isset($rows[0][0]) && is_array($rows[0][0])) {
+            $rows = $rows[0];
+        }
 
-                // Extract all IDs to reduce multiple queries
-                $subBudgetHeadIds = array_column($chunk, 'sub_budget_head_id');
-                $departmentAbvs = array_column($chunk, 'department');
-                $budgetCodes = array_column($chunk, 'budget_code');
+        $total = count($rows);
+        $inserted = 0;
 
-                // Fetch required data in a single query
-                $subBudgetHeads = SubBudgetHead::whereIn('id', $subBudgetHeadIds)->get()->keyBy('id');
-                $departments = Department::whereIn('abv', $departmentAbvs)->get()->keyBy('abv');
-                $budgetCodeData = BudgetCode::whereIn('code', $budgetCodes)->get()->keyBy('code');
+        return DB::transaction(function () use ($rows, $total, &$inserted) {
+            $inserts = [];
 
-                foreach ($chunk as $item) {
-                    if (empty($item) || !isset($item['budget_year'], $item['approved'])) {
-                        Log::warning("Skipping an invalid item: " . json_encode($item));
-                        continue;
-                    }
+            // Extract all IDs to reduce multiple queries
+            $subBudgetHeadIds = array_column($rows, 'sub_budget_head_id');
+            $departmentAbvs = array_map(fn($v) => strtoupper(trim($v ?? '')), array_column($rows, 'department'));
+            $budgetCodes = array_map(fn($v) => strtoupper(trim($v ?? '')), array_column($rows, 'budget_code'));
 
-                    $subBudgetHead = $subBudgetHeads[$item['sub_budget_head_id']] ?? null;
-                    $department = $departments[$item['department']] ?? null;
-                    $budgetCode = $budgetCodeData[$item['budget_code']] ?? null;
+            // Fetch required data in a single query
+            $subBudgetHeads = SubBudgetHead::whereIn('id', $subBudgetHeadIds)->get()->keyBy('id');
+            $departments = Department::whereIn('abv', $departmentAbvs)->get()->keyBy(fn ($d) => strtoupper($d->abv));
+            $budgetCodeData = BudgetCode::whereIn('code', $budgetCodes)->get()->keyBy(fn ($b) => strtoupper($b->code));
 
-                    if ($subBudgetHead && $department && $budgetCode) {
-                        $inserts[] = [
-                            'sub_budget_head_id' => $subBudgetHead->id,
-                            'department_id' => $department->id,
-                            'budget_code_id' => $budgetCode->id,
-                            'budget_year' => $item['budget_year'],
-                            'total_approved_amount' => $item['approved'],
-                            'type' => $this->getType($item['budget_code']),
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-                    }
+            foreach ($rows as $item) {
+                // Validate required fields
+                if (!isset($item['sub_budget_head_id'], $item['department'], $item['budget_code'], $item['budget_year'], $item['approved'])) {
+                    Log::warning("Skipping an invalid item: " . json_encode($item));
+                    continue;
                 }
 
-                if (!empty($inserts)) {
-                    try {
-                        DB::transaction(function () use ($inserts) {
-                            $this->fundRepository->insert($inserts);
-                        });
+                $subBudgetHead = $subBudgetHeads[$item['sub_budget_head_id']] ?? null;
+                $departmentKey = strtoupper(trim($item['department'] ?? ''));
+                $budgetCodeKey = strtoupper(trim($item['budget_code'] ?? ''));
+                $department = $departments[$departmentKey] ?? null;
+                $budgetCode = $budgetCodeData[$budgetCodeKey] ?? null;
 
-                        Log::info("Inserted " . count($inserts) . " records into funds table.");
-                    } catch (\Exception $e) {
-                        Log::error("Database Insert Error: " . $e->getMessage());
-                    }
+                if ($subBudgetHead && $department && $budgetCode) {
+                    $inserts[] = [
+                        'sub_budget_head_id' => $subBudgetHead->id,
+                        'department_id' => $department->id,
+                        'budget_code_id' => $budgetCode->id,
+                        'budget_year' => $item['budget_year'],
+                        'total_approved_amount' => $item['approved'],
+                        'type' => $this->getType($budgetCodeKey),
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
                 } else {
-                    Log::warning("No valid records found for insertion in this chunk.");
+                    if (!$subBudgetHead) {
+                        Log::info('FundImport: Skipped (sub_budget_head not found): ' . ($item['sub_budget_head_id'] ?? 'null'));
+                    }
+                    if (!$department) {
+                        Log::info('FundImport: Skipped (department not found): ' . ($item['department'] ?? 'null'));
+                    }
+                    if (!$budgetCode) {
+                        Log::info('FundImport: Skipped (budget code not found): ' . ($item['budget_code'] ?? 'null'));
+                    }
                 }
             }
 
+            if (!empty($inserts)) {
+                try {
+                    $this->fundRepository->insert($inserts);
+                    $inserted = count($inserts);
+                    Log::info("Inserted {$inserted} records into funds table.");
+                } catch (\Exception $e) {
+                    Log::error("Database Insert Error: " . $e->getMessage());
+                }
+            } else {
+                Log::warning("No valid records found for insertion in this batch.");
+            }
+
             return [
-                'inserted' => count($inserts),
-                'total' => count($rows)
+                'inserted' => $inserted,
+                'total' => $total,
             ];
         });
     }

@@ -32,7 +32,7 @@ class ImportController extends Controller
             return $this->error(null, "Import class not found", 500);
         }
 
-        $chunks = array_chunk($request->data, 500);
+        $chunks = array_chunk($request->data, 100);
 
         foreach ($chunks as $chunk) {
             ImportResourcesJob::dispatch($importClass, $chunk);
@@ -49,6 +49,6 @@ class ImportController extends Controller
             return null;
         }
 
-        return app($importClass);
+        return $importClass;
     }
 }
