@@ -20,4 +20,6 @@ class DepartmentRepository extends BaseRepository
             'alternate_signatory_staff_id' => $data['alternate_signatory_staff_id'] > 0 ? (int) $data['alternate_signatory_staff_id'] : null,
         ];
     }
+
+
 }

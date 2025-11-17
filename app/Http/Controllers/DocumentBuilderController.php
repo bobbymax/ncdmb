@@ -202,7 +202,12 @@ class DocumentBuilderController extends Controller
                             unset($valueDump['created_at']);
                             unset($valueDump['conversations']);
 
-                            if ((int) $valueDump['thread_owner_id'] == Auth::id()) continue;
+                            $threadOwnerId = (int) ($valueDump['thread_owner_id'] ?? 0);
+
+                            // Skip if thread_owner_id is invalid (0 or equals current user)
+                            if ($threadOwnerId <= 0 || $threadOwnerId == Auth::id()) {
+                                continue;
+                            }
 
                             $conversation = $this->threadRepository->create([
                                 ...$valueDump,
@@ -361,9 +366,15 @@ class DocumentBuilderController extends Controller
                 // Check the Document Category metadata activities
                 // if it has activities, then we need to process the activities
                 $postProcesses = $document->documentCategory->meta_data['activities'] ?? [];
+
+//                Log::info('Found Post Processes: ', (array)json_encode($postProcesses));
+
                 if (!empty($postProcesses)) {
                     $activities = collect($postProcesses);
                     $process = $activities->firstWhere('document_action_id', $documentActionId);
+
+
+                    Log::info($documentActionId . ' Found Process: ', (array)json_encode($activities));
 
                     // Workflow takes priority over Actions
                     if (isset($process['workflow_id']) && $process['workflow_id'] > 0) {

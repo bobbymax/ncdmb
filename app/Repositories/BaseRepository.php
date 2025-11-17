@@ -111,6 +111,7 @@ abstract class BaseRepository implements IRepository
         // Apply budget year filter if column exists
         $query = $this->applyBudgetYearFilter($query, $period);
 
+//        return $query->latest()->paginate(10);
         return $query->latest()->get();
     }
 

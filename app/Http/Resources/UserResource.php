@@ -17,13 +17,16 @@ class UserResource extends JsonResource
     {
         return [
             ...parent::toArray($request),
-            'groups' => $this->groups,
+            'groups' => $this->whenLoaded('groups', fn() => $this->groups),
             'name' => "{$this->surname}, {$this->firstname} {$this->middlename}",
-            'grade_level' => $this->gradeLevel->key,
-            'remunerations' => RemunerationResource::collection($this->gradeLevel->remunerations),
-            'rank' => $this->ranking(),
-            'grade_level_object' => $this->gradeLevel,
-            'carder_id' => $this->gradeLevel?->carder_id,
+            'department' => $this->whenLoaded('department', fn() => $this->department?->abv ?? 'N/A'),
+            'grade_level' => $this->whenLoaded('gradeLevel', fn() => $this->gradeLevel->key),
+            'remunerations' => $this->whenLoaded('gradeLevel.remunerations',
+                fn() => RemunerationResource::collection($this->gradeLevel->remunerations)
+            ),
+            'rank' => $this->whenLoaded('gradeLevel', fn() => $this->ranking()),
+            'grade_level_object' => $this->whenLoaded('gradeLevel', fn() => $this->gradeLevel),
+            'carder_id' => $this->whenLoaded('gradeLevel', fn() => $this->gradeLevel?->carder_id),
         ];
     }
 

@@ -21,4 +21,15 @@ class UserController extends BaseController
 
         return $this->success(ClaimResource::collection($user->claims->where('id', '!=', $claimId)));
     }
+
+    public function grouping($groupId, $departmentId): \Illuminate\Http\JsonResponse
+    {
+        try {
+            $users = $this->service->getUsersByDepartmentAndGroup($groupId, $departmentId);
+
+            return $this->success($this->jsonResource::collection($users));
+        } catch (\Exception $e) {
+            return $this->error(null, 'Failed to fetch users: ' . $e->getMessage(), 500);
+        }
+    }
 }

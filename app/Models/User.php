@@ -43,6 +43,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
             'two_factor_enabled' => 'boolean',
+            'date_joined' => 'datetime',
         ];
     }
 
@@ -88,11 +89,11 @@ class User extends Authenticatable
         for ($i = 0; $i < 8; $i++) {
             $codes[] = strtoupper(substr(bin2hex(random_bytes(5)), 0, 10));
         }
-        
+
         $this->forceFill([
             'two_factor_recovery_codes' => encrypt(json_encode($codes))
         ])->save();
-        
+
         return $codes;
     }
 
@@ -101,7 +102,7 @@ class User extends Authenticatable
      */
     public function getRecoveryCodes(): array
     {
-        return $this->two_factor_recovery_codes 
+        return $this->two_factor_recovery_codes
             ? json_decode(decrypt($this->two_factor_recovery_codes), true)
             : [];
     }

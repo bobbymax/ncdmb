@@ -60,6 +60,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::post('process/document', [\App\Http\Controllers\DocumentBuilderController::class, 'process']);
         Route::get('collated/{status}/documents', [\App\Http\Controllers\DocumentController::class, 'queuedDocuments']);
         Route::post('process/handle/request', [\App\Http\Controllers\GoogleApiController::class, 'assign']);
+        Route::get('users/{groupId}/{departmentId}', [\App\Http\Controllers\UserController::class, 'grouping']);
 
         Route::get('chat-token', [\App\Http\Controllers\AuthApiController::class, 'getChatToken']);
         Route::post('document-category/signatories', [\App\Http\Controllers\DocumentCategoryController::class, 'addSignatories']);

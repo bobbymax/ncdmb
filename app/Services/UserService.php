@@ -45,9 +45,9 @@ class UserService extends BaseService
         return $rules;
     }
 
-    public function index()
+    public function getUsersByDepartmentAndGroup(int $groupId, ?int $departmentId = null)
     {
-        return $this->repository->accessible();
+        return $this->repository->getUsersByDepartmentAndGroup($groupId, $departmentId);
     }
 
     public function store(array $data)
@@ -82,15 +82,37 @@ class UserService extends BaseService
     public function update(int $id, array $data, $parsed = true)
     {
         return DB::transaction(function () use ($id, $parsed, $data) {
-            $user = parent::update($id, $data, $parsed);
+            $groups = $data['groups'] ?? null;
+            unset($data['groups']);
+
+            $user = parent::update($id, [
+                'firstname' => $data['firstname'],
+                'surname' => $data['surname'],
+                'grade_level_id' => $data['grade_level_id'],
+                'department_id' => $data['department_id'],
+                'role_id' => $data['role_id'],
+                'email' => $data['email'],
+                'location_id' => $data['location_id'],
+                'middlename' => $data['middlename'],
+                'gender' => $data['gender'],
+                'job_title' => $data['job_title'],
+                'type' => $data['type'],
+                'default_page_id' => $data['default_page_id'],
+                'blocked' => $data['blocked'],
+                'is_admin' => $data['is_admin'] ?? false,
+                'is_logged_in' => $data['is_logged_in'] ?? false,
+                'date_joined' => $data['date_joined'] ?? null,
+                'staff_no' => $data['staff_no'],
+                'status' => $data['status'] ?? 'available',
+            ], $parsed);
 
             if (!$user) {
                 return null;
             }
 
-            if (isset($data['groups'])) {
+            if (isset($groups)) {
                 $currentGroupIds = $user->groups->pluck('id')->toArray();
-                $newGroupIds = array_map(fn($group) => $group['value'], $data['groups']);
+                $newGroupIds = array_map(fn($group) => $group['value'], $groups);
                 $groupsToRemove = array_diff($currentGroupIds, $newGroupIds);
 
                 if (!empty($groupsToRemove)) {
