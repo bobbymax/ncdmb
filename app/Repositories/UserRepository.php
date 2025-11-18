@@ -37,13 +37,13 @@ class UserRepository extends BaseRepository
                 'users.status',
                 'users.blocked',
             ])
+            ->with('groups')
             ->join('groupables', function ($join) use ($groupId) {
                 $join->on('users.id', '=', 'groupables.groupable_id')
                     ->where('groupables.group_id', '=', $groupId)
                     ->where('groupables.groupable_type', '=', User::class);
             })
             ->where('users.blocked', 0); // Exclude blocked users
-//            ->where('users.id', '!=', auth()->id()); // Exclude current user
 
         // Filter by department if provided
         if ($departmentId && $departmentId > 0) {
@@ -64,6 +64,7 @@ class UserRepository extends BaseRepository
             ->with([
                 'groups',
                 'department',
+                'gradeLevel',
                 'gradeLevel.remunerations' => function($query) {
                     $query->where('is_active', 1);
                 }
@@ -75,5 +76,19 @@ class UserRepository extends BaseRepository
         $query = $this->applyBudgetYearFilter($query, $period);
 
         return $query->latest()->get();
+    }
+
+    public function find($id)
+    {
+        return $this->model->newQuery()
+            ->with([
+                'groups',
+                'department',
+                'gradeLevel', // Add this - the resource needs gradeLevel itself
+                'gradeLevel.remunerations' => function($query) {
+                    $query->where('is_active', 1);
+                }
+            ])
+            ->findOrFail($id);
     }
 }

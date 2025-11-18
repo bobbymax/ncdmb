@@ -6,6 +6,7 @@ use App\Jobs\StaffRecordAdded;
 use App\Repositories\GroupRepository;
 use App\Repositories\UserRepository;
 use Illuminate\Support\Facades\DB;
+use Laravel\Reverb\Loggers\Log;
 
 class UserService extends BaseService
 {
@@ -111,20 +112,8 @@ class UserService extends BaseService
             }
 
             if (isset($groups)) {
-                $currentGroupIds = $user->groups->pluck('id')->toArray();
                 $newGroupIds = array_map(fn($group) => $group['value'], $groups);
-                $groupsToRemove = array_diff($currentGroupIds, $newGroupIds);
-
-                if (!empty($groupsToRemove)) {
-                    $user->groups()->detach($groupsToRemove);
-                }
-
-                $groupsToAdd = array_diff($newGroupIds, $currentGroupIds);
-                if (!empty($groupsToAdd)) {
-                    $user->groups()->attach($groupsToAdd);
-                }
-            } else {
-                $user->groups()->detach();
+                $user->groups()->sync($newGroupIds);
             }
 
             return $user;
