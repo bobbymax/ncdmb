@@ -1,0 +1,20 @@
+<?php
+
+namespace App\Services;
+
+use App\Repositories\InventoryReceiptRepository;
+
+class InventoryReceiptService extends BaseService
+{
+    public function __construct(InventoryReceiptRepository $inventoryReceiptRepository)
+    {
+        parent::__construct($inventoryReceiptRepository);
+    }
+
+    public function rules($action = "store"): array
+    {
+        return [
+            //
+        ];
+    }
+}

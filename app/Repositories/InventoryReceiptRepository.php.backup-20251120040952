@@ -1,0 +1,17 @@
+<?php
+
+namespace App\Repositories;
+
+use App\Models\InventoryReceipt;
+
+class InventoryReceiptRepository extends BaseRepository
+{
+    public function __construct(InventoryReceipt $inventoryReceipt) {
+        parent::__construct($inventoryReceipt);
+    }
+
+    public function parse(array $data): array
+    {
+        return $data;
+    }
+}

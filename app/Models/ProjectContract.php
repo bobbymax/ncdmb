@@ -26,6 +26,12 @@ class ProjectContract extends Model
         'standstill_end_date' => 'date',
         'date_of_acceptance' => 'date',
         'is_completed' => 'boolean',
+        'legal_review_required' => 'boolean',
+        'legal_clearance_obtained' => 'boolean',
+        'legal_clearance_date' => 'date',
+        'contract_variations_count' => 'integer',
+        'has_active_disputes' => 'boolean',
+        'last_legal_review_date' => 'date',
     ];
 
     // Model Relationships or Scope Here...
@@ -57,5 +63,41 @@ class ProjectContract extends Model
     public function supplies(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(StoreSupply::class);
+    }
+
+    // Legal Cycle Relationships
+    public function legalReviews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LegalReview::class);
+    }
+
+    public function legalClearances(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LegalClearance::class);
+    }
+
+    public function contractVariations(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ContractVariation::class);
+    }
+
+    public function legalComplianceChecks(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LegalComplianceCheck::class);
+    }
+
+    public function legalDocuments(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LegalDocument::class);
+    }
+
+    public function contractDisputes(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(ContractDispute::class);
+    }
+
+    public function legalAuditTrails(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LegalAuditTrail::class);
     }
 }

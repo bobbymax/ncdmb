@@ -172,7 +172,12 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('inventory-issue-items', \App\Http\Controllers\InventoryIssueItemController::class);
         Route::apiResource('inventory-returns', \App\Http\Controllers\InventoryReturnController::class);
         Route::apiResource('inventory-adjustments', \App\Http\Controllers\InventoryAdjustmentController::class);
-        Route::post('inventory/receipts/{storeSupply}', [\App\Http\Controllers\InventoryReceiptController::class, 'store']);
+        Route::apiResource('inventory-receipts', \App\Http\Controllers\InventoryReceiptController::class);
+        Route::apiResource('inventory-receipt-items', \App\Http\Controllers\InventoryReceiptItemController::class);
+        Route::apiResource('inventory-transfers', \App\Http\Controllers\InventoryTransferController::class);
+        Route::apiResource('inventory-transfer-items', \App\Http\Controllers\InventoryTransferItemController::class);
+        Route::apiResource('inventory-reservations', \App\Http\Controllers\InventoryReservationController::class);
+        Route::apiResource('inventory-valuations', \App\Http\Controllers\InventoryValuationController::class);
         Route::apiResource('products', \App\Http\Controllers\ProductController::class);
         Route::apiResource('productCategories', \App\Http\Controllers\ProductCategoryController::class);
         Route::apiResource('productBrands', \App\Http\Controllers\ProductBrandController::class);
@@ -206,6 +211,53 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
             Route::get('audit-trails', [\App\Http\Controllers\ProcurementAuditTrailController::class, 'index']);
             Route::get('audit-trails/project/{project}', [\App\Http\Controllers\ProcurementAuditTrailController::class, 'byProject']);
         });
+
+        // Legal Cycle Module Routes
+        Route::prefix('legal')->group(function () {
+            // Legal Reviews
+            Route::apiResource('reviews', \App\Http\Controllers\LegalReviewController::class);
+            Route::post('reviews/{id}/approve', [\App\Http\Controllers\LegalReviewController::class, 'approve']);
+            Route::post('reviews/{id}/reject', [\App\Http\Controllers\LegalReviewController::class, 'reject']);
+            Route::get('reviews/project/{projectId}', [\App\Http\Controllers\LegalReviewController::class, 'byProject']);
+            Route::get('reviews/contract/{contractId}', [\App\Http\Controllers\LegalReviewController::class, 'byContract']);
+
+            // Legal Clearances
+            Route::apiResource('clearances', \App\Http\Controllers\LegalClearanceController::class);
+            Route::post('clearances/{id}/grant', [\App\Http\Controllers\LegalClearanceController::class, 'grant']);
+            Route::post('clearances/{id}/revoke', [\App\Http\Controllers\LegalClearanceController::class, 'revoke']);
+            Route::get('clearances/contract/{contractId}', [\App\Http\Controllers\LegalClearanceController::class, 'byContract']);
+
+            // Contract Variations
+            Route::apiResource('variations', \App\Http\Controllers\ContractVariationController::class);
+            Route::post('variations/{id}/approve', [\App\Http\Controllers\ContractVariationController::class, 'approve']);
+            Route::post('variations/{id}/reject', [\App\Http\Controllers\ContractVariationController::class, 'reject']);
+            Route::get('variations/contract/{contractId}', [\App\Http\Controllers\ContractVariationController::class, 'byContract']);
+
+            // Legal Compliance Checks
+            Route::apiResource('compliance-checks', \App\Http\Controllers\LegalComplianceCheckController::class);
+            Route::get('compliance-checks/contract/{contractId}', [\App\Http\Controllers\LegalComplianceCheckController::class, 'byContract']);
+
+            // Legal Documents
+            Route::apiResource('documents', \App\Http\Controllers\LegalDocumentController::class);
+            Route::post('documents/{id}/sign', [\App\Http\Controllers\LegalDocumentController::class, 'sign']);
+            Route::get('documents/contract/{contractId}', [\App\Http\Controllers\LegalDocumentController::class, 'byContract']);
+
+            // Contract Disputes
+            Route::apiResource('disputes', \App\Http\Controllers\ContractDisputeController::class);
+            Route::post('disputes/{id}/resolve', [\App\Http\Controllers\ContractDisputeController::class, 'resolve']);
+            Route::post('disputes/{id}/escalate', [\App\Http\Controllers\ContractDisputeController::class, 'escalate']);
+            Route::get('disputes/contract/{contractId}', [\App\Http\Controllers\ContractDisputeController::class, 'byContract']);
+
+            // Legal Audit Trails
+            Route::get('audit-trails', [\App\Http\Controllers\LegalAuditTrailController::class, 'index']);
+            Route::get('audit-trails/contract/{contractId}', [\App\Http\Controllers\LegalAuditTrailController::class, 'byContract']);
+            Route::get('audit-trails/project/{projectId}', [\App\Http\Controllers\LegalAuditTrailController::class, 'byProject']);
+        });
+
+        // Project Contracts
+        Route::apiResource('project-contracts', \App\Http\Controllers\ProjectContractController::class);
+        Route::get('project-contracts/project/{projectId}', [\App\Http\Controllers\ProjectContractController::class, 'byProject']);
+
         Route::apiResource('vendors', \App\Http\Controllers\VendorController::class);
         Route::apiResource('workOrders', \App\Http\Controllers\WorkOrderController::class);
     });

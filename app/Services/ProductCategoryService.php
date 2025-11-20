@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\ProductCategoryRepository;
+use Illuminate\Support\Str;
 
 class ProductCategoryService extends BaseService
 {
@@ -16,6 +17,15 @@ class ProductCategoryService extends BaseService
     {
         return [
             'name' => 'required|string|max:255',
+            'description' => 'sometimes|nullable|string|min:3',
         ];
+    }
+
+    public function store(array $data)
+    {
+        return parent::store([
+            ...$data,
+            'label' => Str::slug($data['name']),
+        ]);
     }
 }

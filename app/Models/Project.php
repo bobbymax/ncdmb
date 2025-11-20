@@ -225,6 +225,17 @@ class Project extends Model
         return $this->hasMany(ProcurementAuditTrail::class);
     }
 
+    // Legal Cycle Relationships
+    public function legalReviews(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LegalReview::class);
+    }
+
+    public function legalAuditTrails(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(LegalAuditTrail::class);
+    }
+
     // Program/Phase Relationship
     public function program(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {

@@ -15,7 +15,7 @@ class ProjectContractService extends BaseService
     {
         $rules = [
             'vendor_id' => 'required|integer|exists:vendors,id',
-            'board_project_id' => 'required|integer|exists:board_projects,id',
+            'project_id' => 'required|integer|exists:projects,id',
             'department_id' => 'required|integer|exists:departments,id',
             'acceptance_letter' => 'nullable|string|max:255',
             'date_of_acceptance' => 'nullable|date',
