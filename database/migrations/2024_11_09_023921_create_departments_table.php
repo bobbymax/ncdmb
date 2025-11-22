@@ -17,11 +17,14 @@ return new class extends Migration
             $table->string('label')->unique();
             $table->string('abv')->unique();
             $table->string('department_payment_code')->unique()->nullable();
-            $table->bigInteger('parentId')->default(0);
+            
+            // Foreign key columns (constraints added in separate migration after users table exists)
+            $table->unsignedBigInteger('parent_id')->nullable();
+            $table->unsignedBigInteger('bco_id')->nullable();
+            $table->unsignedBigInteger('bo_id')->nullable();
+            $table->unsignedBigInteger('director_id')->nullable();
+            
             $table->enum('type', ['directorate', 'division', 'department', 'unit'])->default('department');
-            $table->bigInteger('bco')->default(0);
-            $table->bigInteger('bo')->default(0);
-            $table->bigInteger('director')->default(0);
             $table->boolean('is_blocked')->default(false);
             $table->timestamps();
             $table->softDeletes();

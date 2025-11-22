@@ -24,7 +24,7 @@ return new class extends Migration
             $table->date('inspection_date');
             
             // Inspection Team
-            $table->unsignedBigInteger('lead_inspector_id')->nullable();
+            $table->foreignId('lead_inspector_id')->nullable()->constrained('users')->nullOnDelete();
             $table->json('inspection_team')->nullable()->comment('Array of user IDs');
             
             // Findings

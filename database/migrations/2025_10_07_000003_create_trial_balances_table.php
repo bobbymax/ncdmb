@@ -27,6 +27,7 @@ return new class extends Migration
             $table->dateTime('approved_at')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
             
             // Unique trial balance per department/period
             $table->unique(['department_id', 'period', 'fiscal_year'], 'unique_trial_balance_period');

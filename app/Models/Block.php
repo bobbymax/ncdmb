@@ -10,6 +10,9 @@ class Block extends Model
     use HasFactory;
 
     protected $guarded = [''];
+    protected $casts = [
+        'schema' => 'json',
+    ];
 
     // Model Relationships or Scope Here...
 

@@ -20,9 +20,16 @@ return new class extends Migration
             $table->unsignedBigInteger('document_action_id');
             $table->foreign('document_action_id')->references('id')->on('document_actions')->onDelete('cascade');
             $table->longText('reason')->nullable();
+            
+            // Polymorphic relationship
             $table->unsignedBigInteger('document_trailable_id');
             $table->string('document_trailable_type');
+            
             $table->timestamps();
+            $table->softDeletes(); // Added for data integrity
+            
+            // Index for polymorphic relationship (shortened name to avoid MySQL 64-character limit)
+            $table->index(['document_trailable_id', 'document_trailable_type'], 'doc_trails_poly_idx');
         });
     }
 

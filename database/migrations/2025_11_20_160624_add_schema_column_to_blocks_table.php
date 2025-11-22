@@ -11,8 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('claims', function (Blueprint $table) {
-            $table->bigInteger('sponsoring_department_id')->default(0)->after('department_id');
+        Schema::table('blocks', function (Blueprint $table) {
+            $table->json('schema')->nullable()->after('type');
         });
     }
 
@@ -21,8 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('claims', function (Blueprint $table) {
-            $table->dropColumn('sponsoring_department_id');
+        Schema::table('blocks', function (Blueprint $table) {
+            $table->dropColumn('schema');
         });
     }
 };

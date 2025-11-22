@@ -27,6 +27,7 @@ return new class extends Migration
             $table->dateTime('closed_at')->nullable();
             $table->foreignId('closed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
+            $table->softDeletes();
             
             // Ensure unique balance record per account/ledger/period
             $table->unique(['chart_of_account_id', 'ledger_id', 'period', 'fiscal_year'], 'unique_account_period');

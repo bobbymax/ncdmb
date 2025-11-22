@@ -13,9 +13,8 @@ return new class extends Migration
     {
         Schema::create('mailing_lists', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('group_id');
-            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
-            $table->bigInteger('department_id')->default(0);
+            $table->foreignId('group_id')->constrained('groups')->cascadeOnDelete();
+            $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete(); // Fixed default(0) issue
             $table->string('name');
             $table->timestamps();
         });

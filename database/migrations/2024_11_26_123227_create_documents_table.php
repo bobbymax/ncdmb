@@ -13,26 +13,69 @@ return new class extends Migration
     {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('user_id');
-            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->unsignedBigInteger('department_id');
-            $table->foreign('department_id')->references('id')->on('departments')->onDelete('cascade');
-            $table->unsignedBigInteger('document_category_id');
-            $table->foreign('document_category_id')->references('id')->on('document_categories')->onDelete('cascade');
-            $table->unsignedBigInteger('document_type_id');
-            $table->foreign('document_type_id')->references('id')->on('document_types')->onDelete('cascade');
-            $table->bigInteger('vendor_id')->default(0);
-            $table->bigInteger('document_reference_id')->default(0);
-            $table->bigInteger('document_action_id')->default(0);
+            
+            // Foreign keys - properly defined
+            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('department_id')->constrained('departments')->cascadeOnDelete();
+            $table->foreignId('document_category_id')->constrained('document_categories')->cascadeOnDelete();
+            $table->foreignId('document_type_id')->constrained('document_types')->cascadeOnDelete();
+            $table->foreignId('workflow_id')->nullable()->constrained('workflows')->nullOnDelete();
+            $table->foreignId('vendor_id')->nullable()->constrained('vendors')->nullOnDelete();
+            $table->foreignId('document_reference_id')->nullable()->constrained('documents')->nullOnDelete();
+            $table->foreignId('document_action_id')->nullable()->constrained('document_actions')->nullOnDelete();
+            $table->foreignId('fund_id')->nullable()->constrained('funds')->nullOnDelete();
+            
+            // Foreign key columns (constraints added in separate migration after referenced tables exist)
+            $table->unsignedBigInteger('progress_tracker_id')->nullable();
+            $table->unsignedBigInteger('threshold_id')->nullable();
+            
+            // Polymorphic relationship
             $table->unsignedBigInteger('documentable_id');
             $table->string('documentable_type');
+            
+            // Core fields
             $table->string('title');
             $table->string('ref')->unique();
             $table->longText('description')->nullable();
-            $table->string('file_path')->nullable();
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            
+            // Status and type
+            $table->string('status')->nullable(); // changed from enum to string
+            $table->enum('type', ['staff', 'third-party'])->default('staff');
+            
+            // JSON fields
+            $table->json('config')->nullable();
+            $table->json('contents')->nullable();
+            $table->json('meta_data')->nullable();
+            $table->json('uploaded_requirements')->nullable();
+            $table->json('preferences')->nullable();
+            $table->json('watchers')->nullable();
+            $table->json('activities')->nullable();
+            $table->string('pointer')->nullable();
+            
+            // Amount fields
+            $table->decimal('approved_amount', 30, 2)->default(0);
+            $table->decimal('sub_total_amount', 30, 2)->default(0);
+            $table->decimal('admin_fee_amount', 30, 2)->default(0);
+            $table->decimal('vat_amount', 30, 2)->default(0);
+            $table->decimal('variation_amount', 30, 2)->default(0);
+            
+            // Year - changed from bigInteger default(0) to year nullable
+            $table->year('budget_year')->nullable();
+            
+            // Metadata
+            $table->boolean('is_completed')->default(false);
             $table->boolean('is_archived')->default(false);
             $table->timestamps();
+            $table->softDeletes();
+            
+            // Indexes for performance
+            $table->index(['documentable_id', 'documentable_type']);
+            $table->index(['user_id', 'status']);
+            $table->index(['department_id', 'status']);
+            $table->index(['document_category_id']);
+            $table->index(['workflow_id']);
+            $table->index(['progress_tracker_id']);
         });
     }
 

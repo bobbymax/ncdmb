@@ -25,6 +25,9 @@ return new class extends Migration
             $table->string('status')->default('logged');
             $table->timestamps();
             $table->softDeletes();
+            
+            // Index for polymorphic relationship
+            $table->index(['journalable_id', 'journalable_type']);
         });
     }
 

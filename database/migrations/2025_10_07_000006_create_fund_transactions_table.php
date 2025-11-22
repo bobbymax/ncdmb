@@ -38,6 +38,7 @@ return new class extends Migration
             $table->foreignId('reversed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->dateTime('reversed_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
             
             $table->index(['source_id', 'source_type']);
         });

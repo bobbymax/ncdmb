@@ -15,6 +15,10 @@ return new class extends Migration
             $table->unsignedBigInteger('document_action_id');
             $table->unsignedBigInteger('document_actionable_id');
             $table->string('document_actionable_type');
+            
+            // Indexes for polymorphic relationship
+            $table->index(['document_actionable_id', 'document_actionable_type'], 'doc_actionables_poly_idx');
+            $table->index('document_action_id', 'doc_actionables_action_idx');
         });
     }
 

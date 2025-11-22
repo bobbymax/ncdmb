@@ -19,8 +19,8 @@ return new class extends Migration
             $table->foreign('room_id')->references('id')->on('rooms')->onDelete('cascade');
             $table->unsignedBigInteger('department_id');
             $table->foreign('department_id')->references('id')->on('departments')->onDelete('cascade');
-            $table->bigInteger('fund_id')->default(0);
-            $table->bigInteger('staff_id')->default(0);
+            $table->foreignId('fund_id')->nullable()->constrained('funds')->nullOnDelete();
+            $table->foreignId('staff_id')->nullable()->constrained('users')->nullOnDelete();
             $table->string('code')->unique();
             $table->string('title');
             $table->longText('description')->nullable();
@@ -48,6 +48,12 @@ return new class extends Migration
             $table->boolean('has_accepted')->default(false);
             $table->boolean('closed')->default(false);
             $table->timestamps();
+            $table->softDeletes();
+            
+            // Indexes for performance
+            $table->index('status');
+            $table->index(['start_date', 'end_date']);
+            $table->index('closed');
         });
     }
 

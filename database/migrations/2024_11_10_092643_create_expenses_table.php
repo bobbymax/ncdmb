@@ -15,11 +15,11 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('claim_id');
             $table->foreign('claim_id')->references('id')->on('claims')->onDelete('cascade');
-            $table->unsignedBigInteger('remuneration_id')->default(0);
+            $table->foreignId('remuneration_id')->nullable()->constrained('remunerations')->nullOnDelete();
             $table->string('identifier')->unique()->nullable();
             $table->string('description')->nullable();
-            $table->bigInteger('parent_id')->default(0);
-            $table->bigInteger('allowance_id')->default(0);
+            $table->foreignId('parent_id')->nullable()->constrained('expenses')->nullOnDelete();
+            $table->foreignId('allowance_id')->nullable()->constrained('allowances')->nullOnDelete();
             $table->decimal('total_distance_covered', 8, 2)->default(0);
             $table->decimal('unit_price', 30, 2)->default(0);
             $table->date('start_date')->nullable();
@@ -29,6 +29,7 @@ return new class extends Migration
             $table->decimal('total_amount_paid', 30, 2)->default(0);
             $table->enum('status', ['pending', 'cleared', 'altered', 'rejected'])->default('pending');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

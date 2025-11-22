@@ -23,13 +23,16 @@ return new class extends Migration
             $table->foreign('vendor_id')->references('id')->on('vendors')->onDelete('cascade');
             $table->unsignedBigInteger('project_milestone_id');
             $table->foreign('project_milestone_id')->references('id')->on('project_milestones')->onDelete('cascade');
-            $table->bigInteger('expenditure_id')->default(0);
+            
+            // Foreign key column (constraint added in separate migration after referenced table exists)
+            $table->unsignedBigInteger('expenditure_id')->nullable();
+            
             $table->string('code')->unique();
             $table->bigInteger('no_of_itineraries')->default(0);
             $table->decimal('total_payable_amount', 30, 2)->default(0);
             $table->longText('instruction')->nullable();
             $table->longText('description')->nullable();
-            $table->bigInteger('budget_year')->default(0);
+            $table->year('budget_year')->nullable(); // Changed from bigInteger default(0) to year nullable
             $table->enum('status', ['pending', 'raised', 'paid', 'reversed'])->default('pending');
             $table->timestamps();
         });

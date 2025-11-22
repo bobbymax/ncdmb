@@ -27,6 +27,7 @@ return new class extends Migration
             $table->dateTime('posted_at')->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

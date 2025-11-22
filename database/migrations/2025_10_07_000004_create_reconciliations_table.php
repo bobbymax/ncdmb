@@ -29,6 +29,7 @@ return new class extends Migration
             $table->foreignId('reconciled_by')->nullable()->constrained('users')->nullOnDelete();
             $table->dateTime('reconciled_at')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

@@ -12,8 +12,8 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('journal_types', function (Blueprint $table) {
-            $table->unsignedBigInteger('ledger_id')->default(0)->after('id');
-            $table->unsignedBigInteger('entity_id')->default(0)->after('ledger_id');
+            $table->foreignId('ledger_id')->nullable()->after('id')->constrained('ledgers')->nullOnDelete();
+            $table->unsignedBigInteger('entity_id')->nullable()->after('ledger_id'); // Polymorphic, no FK constraint
             $table->enum('context', ['tax', 'stamp', 'commission', 'holding', 'gross', 'net', 'reimbursement'])->default('gross')->after('code');
             $table->enum('benefactor', ['beneficiary', 'entity'])->default('entity')->after('context');
             $table->enum('state', ['fixed', 'optional'])->default('optional')->after('benefactor');
@@ -29,6 +29,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('journal_types', function (Blueprint $table) {
+            // Drop foreign key first, then drop columns
+            $table->dropForeign(['ledger_id']);
             $table->dropColumn('entity_id');
             $table->dropColumn('ledger_id');
             $table->dropColumn('benefactor');

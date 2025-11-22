@@ -28,6 +28,9 @@ return new class extends Migration
             $table->unsignedBigInteger('beneficiary_id')->nullable();
             $table->string('beneficiary_type')->nullable();
             $table->enum('payment_method', ['bank-transfer', 'cheque', 'cash', 'cheque-number'])->default('bank-transfer');
+            
+            // Index for polymorphic relationship
+            $table->index(['beneficiary_id', 'beneficiary_type']);
             $table->enum('currency', ['USD', 'EUR', 'NGN', 'GBP', 'YEN'])->default('NGN');
             $table->dateTime('posted_at')->nullable();
             $table->boolean('is_archived')->default(false);

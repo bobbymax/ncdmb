@@ -13,25 +13,47 @@ return new class extends Migration
     {
         Schema::create('document_drafts', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('document_id');
-            $table->foreign('document_id')->references('id')->on('documents')->onDelete('cascade');
-            $table->unsignedBigInteger('group_id');
-            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
-            $table->unsignedBigInteger('created_by_user_id');
-            $table->foreign('created_by_user_id')->references('id')->on('users')->onDelete('cascade');
-            $table->unsignedBigInteger('current_workflow_stage_id');
-            $table->foreign('current_workflow_stage_id')->references('id')->on('workflow_stages')->onDelete('cascade');
-            $table->unsignedBigInteger('document_action_id');
-            $table->foreign('document_action_id')->references('id')->on('document_actions')->onDelete('cascade');
-            $table->unsignedBigInteger('department_id');
-            $table->foreign('department_id')->references('id')->on('departments')->onDelete('cascade');
-            $table->bigInteger('authorising_staff_id')->default(0);
-            $table->unsignedBigInteger('document_draftable_id');
-            $table->string('document_draftable_type');
-            $table->string('file_path')->nullable();
-            $table->string('digital_signature_path')->nullable();
+            
+            // Foreign keys - properly defined
+            $table->foreignId('document_id')->constrained('documents')->cascadeOnDelete();
+            $table->foreignId('operator_id')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('group_id')->constrained('groups')->cascadeOnDelete();
+            $table->foreignId('current_workflow_stage_id')->constrained('workflow_stages')->cascadeOnDelete();
+            $table->foreignId('department_id')->constrained('departments')->cascadeOnDelete();
+            $table->foreignId('document_action_id')->nullable()->constrained('document_actions')->nullOnDelete();
+            
+            // Foreign key columns (constraints added in separate migration after referenced tables exist)
+            $table->unsignedBigInteger('progress_tracker_id')->nullable();
+            $table->unsignedBigInteger('carder_id')->nullable();
+            
+            // Core fields
             $table->string('status')->nullable();
+            $table->unsignedBigInteger('version_number')->nullable();
+            
+            // Amount fields
+            $table->decimal('amount', 30, 2)->default(0);
+            $table->decimal('taxable_amount', 30, 2)->default(0);
+            $table->decimal('sub_total_amount', 30, 2)->default(0);
+            $table->decimal('vat_amount', 30, 2)->default(0);
+            
+            // Permission and remarks
+            $table->enum('permission', ['r', 'rw', 'rwx'])->default('r');
+            $table->longText('remark')->nullable();
+            
             $table->timestamps();
+            $table->softDeletes();
+            
+            // Unique constraint for versioning
+            $table->unique(
+                ['document_id', 'version_number'],
+                'unique_version_per_document'
+            );
+            
+            // Indexes for performance
+            $table->index(['document_id', 'status']);
+            $table->index(['group_id', 'status']);
+            $table->index(['current_workflow_stage_id']);
+            $table->index(['progress_tracker_id']);
         });
     }
 

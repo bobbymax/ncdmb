@@ -32,6 +32,10 @@ return new class extends Migration
             $table->text('completion_notes')->nullable();
             $table->foreignId('completed_by_id')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
+            $table->softDeletes(); // Added for data integrity
+            
+            // Index for polymorphic relationship
+            $table->index(['assignable_id', 'assignable_type']);
         });
     }
 

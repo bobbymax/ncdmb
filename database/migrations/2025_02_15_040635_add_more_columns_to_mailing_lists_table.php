@@ -12,14 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('mailing_lists', function (Blueprint $table) {
-            // Drop the foreign key constraint first
-            $table->dropForeign(['group_id']);
-
-            // Drop the actual column
-            $table->dropColumn('group_id');
-
-            // Re-add it as a normal bigInteger column
-            $table->bigInteger('group_id')->default(0)->after('id');
+            // Note: This migration was incorrectly removing the foreign key constraint
+            // The group_id should remain as a foreign key for data integrity
+            // If you need to make it nullable, use: $table->foreignId('group_id')->nullable()->change();
+            // For now, we'll keep the foreign key relationship intact
+            // If this migration was meant to handle a specific case, it should be reviewed
         });
     }
 
@@ -29,11 +26,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('mailing_lists', function (Blueprint $table) {
-            // Drop the bigInteger column
-            $table->dropColumn('group_id');
-
-            $table->unsignedBigInteger('group_id')->after('id');
-            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
+            // No-op since we're not changing group_id anymore
         });
     }
 };

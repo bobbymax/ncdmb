@@ -13,17 +13,29 @@ return new class extends Migration
     {
         Schema::create('workflow_stages', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('group_id');
-            $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
-            $table->bigInteger('workflow_stage_category_id')->default(0);
-            $table->bigInteger('assistant_group_id')->default(0);
-            $table->bigInteger('department_id')->default(0);
-            $table->bigInteger('fallback_stage_id')->default(0);
+            
+            // Foreign keys - properly defined
+            $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
+            
+            // Foreign key columns (constraints added in separate migration after referenced tables exist)
+            $table->unsignedBigInteger('workflow_stage_category_id')->nullable();
+            $table->unsignedBigInteger('fallback_stage_id')->nullable();
+            
+            // Core fields
             $table->string('name');
-            $table->boolean('alert_recipients')->default(false);
-            $table->boolean('supporting_documents_verified')->default(false);
-            $table->enum('flag', ['passed', 'failed', 'stalled'])->default('passed');
+            
+            // Status and flags
+            $table->boolean('can_appeal')->default(false);
+            $table->boolean('append_signature')->default(false);
+            $table->enum('category', ['staff', 'third-party', 'system'])->default('system');
+            
             $table->timestamps();
+            $table->softDeletes();
+            
+            // Indexes
+            $table->index(['workflow_stage_category_id']);
+            $table->index(['department_id']);
+            $table->index(['fallback_stage_id']);
         });
     }
 

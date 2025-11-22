@@ -25,10 +25,15 @@ return new class extends Migration
             $table->decimal('total_booked_balance', 30, 2)->default(0);
             $table->decimal('total_actual_balance', 30, 2)->default(0);
             $table->decimal('total_reserved_amount', 30, 2)->default(0);
-            $table->bigInteger('budget_year')->default(0);
+            $table->year('budget_year')->nullable(); // changed from bigInteger default(0) to year nullable
             $table->boolean('is_exhausted')->default(false);
             $table->boolean('is_logistics')->default(false);
             $table->timestamps();
+            $table->softDeletes();
+            
+            // Indexes for performance
+            $table->index('is_exhausted');
+            $table->index('budget_year');
         });
     }
 

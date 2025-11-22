@@ -40,6 +40,9 @@ return new class extends Migration
             $table->tinyInteger('ocr_index_version')->default('0');
             $table->timestamps();
             $table->softDeletes();
+            
+            // Index for polymorphic relationship
+            $table->index(['assignable_id', 'assignable_type']);
         });
     }
 

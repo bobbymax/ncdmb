@@ -15,6 +15,10 @@ return new class extends Migration
             $table->unsignedBigInteger('group_id');
             $table->unsignedBigInteger('groupable_id');
             $table->string('groupable_type');
+            
+            // Indexes for polymorphic relationship
+            $table->index(['groupable_id', 'groupable_type']);
+            $table->index('group_id');
         });
     }
 

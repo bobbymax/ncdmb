@@ -18,6 +18,8 @@ return new class extends Migration
             
             // Action Details
             $table->string('action', 100); // 'created', 'stage_changed', 'bid_opened', etc.
+            
+            // Polymorphic relationship
             $table->string('entity_type', 100)->nullable(); // 'BidInvitation', 'Bid', 'Contract'
             $table->unsignedBigInteger('entity_id')->nullable();
             
@@ -32,8 +34,10 @@ return new class extends Migration
             
             $table->timestamp('created_at')->useCurrent();
             
+            // Indexes
             $table->index('action');
             $table->index('created_at');
+            $table->index(['entity_id', 'entity_type']); // Index for polymorphic relationship
         });
     }
 

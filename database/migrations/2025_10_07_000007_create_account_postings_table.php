@@ -29,6 +29,7 @@ return new class extends Migration
             $table->dateTime('reversed_at')->nullable();
             $table->text('reversal_reason')->nullable();
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

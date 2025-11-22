@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('payments', function (Blueprint $table) {
-            $table->unsignedBigInteger('chart_of_account_id')->default(0)->after('payment_batch_id');
+            $table->foreignId('chart_of_account_id')->nullable()->after('payment_batch_id')->constrained('chart_of_accounts')->nullOnDelete();
         });
     }
 
@@ -22,6 +22,8 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('payments', function (Blueprint $table) {
+            // Drop foreign key first, then drop column
+            $table->dropForeign(['chart_of_account_id']);
             $table->dropColumn('chart_of_account_id');
         });
     }

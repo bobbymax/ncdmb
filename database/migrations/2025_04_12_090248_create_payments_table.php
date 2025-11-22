@@ -25,6 +25,10 @@ return new class extends Migration
             $table->decimal('total_amount_paid', 30, 2)->default(0);
             $table->unsignedBigInteger('resource_id')->nullable();
             $table->string('resource_type')->nullable();
+            
+            // Index for polymorphic relationship
+            $table->index(['resource_id', 'resource_type']);
+            
             $table->date('period')->nullable();
             $table->year('budget_year')->nullable();
             $table->dateTime('paid_at')->nullable();

@@ -22,6 +22,9 @@ return new class extends Migration
             $table->string('collectable_type')->nullable();
             $table->timestamps();
             $table->softDeletes();
+            
+            // Index for polymorphic relationship
+            $table->index(['collectable_id', 'collectable_type']);
         });
     }
 

@@ -19,7 +19,8 @@ class BlockService extends BaseService
             'input_type' => 'required|string',
             'icon' => 'required|string',
             'max_words' => 'sometimes|min:0',
-            'type' => 'required|string|in:staff,third-party,document'
+            'type' => 'required|string|in:staff,third-party,document',
+            'schema' => 'nullable|sometimes|array',
         ];
     }
 }

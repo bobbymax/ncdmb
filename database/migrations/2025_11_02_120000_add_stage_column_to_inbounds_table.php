@@ -35,8 +35,19 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('inbounds', function (Blueprint $table) {
-            $table->dropIndex(['inbounds_stage_index']);
-            $table->dropIndex(['inbounds_status_stage_index']);
+            // Drop indexes by column names (more reliable than index names)
+            try {
+                $table->dropIndex(['status', 'stage']); // Composite index
+            } catch (\Exception $e) {
+                // Index might not exist, ignore
+            }
+            
+            try {
+                $table->dropIndex(['stage']); // Single column index
+            } catch (\Exception $e) {
+                // Index might not exist, ignore
+            }
+            
             $table->dropColumn('stage');
         });
     }

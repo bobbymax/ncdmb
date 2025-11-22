@@ -13,15 +13,33 @@ return new class extends Migration
     {
         Schema::create('progress_trackers', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('workflow_id');
-            $table->foreign('workflow_id')->references('id')->on('workflows')->onDelete('cascade');
-            $table->unsignedBigInteger('workflow_stage_id');
-            $table->foreign('workflow_stage_id')->references('id')->on('workflow_stages')->onDelete('cascade');
+            $table->string('identifier', 36)->unique();
+            
+            // Foreign keys - properly defined
+            $table->foreignId('workflow_id')->constrained('workflows')->cascadeOnDelete();
+            $table->foreignId('workflow_stage_id')->constrained('workflow_stages')->cascadeOnDelete();
+            $table->foreignId('group_id')->nullable()->constrained('groups')->nullOnDelete();
+            $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
+            
+            // Foreign key columns (constraints added in separate migration after referenced tables exist)
+            $table->unsignedBigInteger('internal_process_id')->nullable();
+            $table->unsignedBigInteger('carder_id')->nullable();
+            $table->unsignedBigInteger('signatory_id')->nullable();
+            $table->unsignedBigInteger('process_card_id')->nullable();
+            
+            // Core fields
             $table->integer('order')->default(0);
-            $table->dateTime('date_completed')->nullable();
-            $table->enum('status', ['pending', 'passed', 'stalled', 'failed'])->default('pending');
-            $table->boolean('is_closed')->default(false);
+            $table->enum('permission', ['r', 'rw', 'rwx'])->default('r');
+            
             $table->timestamps();
+            $table->softDeletes();
+            
+            // Indexes
+            $table->index(['workflow_id', 'workflow_stage_id']);
+            $table->index(['group_id']);
+            $table->index(['department_id']);
+            $table->index(['signatory_id']);
+            $table->index('permission');
         });
     }
 

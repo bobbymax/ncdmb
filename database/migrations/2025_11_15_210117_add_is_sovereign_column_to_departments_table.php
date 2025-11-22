@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('departments', function (Blueprint $table) {
-            $table->boolean('is_sovereign')->default(false)->after('director');
+            $table->boolean('is_sovereign')->default(false)->after('director_id');
         });
     }
 

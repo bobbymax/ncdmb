@@ -25,6 +25,9 @@ return new class extends Migration
             $table->unsignedBigInteger('uploadable_id');
             $table->string('uploadable_type');
             $table->timestamps();
+            
+            // Index for polymorphic relationship
+            $table->index(['uploadable_id', 'uploadable_type']);
         });
     }
 

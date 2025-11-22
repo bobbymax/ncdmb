@@ -36,7 +36,7 @@ return new class extends Migration
             $table->enum('approval_threshold', ['work-order', 'tenders', 'minister', 'fec', 'other'])->default('work-order');
             $table->enum('status', ['pending', 'completed', 'overdue'])->default('pending');
             $table->boolean('is_archived')->default(false);
-            $table->bigInteger('budget_year')->default(0);
+            $table->year('budget_year')->nullable(); // Changed from bigInteger default(0) to year nullable
             $table->timestamps();
         });
     }

@@ -25,10 +25,11 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->decimal('total_payable_amount', 30, 2)->default(0);
             $table->decimal('total_approved_payable_amount', 30, 2)->default(0);
-            $table->bigInteger('budget_year')->default(0);
+            $table->year('budget_year')->nullable(); // Changed from bigInteger default(0) to year nullable
             $table->enum('type', ['staff-payment', 'third-party-payment'])->default('staff-payment');
             $table->enum('status', ['pending', 'dispatched', 'paid', 'reversed'])->default('pending');
             $table->timestamps();
+            // Note: softDeletes() is added in 2025_03_30_073049_change_columns_on_payment_batches_table.php
         });
     }
 

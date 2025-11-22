@@ -20,7 +20,7 @@ return new class extends Migration
             $table->decimal('total_proposed_amount', 30, 2)->default(0);
             $table->decimal('total_revised_amount', 30, 2)->default(0);
             $table->decimal('total_approved_amount', 30, 2)->default(0);
-            $table->bigInteger('budget_year')->default(0);
+            $table->year('budget_year')->nullable(); // Changed from bigInteger default(0) to year nullable
             $table->boolean('is_approved')->default(false);
             $table->timestamps();
         });

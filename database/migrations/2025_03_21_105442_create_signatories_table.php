@@ -15,9 +15,9 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('group_id');
             $table->foreign('group_id')->references('id')->on('groups')->onDelete('cascade');
-            $table->unsignedBigInteger('department_id')->default(0);
+            $table->foreignId('department_id')->nullable()->constrained('departments')->nullOnDelete();
             $table->enum('type', ['owner', 'initiator', 'vendor', 'witness', 'approval', 'authorised', 'attestation', 'auditor', 'other'])->default('owner');
-            $table->unsignedBigInteger('order')->default(0);
+            $table->integer('order')->default(0);
             $table->timestamps();
         });
     }
