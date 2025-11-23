@@ -66,4 +66,9 @@ class Group extends Model
     {
         return $this->morphedByMany(DocumentPanel::class, 'groupable');
     }
+
+    public function pages(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphedByMany(Page::class, 'groupable');
+    }
 }

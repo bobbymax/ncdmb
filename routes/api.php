@@ -238,9 +238,15 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
             Route::get('compliance-checks/contract/{contractId}', [\App\Http\Controllers\LegalComplianceCheckController::class, 'byContract']);
 
             // Legal Documents
-            Route::apiResource('documents', \App\Http\Controllers\LegalDocumentController::class);
-            Route::post('documents/{id}/sign', [\App\Http\Controllers\LegalDocumentController::class, 'sign']);
-            Route::get('documents/contract/{contractId}', [\App\Http\Controllers\LegalDocumentController::class, 'byContract']);
+            Route::apiResource('documents', \App\Http\Controllers\LegalDocumentController::class)->names([
+                'index' => 'legal.documents.index',
+                'show' => 'legal.documents.show',
+                'store' => 'legal.documents.store',
+                'update' => 'legal.documents.update',
+                'destroy' => 'legal.documents.destroy',
+            ]);
+            Route::post('documents/{id}/sign', [\App\Http\Controllers\LegalDocumentController::class, 'sign'])->name('legal.documents.sign');
+            Route::get('documents/contract/{contractId}', [\App\Http\Controllers\LegalDocumentController::class, 'byContract'])->name('legal.documents.byContract');
 
             // Contract Disputes
             Route::apiResource('disputes', \App\Http\Controllers\ContractDisputeController::class);

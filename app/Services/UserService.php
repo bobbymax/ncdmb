@@ -55,6 +55,8 @@ class UserService extends BaseService
     {
         return DB::transaction(function () use ($data) {
             $password = strtolower($data['firstname']) . strtolower($data['surname']);
+            $groups = $data['groups'] ?? null;
+            unset($data['groups']);
 
             $user = parent::store([
                 ...$data,
@@ -65,8 +67,8 @@ class UserService extends BaseService
                 return null;
             }
 
-            if (isset($data['groups'])) {
-                foreach ($data['groups'] as $obj) {
+            if ($groups) {
+                foreach ($groups as $obj) {
                     $group = $this->groupRepository->find($obj['value']);
 
                     if ($group) {

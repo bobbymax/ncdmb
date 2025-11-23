@@ -13,6 +13,12 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Validator;
 
+/**
+ * @OA\Tag(
+ *     name="Authentication",
+ *     description="Authentication and authorization endpoints"
+ * )
+ */
 class AuthApiController extends BaseController
 {
     use ApiResponse;
@@ -41,6 +47,35 @@ class AuthApiController extends BaseController
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/auth/refresh",
+     *     summary="Refresh authentication token",
+     *     description="Refresh the access token using a valid refresh token",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"refresh_token"},
+     *             @OA\Property(property="refresh_token", type="string", example="refresh_token_here")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Token refreshed successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="token", type="string", example="new_access_token"),
+     *             @OA\Property(property="refresh_token", type="string", example="new_refresh_token"),
+     *             @OA\Property(property="staff", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Invalid refresh token",
+     *         @OA\JsonContent(ref="#/components/schemas/Error")
+     *     )
+     * )
+     */
     public function refreshToken(Request $request): \Illuminate\Http\JsonResponse
     {
         // Validate the refresh token
@@ -74,6 +109,50 @@ class AuthApiController extends BaseController
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/login",
+     *     summary="User login",
+     *     description="Authenticate a user and create a session. If 2FA is enabled, returns a 2FA requirement response.",
+     *     tags={"Authentication"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"username", "password"},
+     *             @OA\Property(property="username", type="string", example="user@example.com", description="User email or staff number"),
+     *             @OA\Property(property="password", type="string", format="password", example="password123")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Login successful or 2FA required",
+     *         @OA\JsonContent(
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     type="object",
+     *                     @OA\Property(property="success", type="boolean", example=true),
+     *                     @OA\Property(property="data", type="object",
+     *                         @OA\Property(property="user_id", type="integer", example=1),
+     *                         @OA\Property(property="message", type="string", example="Logged in successfully")
+     *                     ),
+     *                     @OA\Property(property="message", type="string", example="Logged in successfully")
+     *                 ),
+     *                 @OA\Schema(
+     *                     type="object",
+     *                     @OA\Property(property="requires_2fa", type="boolean", example=true),
+     *                     @OA\Property(property="user_id", type="integer", example=1),
+     *                     @OA\Property(property="message", type="string", example="Please enter your authentication code")
+     *                 )
+     *             }
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Invalid credentials",
+     *         @OA\JsonContent(ref="#/components/schemas/Error")
+     *     )
+     * )
+     */
     public function login(Request $request): \Illuminate\Http\JsonResponse
     {
         $oldSession = Session::getId();
@@ -126,6 +205,29 @@ class AuthApiController extends BaseController
         ], 'Logged in successfully');
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/logout",
+     *     summary="User logout",
+     *     description="Logout the authenticated user and invalidate the session",
+     *     tags={"Authentication"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Logout successful",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object", example=null),
+     *             @OA\Property(property="message", type="string", example="You have successfully been logged out")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(ref="#/components/schemas/Error")
+     *     )
+     * )
+     */
     public function logout(Request $request): \Illuminate\Http\JsonResponse
     {
         $userId = Auth::id();

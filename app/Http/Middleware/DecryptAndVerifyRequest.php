@@ -24,18 +24,37 @@ class DecryptAndVerifyRequest
         }
 
         // Extract user ID and timestamp
-        [$userId, $timestamp, $signature] = explode(':', $identityMarker);
+        $parts = explode(':', $identityMarker);
+        
+        // Validate format
+        if (count($parts) !== 3) {
+            return response()->json(['error' => 'Invalid identity marker format'], 403);
+        }
+        
+        [$userId, $timestamp, $signature] = $parts;
 
         // Verify user authentication
         if (!Auth::check() || Auth::id() != $userId) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
+        // Validate secret key is configured
+        $secretKey = env('IDENTITY_SECRET_KEY', 'ncdmb-staff-user');
+        if (empty($secretKey)) {
+            \Log::error('IDENTITY_SECRET_KEY not configured in environment');
+            return response()->json(['error' => 'Server configuration error'], 500);
+        }
+
         // Generate expected signature
-        $expectedSignature = hash_hmac('sha256', "{$userId}:{$timestamp}", env('IDENTITY_SECRET_KEY'));
+        $expectedSignature = hash_hmac('sha256', "{$userId}:{$timestamp}", $secretKey);
 
         // Verify signature
         if (!hash_equals($expectedSignature, $signature)) {
+            \Log::warning('Identity marker signature mismatch in DecryptAndVerifyRequest', [
+                'user_id' => $userId,
+                'expected' => substr($expectedSignature, 0, 10) . '...',
+                'received' => substr($signature, 0, 10) . '...',
+            ]);
             return response()->json(['error' => 'Invalid identity marker'], 403);
         }
 

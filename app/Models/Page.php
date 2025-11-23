@@ -36,4 +36,9 @@ class Page extends Model
     {
         return $this->belongsTo(DocumentType::class, 'document_type_id');
     }
+
+    public function groups(): \Illuminate\Database\Eloquent\Relations\MorphToMany
+    {
+        return $this->morphToMany(Group::class, 'groupable');
+    }
 }

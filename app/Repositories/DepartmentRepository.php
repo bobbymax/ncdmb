@@ -16,8 +16,8 @@ class DepartmentRepository extends BaseRepository
         return [
             ...$data,
             'label' => Str::slug($data['name']),
-            'signatory_staff_id' => $data['signatory_staff_id'] > 0 ? (int) $data['signatory_staff_id'] : null,
-            'alternate_signatory_staff_id' => $data['alternate_signatory_staff_id'] > 0 ? (int) $data['alternate_signatory_staff_id'] : null,
+            'signatory_staff_id' => (isset($data['signatory_staff_id']) && $data['signatory_staff_id'] > 0) ? (int) $data['signatory_staff_id'] : null,
+            'alternate_signatory_staff_id' => (isset($data['alternate_signatory_staff_id']) && $data['alternate_signatory_staff_id'] > 0) ? (int) $data['alternate_signatory_staff_id'] : null,
         ];
     }
 
