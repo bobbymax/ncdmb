@@ -20,6 +20,122 @@ class UserController extends BaseController
 
     /**
      * @OA\Get(
+     *     path="/api/users",
+     *     summary="List all users",
+     *     tags={"Users"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(ref="#/components/schemas/Success")
+     *     )
+     * )
+     */
+    public function index(): \Illuminate\Http\JsonResponse
+    {
+        return parent::index();
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/users",
+     *     summary="Create a new user",
+     *     tags={"Users"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/UserRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="User created successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Success")
+     *     )
+     * )
+     */
+    public function store(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
+    {
+        return parent::store($request);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/users/{id}",
+     *     summary="Get a specific user",
+     *     tags={"Users"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful operation",
+     *         @OA\JsonContent(ref="#/components/schemas/Success")
+     *     )
+     * )
+     */
+    public function show($id): \Illuminate\Http\JsonResponse
+    {
+        return parent::show($id);
+    }
+
+    /**
+     * @OA\Put(
+     *     path="/api/users/{id}",
+     *     summary="Update a user",
+     *     tags={"Users"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/UserRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User updated successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Success")
+     *     )
+     * )
+     */
+    public function update(\Illuminate\Http\Request $request, $id): \Illuminate\Http\JsonResponse
+    {
+        return parent::update($request, $id);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/users/{id}",
+     *     summary="Delete a user",
+     *     tags={"Users"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="User deleted successfully",
+     *         @OA\JsonContent(ref="#/components/schemas/Success")
+     *     )
+     * )
+     */
+    public function destroy($id): \Illuminate\Http\JsonResponse
+    {
+        return parent::destroy($id);
+    }
+
+    /**
+     * @OA\Get(
      *     path="/api/users/{userId}/claims/{claimId}",
      *     summary="Get user claims excluding a specific claim",
      *     tags={"Users"},

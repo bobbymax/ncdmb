@@ -45,7 +45,7 @@ class ContractVariationController extends BaseController
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(type="object")
+     *         @OA\JsonContent(ref="#/components/schemas/ContractVariationRequest")
      *     ),
      *     @OA\Response(
      *         response=201,
@@ -97,7 +97,7 @@ class ContractVariationController extends BaseController
      *     ),
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(type="object")
+     *         @OA\JsonContent(ref="#/components/schemas/ContractVariationRequest")
      *     ),
      *     @OA\Response(
      *         response=200,

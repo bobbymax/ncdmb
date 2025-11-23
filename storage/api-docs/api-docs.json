@@ -268,7 +268,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ContractDisputeRequest"
                             }
                         }
                     }
@@ -348,7 +348,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ContractDisputeRequest"
                             }
                         }
                     }
@@ -550,7 +550,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ContractVariationRequest"
                             }
                         }
                     }
@@ -630,7 +630,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ContractVariationRequest"
                             }
                         }
                     }
@@ -780,6 +780,485 @@
                 "responses": {
                     "200": {
                         "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/documents": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "List all documents",
+                "operationId": "479e53af7d4820aecb8f9534fdbe21aa",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Create a new document",
+                "operationId": "9b247d60e8834d470666fba8e773edb4",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/DocumentRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Document created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/documents/{id}": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Get a specific document",
+                "operationId": "0fa5befcdb9042b346d01baea49dee95",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Update a document",
+                "operationId": "b851458865e322163fe9b88595919255",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "title": {
+                                        "type": "string",
+                                        "example": "Updated Document Title"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Updated description"
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "pending",
+                                            "approved",
+                                            "rejected"
+                                        ],
+                                        "example": "approved"
+                                    },
+                                    "is_archived": {
+                                        "type": "boolean",
+                                        "example": false,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Document updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Delete a document",
+                "operationId": "889c107c27dc6b118dee932d1760f574",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Document deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/linked/documents/{parentDocumentId}": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Get linked documents for a parent document",
+                "operationId": "2baa73ba9a7afd2507dcc08bfc8a1e4f",
+                "parameters": [
+                    {
+                        "name": "parentDocumentId",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Document not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Error"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/collated/{status}/documents": {
+            "get": {
+                "tags": [
+                    "Documents"
+                ],
+                "summary": "Get queued documents by status",
+                "operationId": "58323889bcd456f841a4616f39f90a16",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "pending"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/groups": {
+            "get": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "List all groups",
+                "operationId": "f286cbf34dc4be32a94459a335658168",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Create a new group",
+                "operationId": "74e9878763e20c38ae5c9930b8d2d3f6",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Group created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/groups/{id}": {
+            "get": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Get a specific group",
+                "operationId": "38a1f4990d0dc69ead7f7377ad016117",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Update a group",
+                "operationId": "f6aca8def1d24d74f3f6bdc6fda8d84e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/GroupRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Group updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Groups"
+                ],
+                "summary": "Delete a group",
+                "operationId": "8c693e934c350f47618655bc71886930",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Group deleted successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -966,7 +1445,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/LegalClearanceRequest"
                             }
                         }
                     }
@@ -1046,7 +1525,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/LegalClearanceRequest"
                             }
                         }
                     }
@@ -1248,7 +1727,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/LegalComplianceCheckRequest"
                             }
                         }
                     }
@@ -1328,7 +1807,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/LegalComplianceCheckRequest"
                             }
                         }
                     }
@@ -1458,7 +1937,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/LegalDocumentRequest"
                             }
                         }
                     }
@@ -1538,7 +2017,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/LegalDocumentRequest"
                             }
                         }
                     }
@@ -1704,7 +2183,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/LegalReviewRequest"
                             }
                         }
                     }
@@ -1784,7 +2263,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/LegalReviewRequest"
                             }
                         }
                     }
@@ -2070,7 +2549,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ProjectBidRequest"
                             }
                         }
                     }
@@ -2150,7 +2629,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ProjectBidRequest"
                             }
                         }
                     }
@@ -2388,7 +2867,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ProjectBidEvaluationRequest"
                             }
                         }
                     }
@@ -2468,7 +2947,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ProjectBidEvaluationRequest"
                             }
                         }
                     }
@@ -2634,7 +3113,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ProjectBidInvitationRequest"
                             }
                         }
                     }
@@ -2714,7 +3193,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ProjectBidInvitationRequest"
                             }
                         }
                     }
@@ -2880,7 +3359,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ProjectRequest"
                             }
                         }
                     }
@@ -2960,7 +3439,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ProjectRequest"
                             }
                         }
                     }
@@ -3054,7 +3533,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ProjectEvaluationCommitteeRequest"
                             }
                         }
                     }
@@ -3134,7 +3613,7 @@
                     "content": {
                         "application/json": {
                             "schema": {
-                                "type": "object"
+                                "$ref": "#/components/schemas/ProjectEvaluationCommitteeRequest"
                             }
                         }
                     }
@@ -3212,6 +3691,354 @@
                 "responses": {
                     "200": {
                         "description": "Committee dissolved successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/roles": {
+            "get": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "List all roles",
+                "operationId": "77e3636d8592997ce9d6d27b50857a69",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Create a new role",
+                "operationId": "4a563842fbfcad237f63da43065fca3d",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RoleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Role created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/roles/{id}": {
+            "get": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Get a specific role",
+                "operationId": "7fb0667a295b7678a30353aa11739683",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Update a role",
+                "operationId": "786d6990093a8eb3a56931f19a827e43",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/RoleRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Role updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Roles"
+                ],
+                "summary": "Delete a role",
+                "operationId": "8285c46981c60ad600aa4077307aec04",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Role deleted successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "List all users",
+                "operationId": "c457726701591d1183b53aa71fc13441",
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Create a new user",
+                "operationId": "592819a0265360b2014512d6dbfaf0e7",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "User created successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/users/{id}": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get a specific user",
+                "operationId": "36a33ff774d5cba33c039dec2c3e0287",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful operation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Update a user",
+                "operationId": "b9091397c8b25f12c6adb74be6ce3a5a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/UserRequest"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "User updated successfully",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/Success"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Delete a user",
+                "operationId": "fa56cffde745d3f152f95cbacd936c0b",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "User deleted successfully",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -3391,6 +4218,1430 @@
                     }
                 },
                 "type": "object"
+            },
+            "DocumentRequest": {
+                "required": [
+                    "user_id",
+                    "department_id",
+                    "document_category_id",
+                    "workflow_id",
+                    "document_type_id",
+                    "title",
+                    "description",
+                    "ref",
+                    "status"
+                ],
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "department_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "document_category_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "workflow_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "document_type_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "vendor_id": {
+                        "type": "integer",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "documentable_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "documentable_type": {
+                        "type": "string",
+                        "example": "App\\\\Models\\\\Project"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "Project Proposal Document"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Detailed description of the document"
+                    },
+                    "ref": {
+                        "type": "string",
+                        "example": "DOC-2024-001"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "approved",
+                            "rejected"
+                        ],
+                        "example": "pending"
+                    },
+                    "is_archived": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "UserRequest": {
+                "required": [
+                    "firstname",
+                    "surname",
+                    "email",
+                    "grade_level_id",
+                    "department_id",
+                    "role_id",
+                    "location_id",
+                    "gender",
+                    "type"
+                ],
+                "properties": {
+                    "staff_no": {
+                        "type": "string",
+                        "maxLength": 8,
+                        "example": "EMP001",
+                        "nullable": true
+                    },
+                    "firstname": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "John"
+                    },
+                    "middlename": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Michael",
+                        "nullable": true
+                    },
+                    "surname": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "Doe"
+                    },
+                    "email": {
+                        "type": "string",
+                        "format": "email",
+                        "maxLength": 255,
+                        "example": "john.doe@example.com"
+                    },
+                    "grade_level_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "department_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "role_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "location_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "gender": {
+                        "type": "string",
+                        "enum": [
+                            "male",
+                            "female"
+                        ],
+                        "example": "male"
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "permanent",
+                            "contract",
+                            "adhoc",
+                            "secondment",
+                            "support",
+                            "admin"
+                        ],
+                        "example": "permanent"
+                    },
+                    "job_title": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Software Developer",
+                        "nullable": true
+                    },
+                    "date_joined": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15",
+                        "nullable": true
+                    },
+                    "avatar": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": null,
+                        "nullable": true
+                    },
+                    "default_page_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "groups": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        },
+                        "example": [
+                            {
+                                "value": 1
+                            },
+                            {
+                                "value": 2
+                            }
+                        ],
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RoleRequest": {
+                "required": [
+                    "name",
+                    "slots",
+                    "access_level",
+                    "department_id"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Administrator"
+                    },
+                    "slots": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "example": 5
+                    },
+                    "access_level": {
+                        "type": "string",
+                        "enum": [
+                            "basic",
+                            "operative",
+                            "control",
+                            "command",
+                            "sovereign",
+                            "system"
+                        ],
+                        "example": "basic"
+                    },
+                    "department_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "issued_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15",
+                        "nullable": true
+                    },
+                    "expired_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-15",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "GroupRequest": {
+                "required": [
+                    "name"
+                ],
+                "properties": {
+                    "name": {
+                        "type": "string",
+                        "example": "IT Department"
+                    }
+                },
+                "type": "object"
+            },
+            "ProjectRequest": {
+                "required": [
+                    "user_id",
+                    "department_id",
+                    "threshold_id",
+                    "project_category_id",
+                    "title",
+                    "type",
+                    "status",
+                    "project_type",
+                    "priority"
+                ],
+                "properties": {
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "department_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "threshold_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "project_category_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "example": "Infrastructure Development Project"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Detailed project description",
+                        "nullable": true
+                    },
+                    "total_proposed_amount": {
+                        "type": "number",
+                        "minimum": 0,
+                        "example": 1000000,
+                        "nullable": true
+                    },
+                    "sub_total_amount": {
+                        "type": "number",
+                        "minimum": 0,
+                        "example": 900000,
+                        "nullable": true
+                    },
+                    "service_charge_percentage": {
+                        "type": "integer",
+                        "maximum": 100,
+                        "minimum": 0,
+                        "example": 5,
+                        "nullable": true
+                    },
+                    "markup_amount": {
+                        "type": "number",
+                        "minimum": 0,
+                        "example": 50000,
+                        "nullable": true
+                    },
+                    "vat_amount": {
+                        "type": "number",
+                        "minimum": 0,
+                        "example": 50000,
+                        "nullable": true
+                    },
+                    "proposed_start_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15",
+                        "nullable": true
+                    },
+                    "proposed_end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-12-31",
+                        "nullable": true
+                    },
+                    "type": {
+                        "type": "string",
+                        "enum": [
+                            "staff",
+                            "third-party"
+                        ],
+                        "example": "staff"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "registered",
+                            "approved",
+                            "denied",
+                            "kiv",
+                            "discussed"
+                        ],
+                        "example": "pending"
+                    },
+                    "project_type": {
+                        "type": "string",
+                        "enum": [
+                            "capital",
+                            "operational",
+                            "maintenance",
+                            "research",
+                            "infrastructure"
+                        ],
+                        "example": "infrastructure"
+                    },
+                    "priority": {
+                        "type": "string",
+                        "enum": [
+                            "critical",
+                            "high",
+                            "medium",
+                            "low"
+                        ],
+                        "example": "high"
+                    },
+                    "strategic_alignment": {
+                        "type": "string",
+                        "maxLength": 1000,
+                        "example": "Strategic alignment notes",
+                        "nullable": true
+                    },
+                    "fund_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "budget_year": {
+                        "type": "string",
+                        "maxLength": 20,
+                        "example": "2024",
+                        "nullable": true
+                    },
+                    "variation_amount": {
+                        "type": "number",
+                        "example": 0,
+                        "nullable": true
+                    },
+                    "total_approved_amount": {
+                        "type": "number",
+                        "minimum": 0,
+                        "example": 1000000,
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProjectBidInvitationRequest": {
+                "required": [
+                    "project_id",
+                    "title",
+                    "submission_deadline",
+                    "opening_date"
+                ],
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "title": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "example": "Infrastructure Development Bid"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Bid invitation description",
+                        "nullable": true
+                    },
+                    "technical_specifications": {
+                        "type": "string",
+                        "example": "Technical requirements",
+                        "nullable": true
+                    },
+                    "scope_of_work": {
+                        "type": "string",
+                        "example": "Scope details",
+                        "nullable": true
+                    },
+                    "deliverables": {
+                        "type": "string",
+                        "example": "Expected deliverables",
+                        "nullable": true
+                    },
+                    "terms_and_conditions": {
+                        "type": "string",
+                        "example": "Terms and conditions",
+                        "nullable": true
+                    },
+                    "required_documents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "tax_clearance",
+                            "company_registration"
+                        ],
+                        "nullable": true
+                    },
+                    "eligibility_criteria": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "example": [
+                            "5_years_experience",
+                            "certified_contractor"
+                        ],
+                        "nullable": true
+                    },
+                    "bid_security_required": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "bid_security_amount": {
+                        "type": "number",
+                        "minimum": 0,
+                        "example": 50000,
+                        "nullable": true
+                    },
+                    "bid_security_validity_days": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "example": 90,
+                        "nullable": true
+                    },
+                    "estimated_contract_value": {
+                        "type": "number",
+                        "minimum": 0,
+                        "example": 1000000,
+                        "nullable": true
+                    },
+                    "advertisement_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15",
+                        "nullable": true
+                    },
+                    "pre_bid_meeting_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-20",
+                        "nullable": true
+                    },
+                    "pre_bid_meeting_location": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "example": "Conference Room A",
+                        "nullable": true
+                    },
+                    "submission_deadline": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-02-15T17:00:00Z"
+                    },
+                    "bid_validity_days": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "example": 120,
+                        "nullable": true
+                    },
+                    "opening_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-02-16T10:00:00Z"
+                    },
+                    "opening_location": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "example": "Main Hall",
+                        "nullable": true
+                    },
+                    "evaluation_criteria": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        },
+                        "nullable": true
+                    },
+                    "technical_weight": {
+                        "type": "number",
+                        "maximum": 100,
+                        "minimum": 0,
+                        "example": 60,
+                        "nullable": true
+                    },
+                    "financial_weight": {
+                        "type": "number",
+                        "maximum": 100,
+                        "minimum": 0,
+                        "example": 40,
+                        "nullable": true
+                    },
+                    "published_newspapers": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "published_bpp_portal": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "published",
+                            "closed",
+                            "cancelled"
+                        ],
+                        "example": "draft",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProjectBidRequest": {
+                "required": [
+                    "project_id",
+                    "bid_invitation_id",
+                    "vendor_id",
+                    "bid_amount"
+                ],
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "bid_invitation_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "vendor_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "bid_amount": {
+                        "type": "number",
+                        "minimum": 0,
+                        "example": 950000
+                    },
+                    "bid_currency": {
+                        "type": "string",
+                        "maxLength": 10,
+                        "example": "NGN",
+                        "nullable": true
+                    },
+                    "submitted_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-02-10T14:30:00Z",
+                        "nullable": true
+                    },
+                    "submission_method": {
+                        "type": "string",
+                        "enum": [
+                            "physical",
+                            "electronic",
+                            "hybrid"
+                        ],
+                        "example": "electronic",
+                        "nullable": true
+                    },
+                    "received_by": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "bid_security_submitted": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "bid_security_type": {
+                        "type": "string",
+                        "enum": [
+                            "bank_guarantee",
+                            "insurance_bond",
+                            "cash"
+                        ],
+                        "example": "bank_guarantee",
+                        "nullable": true
+                    },
+                    "bid_security_reference": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "BG-2024-001",
+                        "nullable": true
+                    },
+                    "bid_documents": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        },
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "submitted",
+                            "opened",
+                            "responsive",
+                            "non_responsive",
+                            "under_evaluation",
+                            "evaluated",
+                            "disqualified",
+                            "recommended",
+                            "awarded",
+                            "not_awarded"
+                        ],
+                        "example": "submitted",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProjectBidEvaluationRequest": {
+                "required": [
+                    "project_bid_id",
+                    "evaluation_type"
+                ],
+                "properties": {
+                    "project_bid_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "evaluator_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "evaluation_type": {
+                        "type": "string",
+                        "enum": [
+                            "administrative",
+                            "technical",
+                            "financial",
+                            "post_qualification"
+                        ],
+                        "example": "technical"
+                    },
+                    "evaluation_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-02-20",
+                        "nullable": true
+                    },
+                    "criteria": {
+                        "type": "array",
+                        "items": {
+                            "type": "object"
+                        },
+                        "nullable": true
+                    },
+                    "total_score": {
+                        "type": "number",
+                        "maximum": 100,
+                        "minimum": 0,
+                        "example": 85.5,
+                        "nullable": true
+                    },
+                    "pass_fail": {
+                        "type": "string",
+                        "enum": [
+                            "pass",
+                            "fail",
+                            "conditional"
+                        ],
+                        "example": "pass",
+                        "nullable": true
+                    },
+                    "comments": {
+                        "type": "string",
+                        "example": "Evaluation comments",
+                        "nullable": true
+                    },
+                    "recommendations": {
+                        "type": "string",
+                        "example": "Recommendations",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "draft",
+                            "submitted",
+                            "reviewed",
+                            "approved"
+                        ],
+                        "example": "draft",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ProjectEvaluationCommitteeRequest": {
+                "required": [
+                    "project_id",
+                    "committee_name",
+                    "committee_type",
+                    "chairman_id"
+                ],
+                "properties": {
+                    "project_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "committee_name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Technical Evaluation Committee"
+                    },
+                    "committee_type": {
+                        "type": "string",
+                        "enum": [
+                            "tender_board",
+                            "technical",
+                            "financial",
+                            "opening"
+                        ],
+                        "example": "technical"
+                    },
+                    "chairman_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "members": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "user_id": {
+                                    "type": "integer",
+                                    "example": 2
+                                },
+                                "role": {
+                                    "type": "string",
+                                    "enum": [
+                                        "chairman",
+                                        "secretary",
+                                        "member",
+                                        "observer"
+                                    ],
+                                    "example": "member"
+                                }
+                            },
+                            "type": "object"
+                        },
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "active",
+                            "dissolved"
+                        ],
+                        "example": "active",
+                        "nullable": true
+                    },
+                    "formed_at": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15",
+                        "nullable": true
+                    },
+                    "dissolved_at": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-12-31",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "LegalReviewRequest": {
+                "required": [
+                    "review_type",
+                    "reviewed_by"
+                ],
+                "properties": {
+                    "project_contract_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "project_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "document_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "review_type": {
+                        "type": "string",
+                        "enum": [
+                            "contract_review",
+                            "compliance_check",
+                            "risk_assessment",
+                            "variation_review",
+                            "termination_review",
+                            "other"
+                        ],
+                        "example": "contract_review"
+                    },
+                    "reviewed_by": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "review_status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "in_review",
+                            "approved",
+                            "rejected",
+                            "conditional"
+                        ],
+                        "example": "pending",
+                        "nullable": true
+                    },
+                    "review_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15",
+                        "nullable": true
+                    },
+                    "legal_opinion": {
+                        "type": "string",
+                        "example": "Legal opinion text",
+                        "nullable": true
+                    },
+                    "compliance_score": {
+                        "type": "number",
+                        "maximum": 100,
+                        "minimum": 0,
+                        "example": 85.5,
+                        "nullable": true
+                    },
+                    "risks_identified": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "recommendations": {
+                        "type": "string",
+                        "example": "Recommendations",
+                        "nullable": true
+                    },
+                    "requires_revision": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "revision_notes": {
+                        "type": "string",
+                        "example": "Revision notes",
+                        "nullable": true
+                    },
+                    "approved_by": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "approval_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-20",
+                        "nullable": true
+                    },
+                    "rejection_reason": {
+                        "type": "string",
+                        "example": "Rejection reason",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "LegalClearanceRequest": {
+                "required": [
+                    "project_contract_id",
+                    "clearance_type"
+                ],
+                "properties": {
+                    "project_contract_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "clearance_type": {
+                        "type": "string",
+                        "enum": [
+                            "pre_award",
+                            "pre_signing",
+                            "variation",
+                            "termination",
+                            "other"
+                        ],
+                        "example": "pre_award"
+                    },
+                    "clearance_status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "cleared",
+                            "rejected",
+                            "conditional",
+                            "expired"
+                        ],
+                        "example": "pending",
+                        "nullable": true
+                    },
+                    "cleared_by": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "clearance_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15",
+                        "nullable": true
+                    },
+                    "clearance_reference": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "CLR-2024-001",
+                        "nullable": true
+                    },
+                    "conditions": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "expiry_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2025-01-15",
+                        "nullable": true
+                    },
+                    "compliance_requirements": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    },
+                    "notes": {
+                        "type": "string",
+                        "example": "Clearance notes",
+                        "nullable": true
+                    },
+                    "rejection_reason": {
+                        "type": "string",
+                        "example": "Rejection reason",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ContractVariationRequest": {
+                "required": [
+                    "project_contract_id",
+                    "variation_type",
+                    "variation_reference",
+                    "original_value",
+                    "variation_amount",
+                    "new_total_value",
+                    "reason",
+                    "initiated_by",
+                    "initiated_date"
+                ],
+                "properties": {
+                    "project_contract_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "variation_type": {
+                        "type": "string",
+                        "enum": [
+                            "price_adjustment",
+                            "scope_change",
+                            "time_extension",
+                            "specification_change",
+                            "termination",
+                            "other"
+                        ],
+                        "example": "price_adjustment"
+                    },
+                    "variation_reference": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "VAR-2024-001"
+                    },
+                    "original_value": {
+                        "type": "number",
+                        "minimum": 0,
+                        "example": 1000000
+                    },
+                    "variation_amount": {
+                        "type": "number",
+                        "example": 100000
+                    },
+                    "new_total_value": {
+                        "type": "number",
+                        "minimum": 0,
+                        "example": 1100000
+                    },
+                    "reason": {
+                        "type": "string",
+                        "example": "Price adjustment due to market changes"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Detailed variation description",
+                        "nullable": true
+                    },
+                    "initiated_by": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "initiated_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15"
+                    },
+                    "legal_review_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "approval_status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "approved",
+                            "rejected",
+                            "conditional"
+                        ],
+                        "example": "pending",
+                        "nullable": true
+                    },
+                    "approved_by": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "approval_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-20",
+                        "nullable": true
+                    },
+                    "approval_notes": {
+                        "type": "string",
+                        "example": "Approval notes",
+                        "nullable": true
+                    },
+                    "rejection_reason": {
+                        "type": "string",
+                        "example": "Rejection reason",
+                        "nullable": true
+                    },
+                    "variation_document_url": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "example": "https://example.com/variation.pdf",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "LegalComplianceCheckRequest": {
+                "required": [
+                    "project_contract_id",
+                    "compliance_type",
+                    "checked_by",
+                    "check_date"
+                ],
+                "properties": {
+                    "project_contract_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "compliance_type": {
+                        "type": "string",
+                        "enum": [
+                            "procurement_act",
+                            "fiscal_responsibility",
+                            "public_accounts",
+                            "company_law",
+                            "tax_compliance",
+                            "other"
+                        ],
+                        "example": "procurement_act"
+                    },
+                    "check_status": {
+                        "type": "string",
+                        "enum": [
+                            "pending",
+                            "passed",
+                            "failed",
+                            "conditional"
+                        ],
+                        "example": "pending",
+                        "nullable": true
+                    },
+                    "checked_by": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "check_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15"
+                    },
+                    "findings": {
+                        "type": "string",
+                        "example": "Compliance findings",
+                        "nullable": true
+                    },
+                    "corrective_actions": {
+                        "type": "string",
+                        "example": "Required corrective actions",
+                        "nullable": true
+                    },
+                    "follow_up_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-02-15",
+                        "nullable": true
+                    },
+                    "compliance_score": {
+                        "type": "number",
+                        "maximum": 100,
+                        "minimum": 0,
+                        "example": 90,
+                        "nullable": true
+                    },
+                    "requires_remediation": {
+                        "type": "boolean",
+                        "example": false,
+                        "nullable": true
+                    },
+                    "remediation_plan": {
+                        "type": "string",
+                        "example": "Remediation plan details",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "LegalDocumentRequest": {
+                "required": [
+                    "project_contract_id",
+                    "document_type",
+                    "document_name",
+                    "document_url",
+                    "uploaded_by",
+                    "uploaded_at"
+                ],
+                "properties": {
+                    "project_contract_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "document_type": {
+                        "type": "string",
+                        "enum": [
+                            "contract_draft",
+                            "signed_contract",
+                            "addendum",
+                            "legal_opinion",
+                            "clearance_certificate",
+                            "variation_order",
+                            "termination_notice",
+                            "other"
+                        ],
+                        "example": "contract_draft"
+                    },
+                    "document_name": {
+                        "type": "string",
+                        "maxLength": 255,
+                        "example": "Contract Agreement"
+                    },
+                    "document_url": {
+                        "type": "string",
+                        "maxLength": 500,
+                        "example": "https://example.com/contract.pdf"
+                    },
+                    "version": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "uploaded_by": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "uploaded_at": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15"
+                    },
+                    "is_current": {
+                        "type": "boolean",
+                        "example": true,
+                        "nullable": true
+                    },
+                    "requires_signature": {
+                        "type": "boolean",
+                        "example": true,
+                        "nullable": true
+                    },
+                    "signed_by": {
+                        "type": "array",
+                        "items": {
+                            "type": "integer"
+                        },
+                        "nullable": true
+                    },
+                    "signed_at": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-20",
+                        "nullable": true
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Document description",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "ContractDisputeRequest": {
+                "required": [
+                    "project_contract_id",
+                    "dispute_type",
+                    "dispute_reference",
+                    "description",
+                    "raised_by",
+                    "raised_date"
+                ],
+                "properties": {
+                    "project_contract_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "dispute_type": {
+                        "type": "string",
+                        "enum": [
+                            "payment",
+                            "performance",
+                            "variation",
+                            "termination",
+                            "quality",
+                            "delay",
+                            "other"
+                        ],
+                        "example": "payment"
+                    },
+                    "dispute_reference": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "example": "DSP-2024-001"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Dispute description"
+                    },
+                    "raised_by": {
+                        "type": "string",
+                        "enum": [
+                            "contractor",
+                            "government",
+                            "both"
+                        ],
+                        "example": "contractor"
+                    },
+                    "raised_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-15"
+                    },
+                    "status": {
+                        "type": "string",
+                        "enum": [
+                            "open",
+                            "under_negotiation",
+                            "mediation",
+                            "arbitration",
+                            "litigation",
+                            "resolved",
+                            "escalated",
+                            "closed"
+                        ],
+                        "example": "open",
+                        "nullable": true
+                    },
+                    "resolution_method": {
+                        "type": "string",
+                        "enum": [
+                            "negotiation",
+                            "mediation",
+                            "arbitration",
+                            "litigation",
+                            "settlement",
+                            "other"
+                        ],
+                        "example": "negotiation",
+                        "nullable": true
+                    },
+                    "resolved_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-02-15",
+                        "nullable": true
+                    },
+                    "resolution_notes": {
+                        "type": "string",
+                        "example": "Resolution notes",
+                        "nullable": true
+                    },
+                    "disputed_amount": {
+                        "type": "number",
+                        "minimum": 0,
+                        "example": 50000,
+                        "nullable": true
+                    },
+                    "resolved_amount": {
+                        "type": "number",
+                        "minimum": 0,
+                        "example": 45000,
+                        "nullable": true
+                    },
+                    "legal_counsel_id": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "legal_advice": {
+                        "type": "string",
+                        "example": "Legal advice",
+                        "nullable": true
+                    },
+                    "supporting_documents": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "nullable": true
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -3416,12 +5667,24 @@
             "description": "User management endpoints"
         },
         {
+            "name": "Documents",
+            "description": "Document management endpoints"
+        },
+        {
             "name": "Projects",
             "description": "Project management endpoints"
         },
         {
             "name": "Procurement",
             "description": "Procurement and bidding management endpoints"
+        },
+        {
+            "name": "Roles",
+            "description": "Role management endpoints"
+        },
+        {
+            "name": "Groups",
+            "description": "Group management endpoints"
         }
     ],
     "security": [

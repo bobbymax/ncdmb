@@ -45,7 +45,7 @@ class ProjectEvaluationCommitteeController extends BaseController
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(type="object")
+     *         @OA\JsonContent(ref="#/components/schemas/ProjectEvaluationCommitteeRequest")
      *     ),
      *     @OA\Response(
      *         response=201,
@@ -97,7 +97,7 @@ class ProjectEvaluationCommitteeController extends BaseController
      *     ),
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(type="object")
+     *         @OA\JsonContent(ref="#/components/schemas/ProjectEvaluationCommitteeRequest")
      *     ),
      *     @OA\Response(
      *         response=200,
