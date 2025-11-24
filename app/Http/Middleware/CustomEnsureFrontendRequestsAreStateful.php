@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use Illuminate\Routing\Pipeline;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Closure;
 
 class CustomEnsureFrontendRequestsAreStateful
@@ -16,10 +17,25 @@ class CustomEnsureFrontendRequestsAreStateful
     {
         $this->configureSecureCookieSessions();
 
+        // Always apply session middleware for API routes
+        // The fromFrontend check is kept for logging/debugging purposes
+        $isFromFrontend = static::fromFrontend($request);
+        
+        // Log for debugging (can be removed in production if not needed)
+        if (config('app.debug')) {
+            Log::info('Frontend detection', [
+                'is_from_frontend' => $isFromFrontend,
+                'origin' => $request->headers->get('origin'),
+                'referer' => $request->headers->get('referer'),
+                'stateful_domains' => config('sanctum.stateful', []),
+            ]);
+        }
+
         return (new Pipeline(app()))
             ->send($request)
             ->through(
-                static::fromFrontend($request) ? $this->frontendMiddleware() : []
+                // Always apply session middleware for API authentication routes
+                $this->frontendMiddleware()
             )
             ->then(function ($request) use ($next) {
                 return $next($request);
