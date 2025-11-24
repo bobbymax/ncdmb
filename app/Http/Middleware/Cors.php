@@ -16,7 +16,7 @@ class Cors
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $allowedOrigins = ['http://localhost:3000', 'https://portal.test'];
+        $allowedOrigins = ['http://localhost:3000', 'https://portal.test', 'http://staging.ncdmb.gov.ng', 'http://staging.ncdmb.gov.ng:8000'];
         $origin = $request->headers->get('Origin');
 
         // Handle preflight requests (OPTIONS) before Laravel processes them

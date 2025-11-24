@@ -6,7 +6,7 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000', 'https://portal.test'],
+    'allowed_origins' => ['http://localhost:3000', 'https://portal.test', 'http://staging.ncdmb.gov.ng', 'http://staging.ncdmb.gov.ng:8000'],
 
     'allowed_origins_patterns' => [],
 
