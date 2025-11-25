@@ -3,16 +3,16 @@
 namespace App\Imports;
 
 use App\Interfaces\Importable;
-use App\Models\Group;
 use App\Models\Page;
-use App\Models\Role;
 use App\Repositories\PageRepository;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class PageImport implements Importable
 {
+    // Registry to track all saved pages across chunks (label => id)
+    private static array $savedPagesRegistry = [];
+
     public function __construct(
         protected PageRepository $pageRepository
     ) {}
@@ -33,161 +33,53 @@ class PageImport implements Importable
             $total = count($rows);
             $inserted = 0;
             $skipped = 0;
-            $inserts = [];
-            $parentRelations = []; // Store [child_label => parent_label] for pages that need parent resolution after insert
+            $deferredPages = [];
 
-            // Step 1: Get the Super Administrator role and Enterprise Administrators group
-            $superAdminRole = Role::where('slug', 'super-administrator')->first();
-            if (!$superAdminRole) {
-                Log::warning("PageImport: Super Administrator role not found (slug: super-administrator)");
-            } else {
-                Log::info("PageImport: Found Super Administrator role (ID: {$superAdminRole->id})");
-            }
-
-            $enterpriseAdminGroup = Group::where('label', 'enterprise-administrators')->first();
-            if (!$enterpriseAdminGroup) {
-                Log::warning("PageImport: Enterprise Administrators group not found (label: enterprise-administrators)");
-            } else {
-                Log::info("PageImport: Found Enterprise Administrators group (ID: {$enterpriseAdminGroup->id})");
-            }
-
-            // Step 2: Build a map of pages in the current batch (by label) for parent resolution
-            $batchPagesMap = [];
-            foreach ($rows as $item) {
-                if (!empty($item['name'])) {
-                    $itemLabel = !empty($item['label']) ? trim($item['label']) : Str::slug(trim($item['name']));
-                    $batchPagesMap[$itemLabel] = $item;
-                }
-            }
-            Log::info("PageImport: Processing " . count($batchPagesMap) . " pages in batch");
-
-            // Step 3: Extract all parent labels that need to be resolved
-            $allParentLabels = [];
-            foreach ($rows as $item) {
-                if (!empty($item['parent']) && !empty($item['type']) && trim($item['type']) !== 'app') {
-                    $allParentLabels[] = trim($item['parent']);
-                }
-            }
-            $allParentLabels = array_unique($allParentLabels);
-
-            // Step 4: Bulk fetch existing parent pages from database
-            $parentPagesFromDb = collect();
-            if (!empty($allParentLabels)) {
-                Log::info("PageImport: Looking for parent pages in database: " . implode(', ', $allParentLabels));
-                $parentPagesFromDb = Page::whereIn('label', $allParentLabels)->get()->keyBy('label');
-                Log::info("PageImport: Found " . $parentPagesFromDb->count() . " parent pages in database");
-            }
-
-            // Step 5: Bulk fetch existing pages to check for duplicates
-            $existingPageLabels = [];
-            foreach ($rows as $item) {
-                if (!empty($item['name'])) {
-                    $itemLabel = !empty($item['label']) ? trim($item['label']) : Str::slug(trim($item['name']));
-                    $existingPageLabels[] = $itemLabel;
-                }
-            }
-            $existingPages = Page::whereIn('label', array_unique($existingPageLabels))->get()->keyBy('label');
-
-            // Step 6: Process each row and prepare inserts
+            // Step 1: Validate and prepare pages
+            $validPages = [];
             foreach ($rows as $index => $item) {
-                // Validate required field: name
-                if (!isset($item['name']) || empty(trim($item['name']))) {
-                    Log::warning("PageImport: Skipping row " . ($index + 1) . " - missing name: " . json_encode($item));
+                // Validate required fields
+                if (empty($item['name']) || empty($item['label'])) {
+                    Log::warning("PageImport: Skipping row " . ($index + 1) . " - missing name or label");
                     $skipped++;
                     continue;
                 }
 
-                // Extract and clean values from Excel columns
-                $name = trim($item['name']);
-                $label = !empty($item['label']) ? trim($item['label']) : Str::slug($name);
-                $icon = !empty($item['icon']) ? trim($item['icon']) : null;
-                $type = !empty($item['type']) ? trim($item['type']) : 'index';
-                $parent = !empty($item['parent']) ? trim($item['parent']) : null;
+                // Normalize data (id is excluded - database handles auto-increment)
+                $page = [
+                    'parent_id' => $item['parent_id'] ?? 0,
+                    'workflow_id' => $item['workflow_id'] ?? 0,
+                    'document_type_id' => $item['document_type_id'] ?? 0,
+                    'name' => trim($item['name']),
+                    'label' => trim($item['label']),
+                    'parent' => isset($item['parent']) ? trim($item['parent']) : '',
+                    'path' => isset($item['path']) ? trim($item['path']) : '',
+                    'icon' => isset($item['icon']) ? trim($item['icon']) : null,
+                    'type' => isset($item['type']) ? trim($item['type']) : 'index',
+                    'created_at' => isset($item['created_at']) ? $item['created_at'] : now(),
+                    'updated_at' => isset($item['updated_at']) ? $item['updated_at'] : now(),
+                ];
 
                 // Validate type
                 $validTypes = ['app', 'index', 'view', 'form', 'external', 'dashboard', 'report'];
-                if (!in_array($type, $validTypes)) {
-                    Log::warning("PageImport: Invalid type '{$type}' for page '{$name}', defaulting to 'index'");
-                    $type = 'index';
+                if (!in_array($page['type'], $validTypes)) {
+                    Log::warning("PageImport: Invalid type '{$page['type']}' for page '{$page['name']}', defaulting to 'index'");
+                    $page['type'] = 'index';
                 }
 
-                // Check for duplicates by label
-                if (isset($existingPages[$label])) {
-                    Log::info("PageImport: Skipped page '{$name}' (label '{$label}' already exists)");
+                // Check for duplicates in database
+                $existingPage = Page::where('label', $page['label'])->first();
+                if ($existingPage) {
+                    Log::info("PageImport: Skipped page '{$page['name']}' (label '{$page['label']}' already exists)");
                     $skipped++;
                     continue;
                 }
 
-                // Calculate initial path (will be updated after parent resolution if needed)
-                $path = '/' . $label;
-
-                // For non-app pages, check if parent needs to be resolved
-                $parentId = 0;
-                if ($type !== 'app' && !empty($parent)) {
-                    $parentLabel = trim($parent);
-                    
-                    // Check if parent exists in database
-                    $parentPage = $parentPagesFromDb->get($parentLabel);
-                    
-                    if ($parentPage) {
-                        // Parent found in database
-                        $parentId = $parentPage->id;
-                        $path = '/' . $parentPage->label . '/' . $label;
-                        Log::info("PageImport: Page '{$name}' will have parent '{$parentLabel}' (ID: {$parentId}) from database");
-                    } elseif (isset($batchPagesMap[$parentLabel])) {
-                        // Parent is in the current batch - will resolve after insert
-                        $parentItem = $batchPagesMap[$parentLabel];
-                        $parentItemType = !empty($parentItem['type']) ? trim($parentItem['type']) : 'index';
-                        
-                        // Only use parent from batch if it's not an "app" type
-                        if ($parentItemType !== 'app') {
-                            $parentRelations[$label] = $parentLabel;
-                            // Calculate path using parent label from batch
-                            $parentItemLabel = !empty($parentItem['label']) ? trim($parentItem['label']) : Str::slug(trim($parentItem['name']));
-                            $path = '/' . $parentItemLabel . '/' . $label;
-                            Log::info("PageImport: Page '{$name}' will have parent '{$parentLabel}' from batch (will resolve after insert)");
-                        } else {
-                            Log::warning("PageImport: Parent '{$parentLabel}' is type 'app', cannot be used as parent for page '{$name}'");
-                        }
-                    } else {
-                        Log::warning("PageImport: Parent '{$parentLabel}' not found for page '{$name}' (checked database and current batch)");
-                    }
-                }
-
-                // Check if path already exists
-                $existingByPath = Page::where('path', $path)->first();
-                if ($existingByPath) {
-                    Log::info("PageImport: Skipped page '{$name}' (path '{$path}' already exists)");
-                    $skipped++;
-                    continue;
-                }
-
-                // Prepare insert data
-                $inserts[] = [
-                    'name' => $name,
-                    'label' => $label,
-                    'path' => $path,
-                    'parent_id' => $parentId, // Will be updated after insert if parent was in batch
-                    'workflow_id' => 0,
-                    'document_type_id' => 0,
-                    'type' => $type,
-                    'icon' => $icon,
-                    'description' => null,
-                    'meta_data' => null,
-                    'is_menu' => false,
-                    'is_disabled' => false,
-                    'is_default' => false,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ];
-
-                // Track this page to avoid duplicates in the same batch
-                $existingPages->put($label, (object)['label' => $label]);
+                $validPages[] = $page;
             }
 
-            // Step 7: Insert all pages
-            if (empty($inserts)) {
-                Log::warning("PageImport: No valid records found for insertion.");
+            if (empty($validPages)) {
+                Log::warning("PageImport: No valid pages to process.");
                 return [
                     'inserted' => 0,
                     'skipped' => $skipped,
@@ -195,104 +87,121 @@ class PageImport implements Importable
                 ];
             }
 
-            try {
-                $this->pageRepository->insert($inserts);
-                $inserted = count($inserts);
-                Log::info("PageImport: Successfully inserted {$inserted} pages.");
+            // Step 2: Sort pages by dependency (parents before children)
+            $sortedPages = $this->sortByDependency($validPages);
 
-                // Step 8: Fetch all inserted pages for further processing
-                $insertedPageLabels = array_map(fn($insert) => $insert['label'], $inserts);
-                $insertedPages = Page::whereIn('label', $insertedPageLabels)->get()->keyBy('label');
-                Log::info("PageImport: Fetched " . $insertedPages->count() . " inserted pages for relationship setup.");
+            // Step 3: Process each page in dependency order
+            foreach ($sortedPages as $page) {
+                $parentId = $this->resolveParent($page, $sortedPages);
 
-                // Step 9: Resolve parent relationships for pages that had parents in the batch
-                if (!empty($parentRelations)) {
-                    Log::info("PageImport: Resolving " . count($parentRelations) . " parent relationships from batch.");
+                if ($parentId === null && $page['type'] !== 'app' && empty($page['parent'])) {
+                    // Page needs parent but parent not found - defer
+                    Log::info("PageImport: Deferring page '{$page['name']}' - parent required but not found");
+                    $deferredPages[] = $page;
+                    continue;
+                }
+
+                // Calculate path
+                $path = $this->calculatePath($page, $parentId);
+
+                // Check if path already exists
+                $existingByPath = Page::where('path', $path)->first();
+                if ($existingByPath) {
+                    Log::info("PageImport: Skipped page '{$page['name']}' (path '{$path}' already exists)");
+                    $skipped++;
+                    continue;
+                }
+
+                // Prepare insert data
+                $insertData = [
+                    'name' => $page['name'],
+                    'label' => $page['label'],
+                    'path' => $path,
+                    'parent_id' => $parentId ?? 0,
+                    'workflow_id' => $page['workflow_id'],
+                    'document_type_id' => $page['document_type_id'],
+                    'type' => $page['type'],
+                    'icon' => $page['icon'],
+                    'description' => null,
+                    'meta_data' => null,
+                    'is_menu' => false,
+                    'is_disabled' => false,
+                    'is_default' => false,
+                    'created_at' => $page['created_at'],
+                    'updated_at' => $page['updated_at'],
+                ];
+
+                try {
+                    $savedPage = Page::create($insertData);
+                    $inserted++;
                     
-                    foreach ($parentRelations as $childLabel => $parentLabel) {
-                        $childPage = $insertedPages->get($childLabel);
-                        $parentPage = $insertedPages->get($parentLabel);
+                    // Update registry
+                    self::$savedPagesRegistry[$page['label']] = $savedPage->id;
+                    
+                    Log::info("PageImport: Inserted page '{$page['name']}' (ID: {$savedPage->id}, Parent ID: " . ($parentId ?? 0) . ")");
+                } catch (\Exception $e) {
+                    Log::error("PageImport: Failed to insert page '{$page['name']}': " . $e->getMessage());
+                    $skipped++;
+                }
+            }
+
+            // Step 4: Process deferred pages
+            if (!empty($deferredPages)) {
+                Log::info("PageImport: Processing " . count($deferredPages) . " deferred pages");
+                
+                foreach ($deferredPages as $page) {
+                    $parentId = $this->resolveParent($page, $sortedPages, true); // Check previous chunks
+                    
+                    if ($parentId === null) {
+                        // Parent still not found - skip orphan
+                        Log::warning("PageImport: Skipping orphan page '{$page['name']}' - parent '{$page['parent']}' never found");
+                        $skipped++;
+                        continue;
+                    }
+
+                    // Calculate path
+                    $path = $this->calculatePath($page, $parentId);
+
+                    // Check if path already exists
+                    $existingByPath = Page::where('path', $path)->first();
+                    if ($existingByPath) {
+                        Log::info("PageImport: Skipped deferred page '{$page['name']}' (path '{$path}' already exists)");
+                        $skipped++;
+                        continue;
+                    }
+
+                    // Prepare insert data
+                    $insertData = [
+                        'name' => $page['name'],
+                        'label' => $page['label'],
+                        'path' => $path,
+                        'parent_id' => $parentId,
+                        'workflow_id' => $page['workflow_id'],
+                        'document_type_id' => $page['document_type_id'],
+                        'type' => $page['type'],
+                        'icon' => $page['icon'],
+                        'description' => null,
+                        'meta_data' => null,
+                        'is_menu' => false,
+                        'is_disabled' => false,
+                        'is_default' => false,
+                        'created_at' => $page['created_at'],
+                        'updated_at' => $page['updated_at'],
+                    ];
+
+                    try {
+                        $savedPage = Page::create($insertData);
+                        $inserted++;
                         
-                        if ($childPage && $parentPage) {
-                            // Update parent_id
-                            $childPage->parent_id = $parentPage->id;
-                            
-                            // Recalculate path with correct parent
-                            $childPage->path = '/' . $parentPage->label . '/' . $childPage->label;
-                            
-                            $childPage->save();
-                            
-                            Log::info("PageImport: Set parent_id for '{$childPage->name}' to '{$parentPage->name}' (ID: {$parentPage->id})");
-                        } else {
-                            if (!$childPage) {
-                                Log::error("PageImport: Child page '{$childLabel}' not found after insert!");
-                            }
-                            if (!$parentPage) {
-                                Log::error("PageImport: Parent page '{$parentLabel}' not found after insert!");
-                            }
-                        }
+                        // Update registry
+                        self::$savedPagesRegistry[$page['label']] = $savedPage->id;
+                        
+                        Log::info("PageImport: Inserted deferred page '{$page['name']}' (ID: {$savedPage->id}, Parent ID: {$parentId})");
+                    } catch (\Exception $e) {
+                        Log::error("PageImport: Failed to insert deferred page '{$page['name']}': " . $e->getMessage());
+                        $skipped++;
                     }
                 }
-
-                // Step 10: Attach role and group to all inserted pages
-                if ($superAdminRole || $enterpriseAdminGroup) {
-                    Log::info("PageImport: Attaching roles and groups to " . $insertedPages->count() . " pages.");
-                    
-                    foreach ($insertedPages as $page) {
-                        // Attach Super Administrator role
-                        if ($superAdminRole) {
-                            try {
-                                $existingRoleIds = $page->roles->pluck('id')->toArray();
-                                if (!in_array($superAdminRole->id, $existingRoleIds)) {
-                                    $page->roles()->attach($superAdminRole->id);
-                                    Log::debug("PageImport: Attached Super Administrator role to page '{$page->name}'");
-                                }
-                            } catch (\Exception $e) {
-                                Log::error("PageImport: Failed to attach role to page '{$page->name}': " . $e->getMessage());
-                            }
-                        }
-
-                        // Attach Enterprise Administrators group
-                        if ($enterpriseAdminGroup) {
-                            try {
-                                if (method_exists($page, 'groups')) {
-                                    $existingGroupIds = $page->groups->pluck('id')->toArray();
-                                    if (!in_array($enterpriseAdminGroup->id, $existingGroupIds)) {
-                                        $page->groups()->attach($enterpriseAdminGroup->id);
-                                        Log::debug("PageImport: Attached Enterprise Administrators group to page '{$page->name}'");
-                                    }
-                                } else {
-                                    // Fallback: Use direct DB insert if method doesn't exist
-                                    $exists = DB::table('groupables')
-                                        ->where('group_id', $enterpriseAdminGroup->id)
-                                        ->where('groupable_id', $page->id)
-                                        ->where('groupable_type', Page::class)
-                                        ->exists();
-                                    
-                                    if (!$exists) {
-                                        DB::table('groupables')->insert([
-                                            'group_id' => $enterpriseAdminGroup->id,
-                                            'groupable_id' => $page->id,
-                                            'groupable_type' => Page::class,
-                                        ]);
-                                        Log::debug("PageImport: Attached Enterprise Administrators group to page '{$page->name}' (via direct DB)");
-                                    }
-                                }
-                            } catch (\Exception $e) {
-                                Log::error("PageImport: Failed to attach group to page '{$page->name}': " . $e->getMessage());
-                            }
-                        }
-                    }
-                    
-                    Log::info("PageImport: Completed attaching roles and groups to all pages.");
-                } else {
-                    Log::warning("PageImport: No role or group found, skipping relationship attachment.");
-                }
-
-            } catch (\Exception $e) {
-                Log::error("PageImport: Database error: " . $e->getMessage());
-                Log::error("PageImport: Stack trace: " . $e->getTraceAsString());
-                throw $e;
             }
 
             return [
@@ -301,5 +210,177 @@ class PageImport implements Importable
                 'total' => $total,
             ];
         });
+    }
+
+    /**
+     * Sort pages by dependency (parents before children)
+     */
+    private function sortByDependency(array $pages): array
+    {
+        // Build a map of label => page
+        $pageMap = [];
+        foreach ($pages as $page) {
+            $pageMap[$page['label']] = $page;
+        }
+
+        // Build dependency graph
+        $dependencies = [];
+        foreach ($pages as $page) {
+            $label = $page['label'];
+            $dependencies[$label] = [];
+            
+            if (!empty($page['parent'])) {
+                // Check if parent is in current chunk
+                if (isset($pageMap[$page['parent']])) {
+                    $dependencies[$label][] = $page['parent'];
+                }
+            }
+        }
+
+        // Topological sort
+        $sorted = [];
+        $visited = [];
+        $visiting = [];
+
+        $visit = function ($label) use (&$sorted, &$visited, &$visiting, &$pageMap, &$dependencies, &$visit) {
+            if (isset($visiting[$label])) {
+                // Circular dependency detected - add anyway
+                if (!isset($visited[$label])) {
+                    $sorted[] = $pageMap[$label];
+                    $visited[$label] = true;
+                }
+                return;
+            }
+
+            if (isset($visited[$label])) {
+                return;
+            }
+
+            $visiting[$label] = true;
+
+            // Visit dependencies first
+            foreach ($dependencies[$label] as $dep) {
+                if (isset($pageMap[$dep])) {
+                    $visit($dep);
+                }
+            }
+
+            unset($visiting[$label]);
+            $sorted[] = $pageMap[$label];
+            $visited[$label] = true;
+        };
+
+        foreach ($pages as $page) {
+            if (!isset($visited[$page['label']])) {
+                $visit($page['label']);
+            }
+        }
+
+        return $sorted;
+    }
+
+    /**
+     * Resolve parent for a page
+     * 
+     * @param array $page The page data
+     * @param array $currentChunk All pages in current chunk
+     * @param bool $checkRegistry Whether to check saved pages registry (for deferred pages)
+     * @return int|null Parent ID or null if not found
+     */
+    private function resolveParent(array $page, array $currentChunk, bool $checkRegistry = false): ?int
+    {
+        // If parent is empty and type is 'app', no parent needed
+        if (empty($page['parent']) && $page['type'] === 'app') {
+            return null;
+        }
+
+        // If parent is empty and type is not 'app', parent is required
+        if (empty($page['parent'])) {
+            return null;
+        }
+
+        $parentLabel = $page['parent'];
+
+        // Step 1: Check database
+        $parentPage = Page::where('label', $parentLabel)->first();
+        if ($parentPage) {
+            // Update registry if not already there
+            if (!isset(self::$savedPagesRegistry[$parentLabel])) {
+                self::$savedPagesRegistry[$parentLabel] = $parentPage->id;
+            }
+            return $parentPage->id;
+        }
+
+        // Step 2: Check saved pages registry (for previous chunks)
+        if ($checkRegistry && isset(self::$savedPagesRegistry[$parentLabel])) {
+            return self::$savedPagesRegistry[$parentLabel];
+        }
+
+        // Step 3: Check current chunk
+        // Since we process in dependency order, parent should already be saved
+        // Check registry first (parent might have been saved already)
+        if (isset(self::$savedPagesRegistry[$parentLabel])) {
+            return self::$savedPagesRegistry[$parentLabel];
+        }
+
+        // If not in registry yet, check if parent exists in chunk
+        // (This should be rare due to sorting, but handle it anyway)
+        foreach ($currentChunk as $chunkPage) {
+            if ($chunkPage['label'] === $parentLabel) {
+                // Parent is in current chunk but not saved yet
+                // This shouldn't happen with proper sorting, but return null to defer
+                return null;
+            }
+        }
+
+        // Parent not found
+        return null;
+    }
+
+    /**
+     * Calculate path for a page
+     * 
+     * @param array $page The page data
+     * @param int|null $parentId The parent ID if available
+     * @return string The calculated path
+     */
+    private function calculatePath(array $page, ?int $parentId): string
+    {
+        // If path is provided, use it
+        if (!empty($page['path'])) {
+            return $page['path'];
+        }
+
+        // If type is 'app', use just the label
+        if ($page['type'] === 'app') {
+            return '/' . $page['label'];
+        }
+
+        // If parent exists, build path from parent
+        if ($parentId) {
+            $parentPage = Page::find($parentId);
+            if ($parentPage) {
+                return '/' . $parentPage->label . '/' . $page['label'];
+            }
+        }
+
+        // Fallback: just use label
+        return '/' . $page['label'];
+    }
+
+    /**
+     * Clear the saved pages registry (useful for testing or reset)
+     */
+    public static function clearRegistry(): void
+    {
+        self::$savedPagesRegistry = [];
+    }
+
+    /**
+     * Get the saved pages registry (useful for debugging)
+     */
+    public static function getRegistry(): array
+    {
+        return self::$savedPagesRegistry;
     }
 }
