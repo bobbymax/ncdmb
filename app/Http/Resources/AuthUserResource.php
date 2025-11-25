@@ -14,7 +14,7 @@ class AuthUserResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        $pages = $this->role->pages()->where('is_disabled', 0)->latest()->get();
+        $pages = $this->role->pages()->where('is_disabled', 0)->latest()->get() ?? collect([]);
         return [
             'id' => $this->id,
             'name' => "{$this->firstname} {$this->surname}",

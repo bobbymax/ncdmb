@@ -34,7 +34,7 @@ class UserService extends BaseService
             'gender' => 'required|string|in:male,female',
             'job_title' => 'nullable|string|max:255',
             'type' => 'required|string|in:permanent,contract,adhoc,secondment,support,admin',
-            'default_page_id' => 'sometimes|integer',
+            'default_page_id' => 'sometimes|nullable|integer',
             'groups' => 'sometimes|array',
         ];
 
@@ -60,6 +60,8 @@ class UserService extends BaseService
 
             $user = parent::store([
                 ...$data,
+                'default_page_id' => (int) $data['default_page_id'] > 0 ? $data['default_page_id'] : null,
+                'location_id' => (int) $data['location_id'] > 0 ? $data['location_id'] : null,
                 'password' => $password,
             ]);
 
@@ -100,7 +102,7 @@ class UserService extends BaseService
                 'gender' => $data['gender'],
                 'job_title' => $data['job_title'],
                 'type' => $data['type'],
-                'default_page_id' => $data['default_page_id'],
+                'default_page_id' => (int) $data['default_page_id'] > 0 ? $data['default_page_id'] : null,
                 'blocked' => $data['blocked'],
                 'is_admin' => $data['is_admin'] ?? false,
                 'is_logged_in' => $data['is_logged_in'] ?? false,
