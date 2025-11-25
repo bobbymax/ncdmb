@@ -63,6 +63,7 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::get('users/{groupId}/{departmentId}', [\App\Http\Controllers\UserController::class, 'grouping']);
 
         Route::get('chat-token', [\App\Http\Controllers\AuthApiController::class, 'getChatToken']);
+        Route::get('dashboard', [\App\Http\Controllers\DashboardController::class, 'index']);
         Route::post('document-category/signatories', [\App\Http\Controllers\DocumentCategoryController::class, 'addSignatories']);
 
         // Google Api Endpoints
