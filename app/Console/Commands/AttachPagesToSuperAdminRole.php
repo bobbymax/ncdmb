@@ -30,14 +30,12 @@ class AttachPagesToSuperAdminRole extends Command
     {
         $this->info('Starting to attach pages to super-administrator role...');
 
-        // Find the super-administrator role by slug (or label if slug doesn't exist)
-        $role = Role::where('slug', 'super-administrator')
-            ->orWhere('label', 'super-administrator')
-            ->first();
+        // Find the super-administrator role by slug
+        $role = Role::where('slug', 'super-administrator')->first();
 
         if (!$role) {
             $this->error('Super Administrator role not found!');
-            $this->error('Please ensure a role with slug or label "super-administrator" exists.');
+            $this->error('Please ensure a role with slug "super-administrator" exists.');
             return 1;
         }
 
