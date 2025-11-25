@@ -45,10 +45,21 @@ class Puzzle
      */
     public static function resolve(string $dataString): string
     {
+        // Validate input before processing
+        if (empty($dataString) || !is_string($dataString)) {
+            throw new RuntimeException('Invalid input: data string is empty or not a string.');
+        }
+
         $chunks = json_decode($dataString, true);
 
         if (!is_array($chunks)) {
-            throw new RuntimeException('Invalid or corrupted JSON payload.');
+            // Provide more detailed error information
+            $jsonError = json_last_error();
+            $jsonErrorMessage = json_last_error_msg();
+            throw new RuntimeException(
+                "Invalid or corrupted JSON payload. JSON Error: {$jsonErrorMessage} (Code: {$jsonError}). " .
+                "Input length: " . strlen($dataString) . " characters."
+            );
         }
 
         self::checkVersion($chunks);

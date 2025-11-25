@@ -49,10 +49,16 @@ class SettingService extends BaseService
                 $setting = $this->repository->getRecordByColumn('key', $key);
 
                 if ($setting) {
-
                     $stringValue = $this->convertValueToString($value, $setting->input_data_type);
 
-                    $setting->value = $setting->input_type === "file" ? Puzzle::scramble($stringValue, Auth::user()->staff_no) : $value;
+                    // Only scramble if input_type is "file" AND value is not empty
+                    // This prevents errors when trying to scramble null/empty values
+                    if ($setting->input_type === "file" && !empty($stringValue)) {
+                        $setting->value = Puzzle::scramble($stringValue, Auth::user()->staff_no);
+                    } else {
+                        $setting->value = $value;
+                    }
+                    
                     $setting->save();
                 }
             }
