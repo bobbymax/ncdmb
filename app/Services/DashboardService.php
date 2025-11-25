@@ -44,13 +44,15 @@ class DashboardService
         });
 
         // Eager load payments for all documents using polymorphic relationship
+        // Use select() to only get needed fields and prevent eager loading relationships
         $documentIds = $documents->pluck('id')->toArray();
         $paymentsByDocument = Payment::where('resource_type', 'App\\Models\\Document')
             ->whereIn('resource_id', $documentIds)
+            ->select('id', 'resource_id', 'total_approved_amount', 'total_amount_paid')
             ->get()
             ->groupBy('resource_id');
 
-        // Attach payments to documents
+        // Attach payments to documents as a simple collection
         $documents->each(function ($doc) use ($paymentsByDocument) {
             $doc->payments = $paymentsByDocument->get($doc->id, collect());
         });
@@ -286,26 +288,10 @@ class DashboardService
             return $doc->payments ?? collect();
         });
 
-        $methodDistribution = $payments->groupBy('payment_method')->map(function ($group) {
-            return $group->count();
-        })->map(function ($count, $method) {
-            $name = collect(explode('-', $method))
-                ->map(fn($w) => ucfirst($w))
-                ->join(' ');
-            return [
-                'name' => $name ?: 'Unknown',
-                'value' => $count,
-            ];
-        })->values()->toArray();
-
-        $currencyDistribution = $payments->groupBy('currency')->map(function ($group) {
-            return $group->count();
-        })->map(function ($count, $currency) {
-            return [
-                'name' => $currency ?: 'NGN',
-                'value' => $count,
-            ];
-        })->values()->toArray();
+        // Payment method and currency columns don't exist in the payments table
+        // Return empty arrays for these distributions
+        $methodDistribution = [];
+        $currencyDistribution = [];
 
         $totalPaid = $payments->sum('total_amount_paid') ?? 0;
         $totalApproved = $payments->sum('total_approved_amount') ?? 0;
