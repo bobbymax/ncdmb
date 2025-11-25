@@ -19,7 +19,6 @@ class ChartOfAccountImport implements Importable
         Log::info('Incoming data preview: ' . json_encode(array_slice($rows, 0, 3)));
 
         return DB::transaction(function () use ($rows) {
-            $timestamp = now();
             $inserts = [];
             $skipped = 0;
 
@@ -35,7 +34,7 @@ class ChartOfAccountImport implements Importable
                     continue;
                 }
 
-                $accountCode = strtoupper(trim($row['account_code']));
+                $accountCode = $row['account_code'];
 
                 // Skip duplicates in input
                 if (isset($seen[$accountCode])) {
@@ -51,13 +50,12 @@ class ChartOfAccountImport implements Importable
                     continue;
                 }
 
-                $inserts[] = [
-                    'account_code' => $accountCode,
-                    'name' => trim($row['name']),
-                    'status' => $row['status'] ?? 'active',
-                    'created_at' => $timestamp,
-                    'updated_at' => $timestamp,
-                ];
+                unset($row['id'], $row['parent_id'], $row['deleted_at']);
+                $row['parent_id'] = null;
+
+                $row['account_code'] = $accountCode;
+
+                $inserts[] = $row;
             }
 
             if (!empty($inserts)) {
