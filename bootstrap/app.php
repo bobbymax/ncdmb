@@ -4,6 +4,10 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
+// Start output buffering immediately to catch any premature output (deprecation warnings, etc.)
+// This prevents output from corrupting JSON responses
+ob_start();
+
 // Suppress deprecation warnings from being displayed in HTTP responses
 // They will still be logged but won't pollute JSON/HTTP responses
 if (PHP_SAPI !== 'cli') {
@@ -54,5 +58,11 @@ return Application::configure(basePath: dirname(__DIR__))
         if (PHP_SAPI !== 'cli') {
             ini_set('display_errors', '0');
             ini_set('log_errors', '1');
+            
+            // Clean any output buffer that might contain warnings or other output
+            // This prevents corrupted JSON responses
+            if (ob_get_level() > 0) {
+                ob_clean();
+            }
         }
     })->create();

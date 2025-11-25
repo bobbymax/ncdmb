@@ -15,11 +15,24 @@ class ForceJsonResponse
      */
     public function handle(Request $request, Closure $next): Response
     {
+        // Clean any output that might have been generated before this middleware
+        // This prevents deprecation warnings or other output from corrupting JSON responses
+        if (ob_get_level() > 0) {
+            ob_clean();
+        }
+
         // Only force JSON response for API routes
         if ($request->is('api/*')) {
             $request->headers->set('Accept', 'application/json');
         }
 
-        return $next($request);
+        $response = $next($request);
+
+        // Ensure output buffer is clean before returning JSON response
+        if ($request->is('api/*') && ob_get_level() > 0) {
+            ob_clean();
+        }
+
+        return $response;
     }
 }
