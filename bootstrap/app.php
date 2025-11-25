@@ -4,6 +4,14 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 
+// Suppress deprecation warnings from being displayed in HTTP responses
+// They will still be logged but won't pollute JSON/HTTP responses
+if (PHP_SAPI !== 'cli') {
+    // For web requests, suppress display of deprecation warnings
+    ini_set('display_errors', '0');
+    ini_set('log_errors', '1');
+}
+
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
@@ -41,5 +49,10 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Ensure deprecation warnings don't appear in HTTP responses
+        // They will be logged to the log files instead
+        if (PHP_SAPI !== 'cli') {
+            ini_set('display_errors', '0');
+            ini_set('log_errors', '1');
+        }
     })->create();

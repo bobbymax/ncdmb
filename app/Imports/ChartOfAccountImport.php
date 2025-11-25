@@ -16,6 +16,12 @@ class ChartOfAccountImport implements Importable
 
     public function import(array $rows): array
     {
+        // Unwrap nested array from ImportResourcesJob if needed
+        // ImportResourcesJob wraps chunks as [$chunk], so unwrap one level
+        if (isset($rows[0]) && is_array($rows[0]) && array_keys($rows)[0] === 0 && isset($rows[0][0]) && is_array($rows[0][0])) {
+            $rows = $rows[0];
+        }
+
         Log::info('Incoming data preview: ' . json_encode(array_slice($rows, 0, 3)));
 
         return DB::transaction(function () use ($rows) {
@@ -54,6 +60,10 @@ class ChartOfAccountImport implements Importable
                 $row['parent_id'] = null;
 
                 $row['account_code'] = $accountCode;
+                
+                // Add timestamps - REQUIRED for Laravel insert()
+                $row['created_at'] = now();
+                $row['updated_at'] = now();
 
                 $inserts[] = $row;
             }
