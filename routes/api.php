@@ -134,6 +134,12 @@ Route::group(['middleware' => ['cors', 'json.response']], function () {
         Route::apiResource('inbounds', \App\Http\Controllers\InboundController::class);
         Route::apiResource('inboundInstructions', \App\Http\Controllers\InboundInstructionController::class);
 
+        // Monitoring and Evaluations Module
+        Route::apiResource('companies', \App\Http\Controllers\CompanyController::class);
+        Route::apiResource('companyRepresentatives', \App\Http\Controllers\CompanyRepresentativeController::class);
+        Route::apiResource('schedules', \App\Http\Controllers\ScheduleController::class);
+        Route::apiResource('operations', \App\Http\Controllers\OperationController::class);
+
         // Notifications
         Route::prefix('notifications')->group(function () {
             Route::get('/', [\App\Http\Controllers\NotificationController::class, 'index']);

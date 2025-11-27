@@ -55,6 +55,11 @@ class UserController extends BaseController
      */
     public function store(\Illuminate\Http\Request $request): \Illuminate\Http\JsonResponse
     {
+        // Normalize nullable ID fields before validation
+        $data = $request->all();
+        $data = $this->normalizeNullableIds($data);
+        $request->merge($data);
+        
         return parent::store($request);
     }
 
@@ -107,6 +112,11 @@ class UserController extends BaseController
      */
     public function update(\Illuminate\Http\Request $request, $id): \Illuminate\Http\JsonResponse
     {
+        // Normalize nullable ID fields before validation
+        $data = $request->all();
+        $data = $this->normalizeNullableIds($data);
+        $request->merge($data);
+        
         return parent::update($request, $id);
     }
 
@@ -219,5 +229,30 @@ class UserController extends BaseController
         } catch (\Exception $e) {
             return $this->error(null, 'Failed to fetch users: ' . $e->getMessage(), 500);
         }
+    }
+
+    /**
+     * Normalize nullable ID fields: convert empty strings, "0", or invalid values to null
+     * 
+     * @param array $data
+     * @return array
+     */
+    private function normalizeNullableIds(array $data): array
+    {
+        $nullableIdFields = ['grade_level_id', 'department_id', 'role_id', 'location_id', 'default_page_id'];
+        
+        foreach ($nullableIdFields as $field) {
+            if (isset($data[$field])) {
+                $value = $data[$field];
+                // Convert empty string, "0", 0, or any non-positive integer to null
+                if ($value === '' || $value === '0' || $value === 0 || (is_numeric($value) && (int)$value <= 0)) {
+                    $data[$field] = null;
+                } elseif (is_numeric($value)) {
+                    $data[$field] = (int)$value;
+                }
+            }
+        }
+        
+        return $data;
     }
 }

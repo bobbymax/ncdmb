@@ -12,6 +12,10 @@ class WorkflowStageRepository extends BaseRepository
 
     public function parse(array $data): array
     {
-        return $data;
+        return [
+            ...$data,
+            'department_id' => $data['department_id'] > 0 ? $data['department_id'] : null,
+            'fallback_stage_id' => $data['fallback_stage_id'] > 0 ? $data['fallback_stage_id'] : null,
+        ];
     }
 }

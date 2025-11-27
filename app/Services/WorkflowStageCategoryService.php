@@ -27,7 +27,7 @@ class WorkflowStageCategoryService extends BaseService
         return [
             'name' => 'required|string|max:255',
             'description' => 'sometimes|nullable|string|min:5',
-            'icon_path_blob' => 'sometimes|nullable|mimes:jpeg,jpg,png|max:1024',
+//            'icon_path_blob' => 'sometimes|nullable|mimes:jpeg,jpg,png|max:1024',
         ];
     }
 

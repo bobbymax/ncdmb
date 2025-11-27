@@ -12,6 +12,9 @@ class MailingListRepository extends BaseRepository
 
     public function parse(array $data): array
     {
-        return $data;
+        return [
+            ...$data,
+            'department_id' => $data['department_id'] > 0 ? $data['department_id'] : null,
+        ];
     }
 }
